@@ -35,11 +35,15 @@ class HOPSWriter:
         toolstring = "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         return toolstring
 
-    def generate_hops(self, process):
+    def generate_hops(self, processes):
         # Generate for the start of the part (left)
         self.hop = self.header
         self.hop += self.toolcall
-        self.hop += process.params
+        if isinstance(processes, list):
+            for process in processes:
+                self.hop += process.params
+        else:
+            self.hop += processes.params
 
 
 class FrenchRidgeProcess:
@@ -158,3 +162,9 @@ class FrenchRidgeProcess:
             self.params += self.format_to_hops(
                 *self.generate_params_end(face_front_end), orientation=2
             )
+
+if __name__ == "__main__":
+    hopper = HOPSWriter(1000)
+    process = FrenchRidgeProcess(hopper, "11") #frontfront
+    hopper.generate_hops(process)
+    print(hopper.hop)
