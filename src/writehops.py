@@ -1,4 +1,5 @@
 from compas.geometry import Frame, Transformation, Rotation, Translation, Point, Vector
+from compas.geometry import intersection_plane_plane_plane, Plane
 from copy import deepcopy
 import math
 
@@ -163,8 +164,145 @@ class FrenchRidgeProcess:
                 *self.generate_params_end(face_front_end), orientation=2
             )
 
+
+class DoubleCutProcess:
+
+    def __init__(self, hopper, btlx_params):
+        self.angle1 = btlx_params["angle1"]
+        self.angle2 = btlx_params["angle2"]
+        self.inclination1 = btlx_params["inclination1"]
+        self.inclination2 = btlx_params["inclination2"]
+        self.ref_face = btlx_params["ref_face"]
+        self.ref_faces = []
+        self.startx = btlx_params["startx"]
+        self.starty = btlx_params["starty"]
+        self.length = hopper.length
+        self.width = hopper.width
+        self.frame1, self.frame2 = Frame.worldXY(), Frame.worldXY()
+        self.beta1, self.beta2 = 0.0, 0.0
+        self.theta1, self.theta2 = 0.0, 0.0
+        self.params = ""
+        self.ref_plane = None
+        self.generate_process_params()
+
+    def generate_planes(self):
+        frame = Frame.worldXY()
+        ref_angles = [-math.pi / 2, math.pi, math.pi / 2, 0]
+        ref_translations = [
+            [0, 0, 0],
+            [0, self.width,0],
+            [0, self.width, self.width],
+            [0, 0, self.width],
+        ]
+        ref_angle = ref_angles[int(self.ref_face) - 1]
+        ref_translation = ref_translations[int(self.ref_face) - 1]
+        ref_frame = frame.rotated(ref_angle, frame.xaxis, frame.point)
+        ref_frame = ref_frame.transformed(
+            Translation.from_vector(Vector(*ref_translation))
+        )
+        T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
+        ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
+
+        frame1 = deepcopy(ref_frame)
+        frame1.rotate(math.radians(self.angle1), frame1.zaxis, frame1.point)
+        frame1.rotate(math.radians(self.inclination1), frame1.xaxis, frame1.point)
+
+        frame2 = deepcopy(ref_frame)
+        frame2.rotate(math.radians(self.angle2), frame2.zaxis, frame2.point)
+        frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
+
+        print(frame1, frame2)
+        self.frame1 = frame1
+        self.frame2 = frame2
+
+        self.ref_point = ref_frame.point
+        self.ref_faces = [frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles]
+        for T,face in zip(ref_translations, self.ref_faces):
+            face.transform(Translation.from_vector(Vector(*T)))
+        
+        self.beta1 = math.degrees(self.frame1.euler_angles()[2])
+        self.theta1 = math.degrees(self.frame1.euler_angles()[0] + ref_angle)
+
+        self.beta2 = math.degrees(self.frame2.euler_angles()[2])
+        self.theta2 = math.degrees(self.frame2.euler_angles()[0] + ref_angle)
+
+    
+    def format_to_hops(self, points, frame, theta, beta, orientation=0):
+        hop = ""
+        ref = deepcopy(frame)
+        ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(
+            ref.point.x, ref.point.y, ref.point.z, theta, beta
+        )
+        hop += ebenef + "\n"
+
+        Tr = Transformation.from_change_of_basis(Frame([0,0,0], [1,0,0], [0,1,0]), ref)
+        pts = [point.transformed(Tr) for point in points]
+        for pt in pts:
+            # if it is point 0 then it is the start point
+            if pts.index(pt) == 0:
+                hop += (
+                    "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
+                        pt.x, pt.y, pt.z, orientation
+                    )
+                    + "\n"
+                )
+            else:
+                reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
+                hop += (
+                    "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
+                        pt.x, pt.y, pt.z, reference
+                    )
+                    + "\n"
+                )
+        hop += "EP(1,_ANF,0)\n"
+
+        return hop
+
+    def generate_endpoint(self): 
+        self.generate_planes()  
+        for ref in self.ref_faces:
+            point = intersection_plane_plane_plane(Plane.from_frame(self.frame1), Plane.from_frame(self.frame2), Plane.from_frame(ref))
+            if point != None and point != self.frame1.point:
+                return self.frame1.point, Point(*point)
+
+    def generate_process_params(self):
+        pts = self.generate_endpoint()
+        if pts == None:
+            return
+        start_point, end_point = pts
+        self.params += self.format_to_hops(
+            points=[start_point, end_point],
+            frame = self.frame1,
+            theta = self.theta1,
+            beta = self.beta1,
+            orientation=2
+        )
+        self.params += self.format_to_hops(
+            [start_point, end_point],
+            self.frame2,
+            self.theta2,
+            self.beta2,
+            orientation=1
+        )
+
+
+
 if __name__ == "__main__":
     hopper = HOPSWriter(1000)
-    process = FrenchRidgeProcess(hopper, "11") #frontfront
-    hopper.generate_hops(process)
+    processes = [
+        # FrenchRidgeProcess(hopper, "11"),  # frontfront
+        DoubleCutProcess(
+            hopper,
+            {
+                "angle1": 66.03,
+                "angle2": 158.81,
+                "inclination1": 78.44,
+                "inclination2": 76.67,
+                "ref_face": 2,
+                "startx": 590.10,
+                "starty": 46.53,
+            },
+        )
+    ]
+    hopper.generate_hops(processes)
     print(hopper.hop)
