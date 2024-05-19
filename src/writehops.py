@@ -268,7 +268,7 @@ class DoubleCutProcess:
                     )
                     + "\n"
                 )
-        hop += "EP(2,2.0,0)\n"
+        hop += "EP(3,2.0,0)\n"
 
         return hop
 
