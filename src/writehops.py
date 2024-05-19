@@ -46,7 +46,9 @@ class HOPSWriter:
         else:
             self.hop += processes.params
 
-
+    def write_to_file(self, file_path):
+        with open(file_path, "w") as f:
+            f.write(self.hop)
 class FrenchRidgeProcess:
 
     def __init__(self, hopper, face_front):
@@ -166,34 +168,38 @@ class FrenchRidgeProcess:
 
 
 class DoubleCutProcess:
-
     def __init__(self, hopper, btlx_params):
-        self.angle1 = btlx_params["angle1"]
-        self.angle2 = btlx_params["angle2"]
-        self.inclination1 = btlx_params["inclination1"]
-        self.inclination2 = btlx_params["inclination2"]
-        self.ref_face = btlx_params["ref_face"]
+        self.orientation = str(btlx_params["Orientation"])
+        self.angle1 = float(btlx_params["Angle1"])
+        self.angle2 = float(btlx_params["Angle2"])
+        self.inclination1 = float(btlx_params["Inclination1"])
+        self.inclination2 = float(btlx_params["Inclination2"])
+        self.ref_face = int(btlx_params["ReferencePlaneID"])
         self.ref_faces = []
-        self.startx = btlx_params["startx"]
-        self.starty = btlx_params["starty"]
+        self.startx = float(btlx_params["StartX"])
+        self.starty = float(btlx_params["StartY"])
         self.length = hopper.length
         self.width = hopper.width
         self.frame1, self.frame2 = Frame.worldXY(), Frame.worldXY()
         self.beta1, self.beta2 = 0.0, 0.0
         self.theta1, self.theta2 = 0.0, 0.0
         self.params = ""
+        self.cf1, self.cf2 = None, None
         self.ref_plane = None
-        self.generate_process_params()
+        self.pts = self.generate_process_params()
 
     @staticmethod
-    def frame_to_yaw_pitch(frame):
-        target_normal = -frame.zaxis
-        alpha = math.atan2(target_normal.y, target_normal.x) - math.pi / 2
-        frame.rotate(alpha, frame.zaxis, frame.point)
+    def frame_to_yaw_pitch(frame_to, frame_from):
+        frame = Frame(frame_to.point, [1,0,0], [0,1,0])
+        target_normal = -frame_from.zaxis
+        beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
+        beta = wrap_to_pi(beta)
+        frame.rotate(beta, frame.zaxis, frame.point)
         # Angle to rotate around the x-axis to align the normal vector with the z-axis
-        beta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
-        frame.rotate(beta, frame.xaxis, frame.point)
-        return frame, alpha, beta
+        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
+        theta = wrap_to_pi(theta)
+        frame.rotate(theta, frame.xaxis, frame.point)
+        return frame, theta, beta
 
     def generate_planes(self):
         frame = Frame.worldXY()
@@ -204,18 +210,10 @@ class DoubleCutProcess:
             [0, self.width, self.width],
             [0, 0, self.width],
         ]
-        print(
-            frame,
-            self.ref_face,
-            ref_angles[int(self.ref_face) - 1],
-            ref_translations[int(self.ref_face) - 1],
-        )
         ref_angle = ref_angles[int(self.ref_face) - 1]
         ref_translation = ref_translations[int(self.ref_face) - 1]
         ref_frame = frame.rotated(ref_angle, frame.xaxis, frame.point)
-        print(ref_frame)
         ref_frame.transform(Translation.from_vector(Vector(*ref_translation)))
-        print(ref_frame)
         self.ref_plane = ref_frame
         T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
@@ -237,14 +235,9 @@ class DoubleCutProcess:
         self.ref_faces = [
             frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
         ]
-        for T, face in zip(ref_translations, self.ref_faces):
-            face.transform(Translation.from_vector(Vector(*T)))
+        for i in range(len(self.ref_faces)):
+            self.ref_faces[i].transform(Translation.from_vector(Vector(*ref_translations[i])))
 
-        self.beta1 = math.degrees(self.frame1.euler_angles()[2])
-        self.theta1 = math.degrees(self.frame1.euler_angles()[0])
-
-        self.beta2 = math.degrees(self.frame2.euler_angles()[2])
-        self.theta2 = math.degrees(self.frame2.euler_angles()[0])
 
     def format_to_hops(self, points, frame, theta, beta, orientation=0):
         hop = ""
@@ -289,50 +282,77 @@ class DoubleCutProcess:
                     Plane.from_frame(ref),
                 )
             )
-            # print(point, self.frame1.point)
             if point is not None:
                 if (Vector.from_start_end(point, self.frame1.point).length) > 0.01:
                     return self.frame1.point, Point(*point)
+
+    def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
+        if self.ref_face == 1:
+            alpha = -math.pi / 2
+        elif self.ref_face == 3:
+            alpha = math.pi / 2
+        elif self.ref_face == 2:
+            alpha = math.pi
+        else:
+            alpha = 0
+        T = Rotation.from_axis_and_angle([1,0,0], alpha, point=[0,30,30])
+        return start_point.transformed(T), end_point.transformed(T), frame1.transformed(T), frame2.transformed(T), ref_plane.transformed(T)
 
     def generate_process_params(self):
         pts = self.generate_endpoint()
         if pts == None:
             return
         start_point, end_point = pts
-        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(deepcopy(self.frame1))
+        orientation1 = 2 if self.orientation == "start" else 1
+        # start_point, end_point, self.frame1, self.frame2, self.ref_plane  = self.rotate_things(start_point, end_point, self.frame1, self.frame2, self.ref_plane)
+        self.cf1, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame1)
         self.params += self.format_to_hops(
             points=[start_point, end_point],
-            frame=cutting_frame,
-            theta=math.degrees(alpha),
+            frame=deepcopy(self.cf1),
+            theta=math.degrees(theta),
             beta=math.degrees(beta),
-            orientation=1,
+            orientation=orientation1,
         )
-        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(deepcopy(self.frame2))
+        orientation2 = 1 if self.orientation == "start" else 2
+        self.cf2, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame2)
         self.params += self.format_to_hops(
             points=[start_point, end_point],
-            frame=cutting_frame,
-            theta=math.degrees(alpha),
+            frame=deepcopy(self.cf2),
+            theta=math.degrees(theta),
             beta=math.degrees(beta),
-            orientation=1,
+            orientation=orientation2,
         )
+        return [start_point, end_point]
 
+def wrap_to_pi(angle):
+    # Normalize the angle to be within [-pi, pi]
+    angle = (angle + math.pi) % (2 * math.pi) - math.pi
+    # If the angle is negative, convert it to the positive equivalent
+    if angle < 0:
+        angle += 2 * math.pi
+
+    # If the angle is greater than pi, wrap it to the range [0, pi]
+    if angle > math.pi:
+        angle = 2 * math.pi - angle
+
+    return angle
 
 if __name__ == "__main__":
-    hopper = HOPSWriter(1000)
-    processes = [
-        # FrenchRidgeProcess(hopper, "11"),  # frontfront
-        DoubleCutProcess(
-            hopper,
-            {
-                "angle1": 66.03,
-                "angle2": 158.81,
-                "inclination1": 78.44,
-                "inclination2": 76.67,
-                "ref_face": 1,
-                "startx": 590.10,
-                "starty": 46.53,
-            },
-        )
-    ]
+    import os
+    from parse_btlx import BTLXParser
+
+    file_path = os.path.join(os.path.dirname(__file__), "240514_Module81.btlx")
+    parser = BTLXParser(file_path)
+    remachining_dict = parser.get_remachining_dict()
+    index = 26
+    print(remachining_dict[str(index)])
+    hopper = HOPSWriter(remachining_dict[str(index)]["length"])
+    processes = []
+    for machining in remachining_dict[str(index)]["machinings"]:
+        if machining["Name"] == "FrenchRidgeLapJoint":
+            pass
+        elif machining["Name"] == "T-Butt Joint":
+            process = DoubleCutProcess(hopper, machining)
+            processes.append(process)
     hopper.generate_hops(processes)
-    print(hopper.hop)
+    hopper.write_to_file(os.path.join(os.path.dirname(__file__),"test.hop"))

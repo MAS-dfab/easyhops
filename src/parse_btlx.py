@@ -8,23 +8,27 @@ class BTLXParser:
         self.french_ridge_lap_machinings = {}
         self.double_cut_machinings = {}
         self.remachining_dict = {}
+        self.part_lengths = {}
         self._parse_file()
 
     def _parse_file(self):
-        # Load and parse the XML file
-        tree = ET.parse(self.file_path)
-        root = tree.getroot()
+        try:
+            # Load and parse the XML file
+            tree = ET.parse(self.file_path)
+            root = tree.getroot()
+            # Iterate through each part in the XML
+            for part in root.findall("Project/Parts/Part", self.namespaces):
+                part_id = part.get("OrderNumber")
+                self.part_lengths[part_id] = float(part.get("Length"))
+                frlmachinings = self._parse_machinings(part, "Processings/FrenchRidgeLap", True)
+                dcmachinings = self._parse_machinings(part, "Processings/DoubleCut", False)
 
-        # Iterate through each part in the XML
-        for part in root.findall("Project/Parts/Part", self.namespaces):
-            part_id = part.get("OrderNumber")
-            frlmachinings = self._parse_machinings(part, "Processings/FrenchRidgeLap", True)
-            dcmachinings = self._parse_machinings(part, "Processings/DoubleCut", False)
-
-            if frlmachinings:
-                self.french_ridge_lap_machinings[part_id] = frlmachinings
-            if dcmachinings:
-                self.double_cut_machinings[part_id] = dcmachinings
+                if frlmachinings:
+                    self.french_ridge_lap_machinings[part_id] = frlmachinings
+                if dcmachinings:
+                    self.double_cut_machinings[part_id] = dcmachinings
+        except Exception as e:
+            print("Error parsing BTLX file: ", e)
 
         self._create_remachining_dict()
 
@@ -93,21 +97,22 @@ class BTLXParser:
 
     def _create_remachining_dict(self):
         for part_id, machinings in self.french_ridge_lap_machinings.items():
-            self.remachining_dict[part_id] = []
+            self.remachining_dict[part_id] = {"length": self.part_lengths[part_id], "machinings": []}
             for machining in machinings:
-                self.remachining_dict[part_id].append(machining)
+                self.remachining_dict[part_id]["machinings"].append(machining)
         
         for part_id, machinings in self.double_cut_machinings.items():
             if part_id not in self.remachining_dict:
-                self.remachining_dict[part_id] = []
+                self.remachining_dict[part_id] = {"length": self.part_lengths[part_id], "machinings": []}
             for machining in machinings:
-                self.remachining_dict[part_id].append(machining)
+                self.remachining_dict[part_id]["machinings"].append(machining)
 
     def get_remachining_dict(self):
         return self.remachining_dict
 
-# Usage example
-file_path = os.path.join(os.path.dirname(__file__), "240519_FRL.btlx")
-parser = BTLXParser(file_path)
-remachining_dict = parser.get_remachining_dict()
-print(remachining_dict)
+if __name__ == "__main__":
+    # Usage example
+    file_path = os.path.join(os.path.dirname(__file__), "240514_Module81.btlx")
+    parser = BTLXParser(file_path)
+    remachining_dict = parser.get_remachining_dict()
+    print(remachining_dict)
