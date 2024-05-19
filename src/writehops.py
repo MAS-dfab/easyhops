@@ -299,7 +299,7 @@ class DoubleCutProcess:
         if pts == None:
             return
         start_point, end_point = pts
-        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(self.frame1)
+        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(deepcopy(self.frame1))
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=cutting_frame,
@@ -307,7 +307,7 @@ class DoubleCutProcess:
             beta=math.degrees(beta),
             orientation=1,
         )
-        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(self.frame2)
+        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(deepcopy(self.frame2))
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=cutting_frame,
