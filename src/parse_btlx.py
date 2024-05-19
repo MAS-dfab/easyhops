@@ -97,7 +97,7 @@ class BTLXParser:
 
     def _create_remachining_dict(self):
         for part_id, machinings in self.french_ridge_lap_machinings.items():
-            self.remachining_dict[part_id] = []
+            self.remachining_dict[part_id] = {"length": self.part_lengths[part_id], "machinings": []}
             FRL_face_front = {}
             face_front = ""
             for machining in machinings:
@@ -109,7 +109,7 @@ class BTLXParser:
                 else:
                     face_front += str(0)
             FRL_face_front["face_front"] = face_front
-            self.remachining_dict[part_id].append(FRL_face_front)            
+            self.remachining_dict[part_id]["machinings"].append(FRL_face_front)            
                     
         for part_id, machinings in self.double_cut_machinings.items():
             if part_id not in self.remachining_dict:

@@ -268,7 +268,7 @@ class DoubleCutProcess:
                     )
                     + "\n"
                 )
-        hop += "EP(1,_ANF,0)\n"
+        hop += "EP(2,2.0,0)\n"
 
         return hop
 
@@ -283,8 +283,11 @@ class DoubleCutProcess:
                 )
             )
             if point is not None:
-                if (Vector.from_start_end(point, self.frame1.point).length) > 0.01:
-                    return self.frame1.point, Point(*point)
+                if Vector.from_start_end(point, self.frame1.point).length > 0.01:
+                    if (-0.1 <= point.y <= 60.1 and
+                        -0.1 <= point.z <= 60.1):
+                        return self.frame1.point, Point(point.x, point.y, point.z)
+                
 
     def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
         if self.ref_face == 1:
@@ -303,8 +306,8 @@ class DoubleCutProcess:
         if pts == None:
             return
         start_point, end_point = pts
-        orientation1 = 2 if self.orientation == "start" else 1
-        # start_point, end_point, self.frame1, self.frame2, self.ref_plane  = self.rotate_things(start_point, end_point, self.frame1, self.frame2, self.ref_plane)
+        orientation1 = 1 if self.orientation == "start" else 2
+        start_point, end_point, self.frame1, self.frame2, self.ref_plane  = self.rotate_things(start_point, end_point, self.frame1, self.frame2, self.ref_plane)
         self.cf1, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame1)
         self.params += self.format_to_hops(
             points=[start_point, end_point],
@@ -313,7 +316,7 @@ class DoubleCutProcess:
             beta=math.degrees(beta),
             orientation=orientation1,
         )
-        orientation2 = 1 if self.orientation == "start" else 2
+        orientation2 = 2 if self.orientation == "start" else 1
         self.cf2, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame2)
         self.params += self.format_to_hops(
             points=[start_point, end_point],
