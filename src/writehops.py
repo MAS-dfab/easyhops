@@ -347,7 +347,7 @@ if __name__ == "__main__":
     file_path = os.path.join(os.path.dirname(__file__), "240514_Module81.btlx")
     parser = BTLXParser(file_path)
     remachining_dict = parser.get_remachining_dict()
-    index = 26
+    index = 27
     print(remachining_dict[str(index)])
     hopper = HOPSWriter(remachining_dict[str(index)]["length"])
     processes = []
