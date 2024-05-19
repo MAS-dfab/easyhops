@@ -1,5 +1,5 @@
 from compas.geometry import Frame, Transformation, Rotation, Translation, Point, Vector
-from compas.geometry import intersection_plane_plane_plane, Plane
+from compas.geometry import intersection_plane_plane_plane, Plane, angle_vectors_signed
 from copy import deepcopy
 import math
 
@@ -185,48 +185,67 @@ class DoubleCutProcess:
         self.ref_plane = None
         self.generate_process_params()
 
+    @staticmethod
+    def frame_to_yaw_pitch(frame):
+        target_normal = -frame.zaxis
+        alpha = math.atan2(target_normal.y, target_normal.x) - math.pi / 2
+        frame.rotate(alpha, frame.zaxis, frame.point)
+        # Angle to rotate around the x-axis to align the normal vector with the z-axis
+        beta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
+        frame.rotate(beta, frame.xaxis, frame.point)
+        return frame, alpha, beta
+
     def generate_planes(self):
         frame = Frame.worldXY()
-        ref_angles = [-math.pi / 2, math.pi, math.pi / 2, 0]
+        ref_angles = [math.pi / 2, math.pi, -math.pi / 2, 0]
         ref_translations = [
             [0, 0, 0],
-            [0, self.width,0],
+            [0, self.width, 0],
             [0, self.width, self.width],
             [0, 0, self.width],
         ]
+        print(
+            frame,
+            self.ref_face,
+            ref_angles[int(self.ref_face) - 1],
+            ref_translations[int(self.ref_face) - 1],
+        )
         ref_angle = ref_angles[int(self.ref_face) - 1]
         ref_translation = ref_translations[int(self.ref_face) - 1]
         ref_frame = frame.rotated(ref_angle, frame.xaxis, frame.point)
-        ref_frame = ref_frame.transformed(
-            Translation.from_vector(Vector(*ref_translation))
-        )
+        print(ref_frame)
+        ref_frame.transform(Translation.from_vector(Vector(*ref_translation)))
+        print(ref_frame)
+        self.ref_plane = ref_frame
         T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
 
         frame1 = deepcopy(ref_frame)
-        frame1.rotate(math.radians(self.angle1), frame1.zaxis, frame1.point)
+        frame1.point = ref_frame.point
+        frame1.rotate(math.radians(-self.angle1), frame1.zaxis, frame1.point)
         frame1.rotate(math.radians(self.inclination1), frame1.xaxis, frame1.point)
 
         frame2 = deepcopy(ref_frame)
-        frame2.rotate(math.radians(self.angle2), frame2.zaxis, frame2.point)
+        frame2.point = ref_frame.point
+        frame2.rotate(math.radians(-self.angle2), frame2.zaxis, frame2.point)
         frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
 
-        print(frame1, frame2)
         self.frame1 = frame1
         self.frame2 = frame2
 
         self.ref_point = ref_frame.point
-        self.ref_faces = [frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles]
-        for T,face in zip(ref_translations, self.ref_faces):
+        self.ref_faces = [
+            frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
+        ]
+        for T, face in zip(ref_translations, self.ref_faces):
             face.transform(Translation.from_vector(Vector(*T)))
-        
+
         self.beta1 = math.degrees(self.frame1.euler_angles()[2])
-        self.theta1 = math.degrees(self.frame1.euler_angles()[0] + ref_angle)
+        self.theta1 = math.degrees(self.frame1.euler_angles()[0])
 
         self.beta2 = math.degrees(self.frame2.euler_angles()[2])
-        self.theta2 = math.degrees(self.frame2.euler_angles()[0] + ref_angle)
+        self.theta2 = math.degrees(self.frame2.euler_angles()[0])
 
-    
     def format_to_hops(self, points, frame, theta, beta, orientation=0):
         hop = ""
         ref = deepcopy(frame)
@@ -235,7 +254,9 @@ class DoubleCutProcess:
         )
         hop += ebenef + "\n"
 
-        Tr = Transformation.from_change_of_basis(Frame([0,0,0], [1,0,0], [0,1,0]), ref)
+        Tr = Transformation.from_change_of_basis(
+            Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), ref
+        )
         pts = [point.transformed(Tr) for point in points]
         for pt in pts:
             # if it is point 0 then it is the start point
@@ -258,33 +279,42 @@ class DoubleCutProcess:
 
         return hop
 
-    def generate_endpoint(self): 
-        self.generate_planes()  
+    def generate_endpoint(self):
+        self.generate_planes()
         for ref in self.ref_faces:
-            point = intersection_plane_plane_plane(Plane.from_frame(self.frame1), Plane.from_frame(self.frame2), Plane.from_frame(ref))
-            if point != None and point != self.frame1.point:
-                return self.frame1.point, Point(*point)
+            point = Point(
+                *intersection_plane_plane_plane(
+                    Plane.from_frame(self.frame1),
+                    Plane.from_frame(self.frame2),
+                    Plane.from_frame(ref),
+                )
+            )
+            # print(point, self.frame1.point)
+            if point is not None:
+                if (Vector.from_start_end(point, self.frame1.point).length) > 0.01:
+                    return self.frame1.point, Point(*point)
 
     def generate_process_params(self):
         pts = self.generate_endpoint()
         if pts == None:
             return
         start_point, end_point = pts
+        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(self.frame1)
         self.params += self.format_to_hops(
             points=[start_point, end_point],
-            frame = self.frame1,
-            theta = self.theta1,
-            beta = self.beta1,
-            orientation=2
+            frame=cutting_frame,
+            theta=math.degrees(alpha),
+            beta=math.degrees(beta),
+            orientation=1,
         )
+        cutting_frame, alpha, beta = self.frame_to_yaw_pitch(self.frame2)
         self.params += self.format_to_hops(
-            [start_point, end_point],
-            self.frame2,
-            self.theta2,
-            self.beta2,
-            orientation=1
+            points=[start_point, end_point],
+            frame=cutting_frame,
+            theta=math.degrees(alpha),
+            beta=math.degrees(beta),
+            orientation=1,
         )
-
 
 
 if __name__ == "__main__":
@@ -298,7 +328,7 @@ if __name__ == "__main__":
                 "angle2": 158.81,
                 "inclination1": 78.44,
                 "inclination2": 76.67,
-                "ref_face": 2,
+                "ref_face": 1,
                 "startx": 590.10,
                 "starty": 46.53,
             },
