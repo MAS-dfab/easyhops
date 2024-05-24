@@ -290,14 +290,18 @@ class DoubleCutProcess:
                 
 
     def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
+        flip_order = False
         if self.ref_face == 1:
             alpha = -math.pi / 2
         elif self.ref_face == 3:
             alpha = math.pi / 2
         elif self.ref_face == 2:
-            alpha = math.pi
+            alpha = 0
+            flip_order = True
         else:
             alpha = 0
+        if flip_order:
+            start_point, end_point = end_point, start_point
         T = Rotation.from_axis_and_angle([1,0,0], alpha, point=[0,30,30])
         return start_point.transformed(T), end_point.transformed(T), frame1.transformed(T), frame2.transformed(T), ref_plane.transformed(T)
 
