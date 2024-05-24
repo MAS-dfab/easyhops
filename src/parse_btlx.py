@@ -7,7 +7,9 @@ class BTLXParser:
         self.namespaces = {"d2m": "https://www.design2machine.com"}
         self.french_ridge_lap_machinings = {}
         self.double_cut_machinings = {}
+        self.texts = {}
         self.remachining_dict = {}
+        self.text_dict = {}
         self.part_lengths = {}
         self._parse_file()
     
@@ -19,6 +21,7 @@ class BTLXParser:
             "french_ridge_lap_machinings": self.french_ridge_lap_machinings,
             "double_cut_machinings": self.double_cut_machinings,
             "remachining_dict": self.remachining_dict,
+            text_dict: self.text_dict,
             "part_lengths": self.part_lengths
         }
         return data_dict
@@ -44,15 +47,18 @@ class BTLXParser:
                 self.part_lengths[part_id] = float(part.get("Length"))
                 frlmachinings = self._parse_machinings(part, "d2m:Processings/d2m:FrenchRidgeLap", True)
                 dcmachinings = self._parse_machinings(part, "d2m:Processings/d2m:DoubleCut", False)
+                parsed_texts = self._parse_text(part, "d2m:Processings/d2m:Text")
 
                 if frlmachinings:
                     self.french_ridge_lap_machinings[part_id] = frlmachinings
                 if dcmachinings:
                     self.double_cut_machinings[part_id] = dcmachinings
+                self.texts[part_id] = parsed_texts
         except Exception as e:
             print("Error parsing BTLX file: ", e)
 
         self._create_remachining_dict()
+        self._create_text_dict()
 
     def _parse_machinings(self, part, tag, is_french_ridge_lap):
         machinings = []
@@ -143,10 +149,34 @@ class BTLXParser:
 
     def get_remachining_dict(self):
         return self.remachining_dict
+    
+    def _parse_text(self, part, tag):
+        texts = []
+        for text in part.findall(tag, self.namespaces):
+            text_data = {
+                "ReferencePlaneID": text.get("ReferencePlaneID"),
+                "StartX": text.find("d2m:StartX", self.namespaces).text,
+                "StartY": text.find("d2m:StartY", self.namespaces).text,
+                "Text": text.find("d2m:Text", self.namespaces).text,
+            }
+            texts.append(text_data)
+        return texts
+
+    def _create_text_dict(self):
+        for part_id, texts in self.texts.items():
+            self.text_dict[part_id] = {"text": []}
+            for text in texts:
+                self.text_dict[part_id]["text"].append(text)
+
+    def get_text_dict(self):
+        return self.text_dict
+
 
 if __name__ == "__main__":
     # Usage example
     file_path = os.path.join(os.path.dirname(__file__), "240514_Module81.btlx")
     parser = BTLXParser(file_path)
     remachining_dict = parser.get_remachining_dict()
+    text_dict = parser.get_text_dict()
     print(remachining_dict)
+    print(text_dict)
