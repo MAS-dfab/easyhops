@@ -127,9 +127,11 @@ class BTLXParser:
         for part_id, machinings in self.french_ridge_lap_machinings.items():
             self.remachining_dict[part_id] = {"length": self.part_lengths[part_id], "machinings": []}
             FRL_face_front = {}
+            ref_face_id = {}
             face_front = ""
             for machining in machinings:
                 FRL_face_front["Name"] = machining['Name']
+                FRL_face_front["ReferencePlaneID"] = machining['ReferencePlaneID']
                 if machining['RefPosition'] == 'oppedge':
                     face_front += str(1)
                 elif machining['RefPosition'] == 'refedge':

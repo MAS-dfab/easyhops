@@ -16,6 +16,7 @@ class HOPSWriter:
         self.length = length
         self.leadout = leadout
         self.width = width
+        self.ref_orientation = None
         self.hop = ""
 
     @property
@@ -51,7 +52,7 @@ class HOPSWriter:
             f.write(self.hop)
 class FrenchRidgeProcess:
 
-    def __init__(self, hopper, face_front):
+    def __init__(self, hopper, face_front, ref_face=1):
         """
         Initialize the FrenchRidgeProcess class with the given parameters
         Args:
@@ -61,9 +62,13 @@ class FrenchRidgeProcess:
         self.face_front = face_front
         self.length = hopper.length
         self.width = hopper.width
+        self.hopper = hopper
         self.params = ""
         self.frame1, self.frame2 = [], []
         self.generate_process_params()
+
+    def calculate_rotation(self):
+        if sel
 
     def generate_params_start(self, face_front=True):
         """
@@ -193,6 +198,7 @@ class DoubleCutProcess:
         self.starty = float(btlx_params["StartY"])
         self.length = hopper.length
         self.width = hopper.width
+        self.hopper = hopper
         self.frame1, self.frame2 = Frame.worldXY(), Frame.worldXY()
         self.beta1, self.beta2 = 0.0, 0.0
         self.theta1, self.theta2 = 0.0, 0.0
@@ -306,13 +312,17 @@ class DoubleCutProcess:
         flip_order = False
         if self.ref_face == 1:
             alpha = -math.pi / 2
+            self.hopper.ref_orientation = alpha
         elif self.ref_face == 3:
             alpha = math.pi / 2
+            self.hopper.ref_orientation = alpha
         elif self.ref_face == 2:
             alpha = 0
             flip_order = True
+            self.hopper.ref_orientation = -math.pi
         else:
             alpha = 0
+            self.hopper.ref_orientation = 0
         if flip_order:
             start_point, end_point = end_point, start_point
         T = Rotation.from_axis_and_angle([1,0,0], alpha, point=[0,30,30])
@@ -358,12 +368,40 @@ def wrap_to_pi(angle):
     return angle
 
 class TextProcess:
-    def __init__(self, hopper):
-        self.params = ""
-        self.length = hopper.length
-        self.width = hopper.width
-        self.generate_process_params()
-        
+    def __init__(self, hopper, btlx_params):
+        self.hopper = hopper
+        self.ref_face = int(btlx_params["ReferencePlaneID"])
+        self.text = btlx_params["Text"]
+        self.startx = float(btlx_params["StartX"])
+        self.starty = float(btlx_params["StartY"])
+        self.frame = self.create_text_frame()
+        self.rotate_stuff()
+
+    
+    def create_text_frame(self):
+        frame = Frame.worldXY()
+        ref_angles = [-math.pi / 2, math.pi, math.pi / 2, 0]
+        ref_translations = [
+            [0, 0, 0],
+            [0, 60, 0],
+            [0, 60, 60],
+            [0, 0, 60],
+        ]
+        ref_angle = ref_angles[int(self.ref_face) - 1]
+        ref_translation = ref_translations[int(self.ref_face) - 1]
+        ref_frame = frame.rotated(ref_angle, frame.xaxis, frame.point)
+        ref_frame.transform(Translation.from_vector(Vector(*ref_translation)))
+        T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
+        ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
+        return ref_frame
+    
+    def rotate_stuff(self):
+        angle = self.hopper.ref_orientation
+        rotation_axis = [1,0,0]
+        rotation_pt = [0,30,30]
+        self.frame.rotate(angle, rotation_axis, rotation_pt)
+    
+
 if __name__ == "__main__":
     import os
     from parse_btlx import BTLXParser
@@ -378,7 +416,7 @@ if __name__ == "__main__":
         processes = []
         for machining in remachining_dict[str(index)]["machinings"]:
             if machining["Name"] == "French ridge lap":
-                process = FrenchRidgeProcess(hopper, machining["facefront"])
+                process = FrenchRidgeProcess(hopper, machining["facefront"], machining[])
             elif machining["Name"] == "T-Butt Joint":
                 process = DoubleCutProcess(hopper, machining)
                 processes.append(process)
