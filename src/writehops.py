@@ -63,12 +63,24 @@ class FrenchRidgeProcess:
         self.length = hopper.length
         self.width = hopper.width
         self.hopper = hopper
+        self.ref_face = ref_face
         self.params = ""
         self.frame1, self.frame2 = [], []
+        self.ref_orientation = self.calculate_rotation()
         self.generate_process_params()
 
     def calculate_rotation(self):
-        if sel
+        alpha = 0
+        if self.ref_face == 1:
+            alpha = -math.pi / 2
+        if self.ref_face == 3:
+            alpha = math.pi / 2
+        if self.ref_face == 2:
+            alpha = -math.pi
+        if self.ref_face == 4:
+            alpha = 0
+
+        return alpha
 
     def generate_params_start(self, face_front=True):
         """
@@ -205,6 +217,7 @@ class DoubleCutProcess:
         self.params = ""
         self.cf1, self.cf2 = None, None
         self.ref_plane = None
+        self.ref_orientation = None
         self.pts = self.generate_process_params()
 
     @staticmethod
@@ -312,17 +325,17 @@ class DoubleCutProcess:
         flip_order = False
         if self.ref_face == 1:
             alpha = -math.pi / 2
-            self.hopper.ref_orientation = alpha
+            self.ref_orientation = alpha
         elif self.ref_face == 3:
             alpha = math.pi / 2
-            self.hopper.ref_orientation = alpha
+            self.ref_orientation = alpha
         elif self.ref_face == 2:
             alpha = 0
             flip_order = True
-            self.hopper.ref_orientation = -math.pi
+            self.ref_orientation = 0
         else:
             alpha = 0
-            self.hopper.ref_orientation = 0
+            self.ref_orientation = 0
         if flip_order:
             start_point, end_point = end_point, start_point
         T = Rotation.from_axis_and_angle([1,0,0], alpha, point=[0,30,30])
@@ -368,19 +381,20 @@ def wrap_to_pi(angle):
     return angle
 
 class TextProcess:
-    def __init__(self, hopper, btlx_params):
+    def __init__(self, hopper, btlx_params, ref_orientation=0.0):
         self.hopper = hopper
         self.ref_face = int(btlx_params["ReferencePlaneID"])
         self.text = btlx_params["Text"]
         self.startx = float(btlx_params["StartX"])
         self.starty = float(btlx_params["StartY"])
+        self.ref_frame = None
         self.frame = self.create_text_frame()
-        self.rotate_stuff()
+        self.rotate_stuff(ref_orientation)
 
     
     def create_text_frame(self):
         frame = Frame.worldXY()
-        ref_angles = [-math.pi / 2, math.pi, math.pi / 2, 0]
+        ref_angles = [math.pi / 2, math.pi, -math.pi / 2, 0]
         ref_translations = [
             [0, 0, 0],
             [0, 60, 0],
@@ -393,10 +407,11 @@ class TextProcess:
         ref_frame.transform(Translation.from_vector(Vector(*ref_translation)))
         T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
+        self.ref_frame = ref_frame.copy()
         return ref_frame
     
-    def rotate_stuff(self):
-        angle = self.hopper.ref_orientation
+    def rotate_stuff(self, ref_orientation=0.0):
+        angle = ref_orientation
         rotation_axis = [1,0,0]
         rotation_pt = [0,30,30]
         self.frame.rotate(angle, rotation_axis, rotation_pt)
@@ -416,7 +431,7 @@ if __name__ == "__main__":
         processes = []
         for machining in remachining_dict[str(index)]["machinings"]:
             if machining["Name"] == "French ridge lap":
-                process = FrenchRidgeProcess(hopper, machining["facefront"], machining[])
+                process = FrenchRidgeProcess(hopper, machining["facefront"], machining["ReferencePlaneID"])
             elif machining["Name"] == "T-Butt Joint":
                 process = DoubleCutProcess(hopper, machining)
                 processes.append(process)
