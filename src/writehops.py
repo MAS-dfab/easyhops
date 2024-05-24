@@ -348,14 +348,17 @@ if __name__ == "__main__":
     parser = BTLXParser(file_path)
     remachining_dict = parser.get_remachining_dict()
     index = 27
-    print(remachining_dict[str(index)])
-    hopper = HOPSWriter(remachining_dict[str(index)]["length"])
-    processes = []
-    for machining in remachining_dict[str(index)]["machinings"]:
-        if machining["Name"] == "FrenchRidgeLapJoint":
-            pass
-        elif machining["Name"] == "T-Butt Joint":
-            process = DoubleCutProcess(hopper, machining)
-            processes.append(process)
-    hopper.generate_hops(processes)
-    hopper.write_to_file(os.path.join(os.path.dirname(__file__),"test.hop"))
+    print(remachining_dict)
+    for index, value in remachining_dict.items():
+        hopper = HOPSWriter(remachining_dict[str(index)]["length"])
+        processes = []
+        for machining in remachining_dict[str(index)]["machinings"]:
+            if machining["Name"] == "FrenchRidgeLapJoint":
+                process = FrenchRidgeProcess(hopper, machining["facefront"])
+            elif machining["Name"] == "T-Butt Joint":
+                process = DoubleCutProcess(hopper, machining)
+                processes.append(process)
+        hopper.generate_hops(processes)
+        #create folder with btlx name
+        filename = os.path.join(os.path.dirname(__file__),"hops", "%s.hop" % str(index))
+        hopper.write_to_file(file_path=filename)
