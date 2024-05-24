@@ -152,6 +152,7 @@ class BTLXParser:
         texts = []
         for text in part.findall(tag, self.namespaces):
             text_data = {
+                "Name": text.get("Name"),
                 "ReferencePlaneID": text.get("ReferencePlaneID"),
                 "StartX": text.find("d2m:StartX", self.namespaces).text,
                 "StartY": text.find("d2m:StartY", self.namespaces).text,
