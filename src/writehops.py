@@ -62,6 +62,7 @@ class FrenchRidgeProcess:
         self.length = hopper.length
         self.width = hopper.width
         self.params = ""
+        self.frame1, self.frame2 = [], []
         self.generate_process_params()
 
     def generate_params_start(self, face_front=True):
@@ -148,23 +149,35 @@ class FrenchRidgeProcess:
     def generate_process_params(self):
         face_front_start = True if self.face_front[0] == "1" else False
         if self.face_front[0] != "0":
+            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
             self.params += self.format_to_hops(
-                *self.generate_params_start(face_front_start),
+                [point1, point2], plane, theta, beta,
                 is_vert="start",
                 orientation=2
             )
+            self.frame1.append(plane)
+            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
             self.params += self.format_to_hops(
-                *self.generate_params_start(face_front_start), orientation=1
+                [point1,point2], plane, theta, beta,
+                orientation=1
             )
+            self.frame1.append(plane)
 
         face_front_end = True if self.face_front[1] == "1" else False
         if self.face_front[1] != "0":
+            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
             self.params += self.format_to_hops(
-                *self.generate_params_end(face_front_end), is_vert="end", orientation=1
+                [point1, point2], plane, theta, beta,
+                is_vert="end", 
+                orientation=1
             )
+            self.frame2.append(plane)
+            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
             self.params += self.format_to_hops(
-                *self.generate_params_end(face_front_end), orientation=2
+                    [point1, point2], plane, theta, beta,
+                    orientation=2
             )
+            self.frame2.append(plane)
 
 
 class DoubleCutProcess:
@@ -344,6 +357,13 @@ def wrap_to_pi(angle):
 
     return angle
 
+class TextProcess:
+    def __init__(self, hopper):
+        self.params = ""
+        self.length = hopper.length
+        self.width = hopper.width
+        self.generate_process_params()
+        
 if __name__ == "__main__":
     import os
     from parse_btlx import BTLXParser
@@ -357,12 +377,12 @@ if __name__ == "__main__":
         hopper = HOPSWriter(remachining_dict[str(index)]["length"])
         processes = []
         for machining in remachining_dict[str(index)]["machinings"]:
-            if machining["Name"] == "FrenchRidgeLapJoint":
+            if machining["Name"] == "French ridge lap":
                 process = FrenchRidgeProcess(hopper, machining["facefront"])
             elif machining["Name"] == "T-Butt Joint":
                 process = DoubleCutProcess(hopper, machining)
                 processes.append(process)
         hopper.generate_hops(processes)
         #create folder with btlx name
-        filename = os.path.join(os.path.dirname(__file__),"hops", "%s.hop" % str(index))
+        filename = os.path.join(os.path.dirname(__file__),"hops", "%s_.hop" % str(index))
         hopper.write_to_file(file_path=filename)
