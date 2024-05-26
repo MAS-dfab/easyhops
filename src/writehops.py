@@ -1,5 +1,11 @@
 from compas.geometry import Frame, Transformation, Rotation, Translation, Point, Vector
-from compas.geometry import intersection_plane_plane_plane, Plane, angle_vectors_signed
+from compas.geometry import (
+    intersection_plane_plane_plane,
+    Plane,
+    angle_vectors_signed,
+    dot_vectors,
+    angle_vectors,
+)
 from copy import deepcopy
 import math
 
@@ -50,6 +56,8 @@ class HOPSWriter:
     def write_to_file(self, file_path):
         with open(file_path, "w") as f:
             f.write(self.hop)
+
+
 class FrenchRidgeProcess:
 
     def __init__(self, hopper, face_front, ref_face=1):
@@ -166,33 +174,35 @@ class FrenchRidgeProcess:
     def generate_process_params(self):
         face_front_start = True if self.face_front[0] == "1" else False
         if self.face_front[0] != "0":
-            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
+            [point1, point2], plane, theta, beta = self.generate_params_start(
+                face_front_start
+            )
             self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta,
-                is_vert="start",
-                orientation=2
+                [point1, point2], plane, theta, beta, is_vert="start", orientation=2
             )
             self.frame1.append(plane)
-            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
+            [point1, point2], plane, theta, beta = self.generate_params_start(
+                face_front_start
+            )
             self.params += self.format_to_hops(
-                [point1,point2], plane, theta, beta,
-                orientation=1
+                [point1, point2], plane, theta, beta, orientation=1
             )
             self.frame1.append(plane)
 
         face_front_end = True if self.face_front[1] == "1" else False
         if self.face_front[1] != "0":
-            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
+            [point1, point2], plane, theta, beta = self.generate_params_end(
+                face_front_end
+            )
             self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta,
-                is_vert="end", 
-                orientation=1
+                [point1, point2], plane, theta, beta, is_vert="end", orientation=1
             )
             self.frame2.append(plane)
-            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
+            [point1, point2], plane, theta, beta = self.generate_params_end(
+                face_front_end
+            )
             self.params += self.format_to_hops(
-                    [point1, point2], plane, theta, beta,
-                    orientation=2
+                [point1, point2], plane, theta, beta, orientation=2
             )
             self.frame2.append(plane)
 
@@ -222,16 +232,27 @@ class DoubleCutProcess:
 
     @staticmethod
     def frame_to_yaw_pitch(frame_to, frame_from):
-        frame = Frame(frame_to.point, [1,0,0], [0,1,0])
-        target_normal = -frame_from.zaxis
+        frame = Frame(frame_to.point, [1, 0, 0], [0, 1, 0])
+        condition = angle_vectors(-frame_from.zaxis, Vector.Zaxis(), deg=True) > 99.0
+        print(angle_vectors(-frame_from.zaxis, Vector.Zaxis(), deg=True))
+        if not condition:
+            target_normal = -frame_from.zaxis
+            factor = 1
+            flipped = False
+        else:
+            print("flipped")
+            target_normal = frame_from.zaxis
+            factor = -1
+            flipped = True
+
+        # Angle to rotate around the z-axis to align the normal vector with the x-y plane
         beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
-        beta = wrap_to_pi(beta)
         frame.rotate(beta, frame.zaxis, frame.point)
         # Angle to rotate around the x-axis to align the normal vector with the z-axis
-        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
-        theta = wrap_to_pi(theta)
+        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis) 
+        theta = wrap_to_pi(theta) if factor == 1 else wrap_to_pi(-theta)
         frame.rotate(theta, frame.xaxis, frame.point)
-        return frame, theta, beta
+        return frame, theta, beta, flipped
 
     def generate_planes(self):
         frame = Frame.worldXY()
@@ -268,10 +289,11 @@ class DoubleCutProcess:
             frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
         ]
         for i in range(len(self.ref_faces)):
-            self.ref_faces[i].transform(Translation.from_vector(Vector(*ref_translations[i])))
+            self.ref_faces[i].transform(
+                Translation.from_vector(Vector(*ref_translations[i]))
+            )
 
-
-    def format_to_hops(self, points, frame, theta, beta, orientation=0):
+    def format_to_hops(self, points, frame, theta, beta, orientation=0, ref_height=0.0):
         hop = ""
         ref = deepcopy(frame)
         ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(
@@ -288,7 +310,7 @@ class DoubleCutProcess:
             if pts.index(pt) == 0:
                 hop += (
                     "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
-                        pt.x, pt.y, pt.z, orientation
+                        pt.x, pt.y, pt.z + ref_height, orientation
                     )
                     + "\n"
                 )
@@ -296,7 +318,7 @@ class DoubleCutProcess:
                 reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
                 hop += (
                     "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
-                        pt.x, pt.y, pt.z, reference
+                        pt.x, pt.y, pt.z + ref_height, reference
                     )
                     + "\n"
                 )
@@ -316,10 +338,8 @@ class DoubleCutProcess:
             )
             if point is not None:
                 if Vector.from_start_end(point, self.frame1.point).length > 0.01:
-                    if (-0.1 <= point.y <= 60.1 and
-                        -0.1 <= point.z <= 60.1):
+                    if -0.1 <= point.y <= 60.1 and -0.1 <= point.z <= 60.1:
                         return self.frame1.point, Point(point.x, point.y, point.z)
-                
 
     def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
         flip_order = False
@@ -331,15 +351,28 @@ class DoubleCutProcess:
             self.ref_orientation = alpha
         elif self.ref_face == 2:
             alpha = 0
-            flip_order = True
             self.ref_orientation = 0
         else:
             alpha = 0
             self.ref_orientation = 0
-        if flip_order:
-            start_point, end_point = end_point, start_point
-        T = Rotation.from_axis_and_angle([1,0,0], alpha, point=[0,30,30])
-        return start_point.transformed(T), end_point.transformed(T), frame1.transformed(T), frame2.transformed(T), ref_plane.transformed(T)
+        T = Rotation.from_axis_and_angle([1, 0, 0], alpha, point=[0, 30, 30])
+        sp1, ep1, f1, f2, rp = (
+            start_point.transformed(T),
+            end_point.transformed(T),
+            frame1.transformed(T),
+            frame2.transformed(T),
+            ref_plane.transformed(T),
+        )
+        if dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0  and dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0:
+            secondary_rotation = Rotation.from_axis_and_angle([1, 0, 0], math.pi, point=[0, 30, 30])
+            sp1.transform(secondary_rotation)
+            ep1.transform(secondary_rotation)
+            f1.transform(secondary_rotation)
+            f2.transform(secondary_rotation)
+            rp.transform(secondary_rotation)
+            self.ref_orientation += math.pi
+        
+        return sp1, ep1, f1, f2, rp
 
     def generate_process_params(self):
         pts = self.generate_endpoint()
@@ -347,8 +380,22 @@ class DoubleCutProcess:
             return
         start_point, end_point = pts
         orientation1 = 1 if self.orientation == "start" else 2
-        start_point, end_point, self.frame1, self.frame2, self.ref_plane  = self.rotate_things(start_point, end_point, self.frame1, self.frame2, self.ref_plane)
-        self.cf1, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame1)
+        orientation2 = 2 if self.orientation == "start" else 1
+        start_point, end_point, self.frame1, self.frame2, self.ref_plane = (
+            self.rotate_things(
+                start_point, end_point, self.frame1, self.frame2, self.ref_plane
+            )
+        )       
+        self.cf1, theta, beta, flipped1 = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame1
+        )
+        if start_point.z < end_point.z:
+            start_point, end_point = end_point, start_point
+            orientation1 = 1
+            orientation2 = 2
+        if flipped1:
+            ref_height = -3.2
+            orientation1 = 2
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf1),
@@ -356,16 +403,22 @@ class DoubleCutProcess:
             beta=math.degrees(beta),
             orientation=orientation1,
         )
-        orientation2 = 2 if self.orientation == "start" else 1
-        self.cf2, theta, beta = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame2)
+        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame2
+        )
+        if flipped2:
+            ref_height = -3.2
+            orientation2 = 1
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf2),
             theta=math.degrees(theta),
             beta=math.degrees(beta),
             orientation=orientation2,
+            ref_height=ref_height,
         )
         return [start_point, end_point]
+
 
 def wrap_to_pi(angle):
     # Normalize the angle to be within [-pi, pi]
@@ -380,6 +433,7 @@ def wrap_to_pi(angle):
 
     return angle
 
+
 class TextProcess:
     def __init__(self, hopper, btlx_params, ref_orientation=0.0):
         self.hopper = hopper
@@ -391,7 +445,6 @@ class TextProcess:
         self.frame = self.create_text_frame()
         self.rotate_stuff(ref_orientation)
 
-    
     def create_text_frame(self):
         frame = Frame.worldXY()
         ref_angles = [math.pi / 2, math.pi, -math.pi / 2, 0]
@@ -409,13 +462,13 @@ class TextProcess:
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
         self.ref_frame = ref_frame.copy()
         return ref_frame
-    
+
     def rotate_stuff(self, ref_orientation=0.0):
         angle = ref_orientation
-        rotation_axis = [1,0,0]
-        rotation_pt = [0,30,30]
+        rotation_axis = [1, 0, 0]
+        rotation_pt = [0, 30, 30]
         self.frame.rotate(angle, rotation_axis, rotation_pt)
-    
+
 
 if __name__ == "__main__":
     import os
@@ -431,11 +484,15 @@ if __name__ == "__main__":
         processes = []
         for machining in remachining_dict[str(index)]["machinings"]:
             if machining["Name"] == "French ridge lap":
-                process = FrenchRidgeProcess(hopper, machining["facefront"], machining["ReferencePlaneID"])
+                process = FrenchRidgeProcess(
+                    hopper, machining["facefront"], machining["ReferencePlaneID"]
+                )
             elif machining["Name"] == "T-Butt Joint":
                 process = DoubleCutProcess(hopper, machining)
                 processes.append(process)
         hopper.generate_hops(processes)
-        #create folder with btlx name
-        filename = os.path.join(os.path.dirname(__file__),"hops", "%s_.hop" % str(index))
+        # create folder with btlx name
+        filename = os.path.join(
+            os.path.dirname(__file__), "hops", "%s_.hop" % str(index)
+        )
         hopper.write_to_file(file_path=filename)
