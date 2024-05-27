@@ -101,7 +101,7 @@ class FrenchRidgeProcess:
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = 45.0, 13.263
-        beta = beta if face_front else beta + 180
+        beta = beta if face_front else 180-beta
 
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
@@ -122,7 +122,7 @@ class FrenchRidgeProcess:
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = -45.0, 13.263
-        beta = beta if face_front else beta + 180
+        beta = beta if face_front else 180-beta
 
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
@@ -172,6 +172,7 @@ class FrenchRidgeProcess:
         return hop
 
     def generate_process_params(self):
+        # self.face_front = "11"
         face_front_start = True if self.face_front[0] == "1" else False
         if self.face_front[0] != "0":
             [point1, point2], plane, theta, beta = self.generate_params_start(

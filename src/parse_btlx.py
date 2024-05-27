@@ -132,10 +132,17 @@ class BTLXParser:
             for machining in machinings:
                 FRL_face_front["Name"] = machining['Name']
                 FRL_face_front["ReferencePlaneID"] = machining['ReferencePlaneID']
-                if machining['RefPosition'] == 'oppedge':
-                    face_front += str(1)
-                elif machining['RefPosition'] == 'refedge':
-                    face_front += str(2)
+                if machining['ReferencePlaneID'] == "2":
+                    if machining['RefPosition'] == "refedge":
+                        face_front += str(1)
+                    else:
+                        face_front += str(2)
+                elif machining['ReferencePlaneID'] == "4":
+                    if machining['RefPosition'] == "refedge":
+                        face_front += str(1)
+                    else:
+                        face_front += str(2)
+
                 else:
                     face_front += str(0)
             FRL_face_front["face_front"] = face_front
