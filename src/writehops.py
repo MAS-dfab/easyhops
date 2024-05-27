@@ -389,6 +389,7 @@ class DoubleCutProcess:
         self.cf1, theta, beta, flipped1 = self.frame_to_yaw_pitch(
             deepcopy(self.ref_plane), self.frame1
         )
+        ref_height = 0.0
         if start_point.z < end_point.z:
             start_point, end_point = end_point, start_point
             orientation1 = 1
