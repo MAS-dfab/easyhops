@@ -74,6 +74,7 @@ class FrenchRidgeProcess:
         self.ref_face = ref_face
         self.params = ""
         self.frame1, self.frame2 = [], []
+        self.pts = []
         self.ref_orientation = self.calculate_rotation()
         self.generate_process_params()
 
@@ -106,8 +107,9 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = Point(self.width, 0, self.width / 3)
-        point2 = Point(self.width, self.width, self.width / 2)
+        point1 = Point(self.width, 0, self.width / 3) if face_front else Point(self.width, 0, self.width / 2)
+        point2 = Point(self.width, self.width, self.width / 2) if face_front else Point(self.width, self.width, self.width / 3)
+        self.pts.append([point1.copy(), point2.copy()])
 
         return [point1, point2], plane, theta, beta
 
@@ -127,9 +129,9 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = Point(self.length - self.width, 0, self.width / 3)
-        point2 = Point(self.length - self.width, self.width, self.width / 2)
-
+        point1 = Point(self.length - self.width, 0, self.width / 3) if face_front else Point(self.length - self.width, 0, self.width / 2)
+        point2 = Point(self.length - self.width, self.width, self.width / 2) if face_front else Point(self.length - self.width, self.width, self.width / 3)
+        self.pts.append([point1.copy(), point2.copy()])
         return [point1, point2], plane, theta, beta
 
     def format_to_hops(self, points, plane, theta, beta, is_vert=None, orientation=0):
