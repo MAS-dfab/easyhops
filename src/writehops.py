@@ -458,7 +458,6 @@ class DoubleCutProcess:
             factor = 1
             flipped = False
         else:
-            print("flipped")
             target_normal = frame_from.zaxis
             factor = -1
             flipped = True
@@ -613,12 +612,14 @@ class DoubleCutProcess:
         )
         ref_height = 0.0
         if start_point.z < end_point.z:
+            print("point order flipped")
             start_point, end_point = end_point, start_point
             orientation1 = 1
             orientation2 = 2
         if flipped1:
+            print("frame1 flipped")
             ref_height = -3.2
-            orientation1 = 2
+            orientation1 = 2 if orientation1 == 1 else 1
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf1),
@@ -630,8 +631,9 @@ class DoubleCutProcess:
             deepcopy(self.ref_plane), self.frame2
         )
         if flipped2:
+            print("frame2 flipped")
             ref_height = -3.2
-            orientation2 = 1
+            orientation2 = 1 if orientation2 == 2 else 2
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf2),
