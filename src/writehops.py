@@ -102,13 +102,21 @@ class FrenchRidgeProcess:
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = 45.0, 13.263
-        beta = beta if face_front else 180-beta
+        beta = beta if face_front else 180 - beta
 
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = Point(self.width, 0, self.width / 3) if face_front else Point(self.width, 0, self.width / 2)
-        point2 = Point(self.width, self.width, self.width / 2) if face_front else Point(self.width, self.width, self.width / 3)
+        point1 = (
+            Point(self.width, 0, self.width / 3)
+            if face_front
+            else Point(self.width, 0, self.width / 2)
+        )
+        point2 = (
+            Point(self.width, self.width, self.width / 2)
+            if face_front
+            else Point(self.width, self.width, self.width / 3)
+        )
         self.pts.append([point1.copy(), point2.copy()])
 
         return [point1, point2], plane, theta, beta
@@ -124,13 +132,21 @@ class FrenchRidgeProcess:
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = -45.0, 13.263
-        beta = beta if face_front else 180-beta
+        beta = beta if face_front else 180 - beta
 
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = Point(self.length - self.width, 0, self.width / 3) if face_front else Point(self.length - self.width, 0, self.width / 2)
-        point2 = Point(self.length - self.width, self.width, self.width / 2) if face_front else Point(self.length - self.width, self.width, self.width / 3)
+        point1 = (
+            Point(self.length - self.width, 0, self.width / 3)
+            if face_front
+            else Point(self.length - self.width, 0, self.width / 2)
+        )
+        point2 = (
+            Point(self.length - self.width, self.width, self.width / 2)
+            if face_front
+            else Point(self.length - self.width, self.width, self.width / 3)
+        )
         self.pts.append([point1.copy(), point2.copy()])
         return [point1, point2], plane, theta, beta
 
@@ -210,6 +226,207 @@ class FrenchRidgeProcess:
             self.frame2.append(plane)
 
 
+class DoubleCutStepJointProcess:
+    def __init__(self, hopper, btlx_params):
+        self.orientation = str(btlx_params["Orientation"])
+        self.angle1 = float(btlx_params["Angle1"])
+        self.angle2 = float(btlx_params["Angle2"])
+        self.inclination1 = float(btlx_params["Inclination1"])
+        self.inclination2 = float(btlx_params["Inclination2"])
+        self.ref_face = int(btlx_params["ReferencePlaneID"])
+        self.ref_faces = []
+        self.startx = float(btlx_params["StartX"])
+        self.starty = float(btlx_params["StartY"])
+        self.length = hopper.length
+        self.width = hopper.width
+        self.hopper = hopper
+        self.frame1, self.frame2 = Frame.worldXY(), Frame.worldXY()
+        self.params = ""
+        self.cf1, self.cf2 = None, None
+        self.ref_plane = None
+        self.ref_orientation = None
+        self.pts = self.generate_process_params()
+
+    @staticmethod
+    def frame_to_yaw_pitch(frame_to, frame_from):
+        frame = Frame(frame_to.point, [1, 0, 0], [0, 1, 0])
+
+        target_normal = frame_from.zaxis
+        factor = 1
+        flipped = False
+
+        # Angle to rotate around the z-axis to align the normal vector with the x-y plane
+        beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
+        frame.rotate(beta, frame.zaxis, frame.point)
+        # Angle to rotate around the x-axis to align the normal vector with the z-axis
+        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
+        theta = wrap_to_pi(theta) if factor == 1 else wrap_to_pi(-theta)
+        frame.rotate(theta, frame.xaxis, frame.point)
+        return frame, theta, beta
+
+    def generate_planes(self):
+        frame = Frame.worldXY()
+        ref_angles = [math.pi / 2, math.pi, -math.pi / 2, 0]
+        ref_translations = [
+            [0, 0, 0],
+            [0, self.width, 0],
+            [0, self.width, self.width],
+            [0, 0, self.width],
+        ]
+        ref_angle = ref_angles[int(self.ref_face) - 1]
+        ref_translation = ref_translations[int(self.ref_face) - 1]
+        ref_frame = frame.rotated(ref_angle, frame.xaxis, frame.point)
+        ref_frame.transform(Translation.from_vector(Vector(*ref_translation)))
+        self.ref_plane = ref_frame
+        T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
+        ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
+
+        frame1 = deepcopy(ref_frame)
+        frame1.point = ref_frame.point
+        frame1.rotate(math.radians(-self.angle1), frame1.zaxis, frame1.point)
+        frame1.rotate(math.radians(self.inclination1), frame1.xaxis, frame1.point)
+
+        frame2 = deepcopy(ref_frame)
+        frame2.point = ref_frame.point
+        frame2.rotate(math.radians(-self.angle2), frame2.zaxis, frame2.point)
+        frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
+
+        if (
+            dot_vectors(frame1.zaxis, Vector.Xaxis()) > 0
+            and self.orientation == "start"
+        ):
+            frame1.rotate(math.pi, frame1.yaxis, frame1.point)
+            frame2.rotate(math.pi, frame2.yaxis, frame2.point)
+        elif (
+            dot_vectors(frame1.zaxis, Vector.Xaxis()) < 0 and self.orientation == "end"
+        ):
+            frame1.rotate(math.pi, frame1.yaxis, frame1.point)
+            frame2.rotate(math.pi, frame2.yaxis, frame2.point)
+        self.frame1 = frame1
+        self.frame2 = frame2
+
+        self.ref_point = ref_frame.point
+        self.ref_faces = [
+            frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
+        ]
+        for i in range(len(self.ref_faces)):
+            self.ref_faces[i].transform(
+                Translation.from_vector(Vector(*ref_translations[i]))
+            )
+
+    def format_to_hops(self, points, frame, theta, beta, orientation=0, ref_height=0.0):
+        hop = ""
+        ref = deepcopy(frame)
+        ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(
+            ref.point.x, ref.point.y, ref.point.z, theta, beta
+        )
+        hop += ebenef + "\n"
+
+        Tr = Transformation.from_change_of_basis(
+            Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), ref
+        )
+        pts = [point.transformed(Tr) for point in points]
+        for pt in pts:
+            # if it is point 0 then it is the start point
+            if pts.index(pt) == 0:
+                hop += (
+                    "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
+                        pt.x, pt.y, pt.z + ref_height, orientation
+                    )
+                    + "\n"
+                )
+            else:
+                reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
+                hop += (
+                    "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
+                        pt.x, pt.y, pt.z + ref_height, reference
+                    )
+                    + "\n"
+                )
+        hop += "EP(3,2.0,0)\n"
+
+        return hop
+
+    def generate_endpoint(self):
+        self.generate_planes()
+        # Opp face is basically 1 for 3, 3 for 1, 2 for 4, 4 for 2
+        opp_face_index = (
+            int(self.ref_face) + 2 if int(self.ref_face) < 3 else int(self.ref_face) - 2
+        )
+        ref = self.ref_faces[opp_face_index - 1]
+        point = Point(
+            *intersection_plane_plane_plane(
+                Plane.from_frame(self.frame1),
+                Plane.from_frame(self.frame2),
+                Plane.from_frame(ref),
+            )
+        )
+        return self.frame1.point, Point(point.x, point.y, point.z)
+
+    def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
+        if self.ref_face == 1:
+            alpha = -math.pi / 2
+            self.ref_orientation = alpha
+        elif self.ref_face == 3:
+            alpha = -math.pi / 2
+            self.ref_orientation = alpha
+        elif self.ref_face == 2:
+            alpha = 0
+            self.ref_orientation = 0
+        else:
+            alpha = 0
+            self.ref_orientation = 0
+        T = Rotation.from_axis_and_angle([1, 0, 0], alpha, point=[0, 30, 30])
+        return (
+            start_point.transformed(T),
+            end_point.transformed(T),
+            frame1.transformed(T),
+            frame2.transformed(T),
+            ref_plane.transformed(T),
+        )
+
+    def generate_process_params(self):
+        pts = self.generate_endpoint()
+        if pts == None:
+            return
+        start_point, end_point = pts
+        orientation1 = 2 if self.orientation == "start" else 1
+        orientation2 = 1 if self.orientation == "start" else 2
+        start_point, end_point, self.frame1, self.frame2, self.ref_plane = (
+            self.rotate_things(
+                start_point, end_point, self.frame1, self.frame2, self.ref_plane
+            )
+          )
+        self.cf1, theta, beta = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame1
+        )
+
+        if start_point.z < end_point.z:
+            print("flipped, ref face was at bottom")
+            start_point, end_point = end_point, start_point
+            orientation1 = 1
+            orientation2 = 2
+
+        self.params += self.format_to_hops(
+            points=[start_point, end_point],
+            frame=deepcopy(self.cf1),
+            theta=math.degrees(theta),
+            beta=math.degrees(beta),
+            orientation=orientation1,
+        )
+        self.cf2, theta, beta = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame2
+        )
+        self.params += self.format_to_hops(
+            points=[start_point, end_point],
+            frame=deepcopy(self.cf2),
+            theta=math.degrees(theta),
+            beta=math.degrees(beta),
+            orientation=orientation2,
+        )
+        return [start_point, end_point]
+
+
 class DoubleCutProcess:
     def __init__(self, hopper, btlx_params):
         self.orientation = str(btlx_params["Orientation"])
@@ -225,8 +442,6 @@ class DoubleCutProcess:
         self.width = hopper.width
         self.hopper = hopper
         self.frame1, self.frame2 = Frame.worldXY(), Frame.worldXY()
-        self.beta1, self.beta2 = 0.0, 0.0
-        self.theta1, self.theta2 = 0.0, 0.0
         self.params = ""
         self.cf1, self.cf2 = None, None
         self.ref_plane = None
@@ -252,7 +467,7 @@ class DoubleCutProcess:
         beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
         frame.rotate(beta, frame.zaxis, frame.point)
         # Angle to rotate around the x-axis to align the normal vector with the z-axis
-        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis) 
+        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
         theta = wrap_to_pi(theta) if factor == 1 else wrap_to_pi(-theta)
         frame.rotate(theta, frame.xaxis, frame.point)
         return frame, theta, beta, flipped
@@ -345,7 +560,6 @@ class DoubleCutProcess:
                         return self.frame1.point, Point(point.x, point.y, point.z)
 
     def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
-        flip_order = False
         if self.ref_face == 1:
             alpha = -math.pi / 2
             self.ref_orientation = alpha
@@ -366,15 +580,20 @@ class DoubleCutProcess:
             frame2.transformed(T),
             ref_plane.transformed(T),
         )
-        if dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0  and dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0:
-            secondary_rotation = Rotation.from_axis_and_angle([1, 0, 0], math.pi, point=[0, 30, 30])
+        if (
+            dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0
+            and dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0
+        ):
+            secondary_rotation = Rotation.from_axis_and_angle(
+                [1, 0, 0], math.pi, point=[0, 30, 30]
+            )
             sp1.transform(secondary_rotation)
             ep1.transform(secondary_rotation)
             f1.transform(secondary_rotation)
             f2.transform(secondary_rotation)
             rp.transform(secondary_rotation)
             self.ref_orientation += math.pi
-        
+
         return sp1, ep1, f1, f2, rp
 
     def generate_process_params(self):
@@ -388,7 +607,7 @@ class DoubleCutProcess:
             self.rotate_things(
                 start_point, end_point, self.frame1, self.frame2, self.ref_plane
             )
-        )       
+        )
         self.cf1, theta, beta, flipped1 = self.frame_to_yaw_pitch(
             deepcopy(self.ref_plane), self.frame1
         )
