@@ -172,7 +172,7 @@ class FrenchRidgeProcess:
             # if it is point 0 then it is the start point
             if points.index(pt) == 0:
                 hop += (
-                    "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
+                    "SP({:.3f},{:.3f},{:.3f},{},3,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
                         pt.x, pt.y, pt.z, orientation
                     )
                     + "\n"
