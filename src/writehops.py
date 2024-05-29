@@ -71,7 +71,7 @@ class FrenchRidgeProcess:
         self.length = hopper.length
         self.width = hopper.width
         self.hopper = hopper
-        self.ref_face = ref_face
+        self.ref_face = int(ref_face)
         self.params = ""
         self.frame1, self.frame2 = [], []
         self.pts = []
