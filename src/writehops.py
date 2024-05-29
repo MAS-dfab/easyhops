@@ -8,6 +8,7 @@ from compas.geometry import (
 )
 from copy import deepcopy
 import math
+import os
 
 
 class HOPSWriter:
@@ -45,7 +46,7 @@ class HOPSWriter:
 
     def generate_hops(self, processes):
         # Generate for the start of the part (left)
-        self.hop = self.header
+        # self.hop = self.header
         self.hop += self.toolcall
         if isinstance(processes, list):
             for process in processes:
@@ -57,6 +58,43 @@ class HOPSWriter:
         with open(file_path, "w") as f:
             f.write(self.hop)
 
+class HOPSMerger:
+    def __init__(self):
+        self.merged_content = ""
+
+    def merge_fabrication_files(self, folder_path, index):
+        file_paths = self.get_fabrication_file_paths(folder_path, index)
+        for i, path in enumerate(file_paths):
+            with open(path, 'r') as file:
+                self.merged_content += file.read() + '\n'
+            if i == 0 and len(file_paths) > 2:
+                add_pause="CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:=9,PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)"
+                self.merged_content += add_pause + '\n'
+        self.save_merged_file(folder_path, index)
+
+    def get_fabrication_file_paths(self, folder_path, index):
+        file_paths = []
+        file_suffixes = ["_bis.hop", ".hop", "_.hop"]
+        for suffix in file_suffixes:
+            file_name = "{}{}".format(index, suffix)
+            file_path = os.path.join(folder_path, file_name)
+            if os.path.exists(file_path):
+                file_paths.append(file_path)
+        return file_paths
+
+    def save_merged_file(self, folder_path, index):
+        merged_file_path = os.path.join(folder_path, "{}.hop".format(index))
+        with open(merged_file_path, 'w') as file:
+            file.write(self.merged_content)
+        self.delete_merged_files(folder_path, index)
+
+    def delete_merged_files(self, folder_path, index):
+        file_suffixes = ["_bis.hop", "_.hop"]
+        for suffix in file_suffixes:
+            file_name = "{}{}".format(index, suffix)
+            file_path = os.path.join(folder_path, file_name)
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
 class FrenchRidgeProcess:
 
@@ -694,6 +732,41 @@ class TextProcess:
         rotation_pt = [0, 30, 30]
         self.frame.rotate(angle, rotation_axis, rotation_pt)
 
+
+# class HopFileMerger:
+#     def __init__(self):
+#         self.merged_content = ""
+
+#     def merge_fabrication_files(self, folder_path, index):
+#         file_paths = self.get_fabrication_file_paths(folder_path, index)
+#         for path in file_paths:
+#             with open(path, 'r') as file:
+#                 self.merged_content += file.read() + '\n'
+#         self.save_merged_file(folder_path, index)
+
+#     def get_fabrication_file_paths(self, folder_path, index):
+#         file_paths = []
+#         file_suffixes = ["_bis.hop", ".hop", "_.hop"]
+#         for suffix in file_suffixes:
+#             file_name = f"{index}{suffix}"
+#             file_path = os.path.join(folder_path, file_name)
+#             if os.path.exists(file_path):
+#                 file_paths.append(file_path)
+#         return file_paths
+
+#     def save_merged_file(self, folder_path, index):
+#         merged_file_path = os.path.join(folder_path, f"{index}.hop")
+#         with open(merged_file_path, 'w') as file:
+#             file.write(self.merged_content)
+#         self.delete_merged_files(folder_path, index)
+
+#     def delete_merged_files(self, folder_path, index):
+#         file_suffixes = ["_bis.hop", "_.hop"]
+#         for suffix in file_suffixes:
+#             file_name = f"{index}{suffix}"
+#             file_path = os.path.join(folder_path, file_name)
+#             if os.path.exists(file_path):
+#                 os.remove(file_path)
 
 if __name__ == "__main__":
     import os
