@@ -61,29 +61,50 @@ class HOPSWriter:
 class HOPSMerger:
     def __init__(self):
         self.merged_content = ""
+        self.types = []
 
     def merge_fabrication_files(self, folder_path, index):
         file_paths = self.get_fabrication_file_paths(folder_path, index)
+        print(file_paths)
         for i, path in enumerate(file_paths):
-            with open(path, 'r') as file:
-                self.merged_content += file.read() + '\n'
-            if i == 0 and len(file_paths) > 2:
-                add_pause="CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:=60,PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)"
+            if self.types[i] == "_bis.hop":
+                print("_bis.hop")
+                with open(path, 'r') as file:
+                    # find DX in file
+                    for line in file:
+                        # Check if the line contains "DX"
+                        if "DX" in line and ":=" in line:
+                            # Extract the value after ":=" and before ";"
+                            length = float(line.split(":=")[1].split(";")[0].strip())
+                            # Break the loop after finding the first DX
+                            break
+                    self.merged_content += file.read() + '\n'
+                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)".format(length + 600)
                 self.merged_content += add_pause + '\n'
+            elif self.types[i] == ".hop":
+                print(".hop")
+                with open(path, 'r') as file:
+                    self.merged_content += file.read() + '\n'
+            elif self.types[i] == "_.hop":
+                print("_.hop")
+                with open(path, 'r') as file:
+                    self.merged_content += file.read() + '\n'
         self.save_merged_file(folder_path, index)
 
     def get_fabrication_file_paths(self, folder_path, index):
         file_paths = []
         file_suffixes = ["_bis.hop", ".hop", "_.hop"]
         for suffix in file_suffixes:
-            file_name = "{}{}".format(index, suffix)
+            file_name = "{}{}".format(str(index).zfill(2), suffix)
             file_path = os.path.join(folder_path, file_name)
+            print(file_path, suffix)
             if os.path.exists(file_path):
                 file_paths.append(file_path)
+                self.types.append(suffix)
         return file_paths
 
     def save_merged_file(self, folder_path, index):
-        merged_file_path = os.path.join(folder_path, "{}.hop".format(index))
+        merged_file_path = os.path.join(folder_path, "{}.hop".format(str(index).zfill(2)))
         with open(merged_file_path, 'w') as file:
             file.write(self.merged_content)
         self.delete_merged_files(folder_path, index)
@@ -91,7 +112,7 @@ class HOPSMerger:
     def delete_merged_files(self, folder_path, index):
         file_suffixes = ["_bis.hop", "_.hop"]
         for suffix in file_suffixes:
-            file_name = "{}{}".format(index, suffix)
+            file_name = "{}{}".format(str(index).zfill(2), suffix)
             file_path = os.path.join(folder_path, file_name)
             if os.path.exists(file_path):
                 os.remove(file_path)
