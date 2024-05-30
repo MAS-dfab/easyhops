@@ -107,6 +107,7 @@ class HOPSMerger:
         merged_file_path = os.path.join(folder_path, "{}.hop".format(str(index).zfill(2)))
         with open(merged_file_path, 'w') as file:
             file.write(self.merged_content)
+        self.add_centering_holes(merged_file_path)
         self.delete_merged_files(folder_path, index)
 
     def delete_merged_files(self, folder_path, index):
@@ -116,6 +117,50 @@ class HOPSMerger:
             file_path = os.path.join(folder_path, file_name)
             if os.path.exists(file_path):
                 os.remove(file_path)
+    
+    def add_centering_holes(self, merged_file_path):
+        def modify_horzb_line(horzb_line):
+            # Modify the HORZB values as needed
+            # Example: Modify the X coordinate (second value)
+            parts = horzb_line.split(',')
+            # Parts 0, 1, and 2 are X, Y, and Z coordinates
+            # 3 is diameter, 4 is depth, 5 is flag, 6 is tilt angle, 7 is rotation angle
+            if len(parts) > 1:
+                parts[3] ="1" # change diameter to 1mm
+                parts[4] = "-5" # change depth to 5mm
+            return ','.join(parts)
+
+        lines = self.merged_content
+
+        # List to store EBENE and HORZB lines
+        ebene_horzb_pairs = []
+
+        for i, line in enumerate(lines):
+            if "HORZB" in line:
+                # Store the EBENE line before HORZB line
+                print("Found drilling, line: ", line)
+                if i > 0 and "EBENE" in lines[i-2]:
+                    print("Found EBENE, line: ", lines[i-2])
+                    ebene_line = lines[i-2]
+                    horzb_line = modify_horzb_line(line)
+                    ebene_horzb_pairs.append((ebene_line, horzb_line))
+
+        # Find the position of the first WZB line
+        insert_position = next((i for i, line in enumerate(lines) if "WZB" in line), len(lines))
+
+        with open(merged_file_path, 'w') as file:
+            # Write the lines up to the first WZB line to the output file
+            file.writelines(lines[:insert_position])
+
+            # Insert the new EBENE, WZB, and modified HORZB lines
+            for ebene_line, horzb_line in ebene_horzb_pairs:
+                file.write("\n; Added EBENE and HORZB parts\n")
+                file.write(ebene_line)
+                file.write("WZB(301,_VE,_V,_VA,_SD,_ANF,'1')\n")
+                file.write(horzb_line)
+
+            # Write the rest of the original lines to the output file
+            file.writelines(lines[insert_position:])
 
 class FrenchRidgeProcess:
 
@@ -232,7 +277,7 @@ class FrenchRidgeProcess:
             if points.index(pt) == 0:
                 hop += (
                     "SP({:.3f},{:.3f},{:.3f},{},3,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
-                        pt.x, pt.y, pt.z, orientation
+                        pt.x, pt.y, pt.z + 1.6, orientation
                     )
                     + "\n"
                 )
@@ -240,7 +285,7 @@ class FrenchRidgeProcess:
                 reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
                 hop += (
                     "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
-                        pt.x, pt.y, pt.z, reference
+                        pt.x, pt.y, pt.z + 1.6, reference
                     )
                     + "\n"
                 )
