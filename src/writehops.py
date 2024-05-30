@@ -68,7 +68,7 @@ class HOPSMerger:
             with open(path, 'r') as file:
                 self.merged_content += file.read() + '\n'
             if i == 0 and len(file_paths) > 2:
-                add_pause="CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:=9,PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)"
+                add_pause="CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:=60,PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)"
                 self.merged_content += add_pause + '\n'
         self.save_merged_file(folder_path, index)
 
