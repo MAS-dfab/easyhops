@@ -58,6 +58,7 @@ class HOPSWriter:
         with open(file_path, "w") as f:
             f.write(self.hop)
 
+
 class HOPSMerger:
     def __init__(self):
         self.merged_content = ""
@@ -69,7 +70,7 @@ class HOPSMerger:
         for i, path in enumerate(file_paths):
             if self.types[i] == "_bis.hop":
                 print("_bis.hop")
-                with open(path, 'r') as file:
+                with open(path, "r") as file:
                     # find DX in file
                     for line in file:
                         # Check if the line contains "DX"
@@ -78,17 +79,19 @@ class HOPSMerger:
                             length = float(line.split(":=")[1].split(";")[0].strip())
                             # Break the loop after finding the first DX
                             break
-                    self.merged_content += file.read() + '\n'
-                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)".format(length + 600)
-                self.merged_content += add_pause + '\n'
+                    self.merged_content += file.read() + "\n"
+                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)".format(
+                    length + 600
+                )
+                self.merged_content += add_pause + "\n"
             elif self.types[i] == ".hop":
                 print(".hop")
-                with open(path, 'r') as file:
-                    self.merged_content += file.read() + '\n'
+                with open(path, "r") as file:
+                    self.merged_content += file.read() + "\n"
             elif self.types[i] == "_.hop":
                 print("_.hop")
-                with open(path, 'r') as file:
-                    self.merged_content += file.read() + '\n'
+                with open(path, "r") as file:
+                    self.merged_content += file.read() + "\n"
         self.save_merged_file(folder_path, index)
 
     def get_fabrication_file_paths(self, folder_path, index):
@@ -104,8 +107,10 @@ class HOPSMerger:
         return file_paths
 
     def save_merged_file(self, folder_path, index):
-        merged_file_path = os.path.join(folder_path, "{}.hop".format(str(index).zfill(2)))
-        with open(merged_file_path, 'w') as file:
+        merged_file_path = os.path.join(
+            folder_path, "{}.hop".format(str(index).zfill(2))
+        )
+        with open(merged_file_path, "w") as file:
             file.write(self.merged_content)
         self.add_centering_holes(merged_file_path)
         self.delete_merged_files(folder_path, index)
@@ -117,18 +122,18 @@ class HOPSMerger:
             file_path = os.path.join(folder_path, file_name)
             if os.path.exists(file_path):
                 os.remove(file_path)
-    
+
     def add_centering_holes(self, merged_file_path):
         def modify_horzb_line(horzb_line):
             # Modify the HORZB values as needed
             # Example: Modify the X coordinate (second value)
-            parts = horzb_line.split(',')
+            parts = horzb_line.split(",")
             # Parts 0, 1, and 2 are X, Y, and Z coordinates
             # 3 is diameter, 4 is depth, 5 is flag, 6 is tilt angle, 7 is rotation angle
             if len(parts) > 1:
-                parts[3] ="1" # change diameter to 1mm
-                parts[4] = "-5" # change depth to 5mm
-            return ','.join(parts)
+                parts[3] = "1"  # change diameter to 1mm
+                parts[4] = "-5"  # change depth to 5mm
+            return ",".join(parts)
 
         lines = self.merged_content
 
@@ -139,16 +144,18 @@ class HOPSMerger:
             if "HORZB" in line:
                 # Store the EBENE line before HORZB line
                 print("Found drilling, line: ", line)
-                if i > 0 and "EBENE" in lines[i-2]:
-                    print("Found EBENE, line: ", lines[i-2])
-                    ebene_line = lines[i-2]
+                if i > 0 and "EBENE" in lines[i - 2]:
+                    print("Found EBENE, line: ", lines[i - 2])
+                    ebene_line = lines[i - 2]
                     horzb_line = modify_horzb_line(line)
                     ebene_horzb_pairs.append((ebene_line, horzb_line))
 
         # Find the position of the first WZB line
-        insert_position = next((i for i, line in enumerate(lines) if "WZB" in line), len(lines))
+        insert_position = next(
+            (i for i, line in enumerate(lines) if "WZB" in line), len(lines)
+        )
 
-        with open(merged_file_path, 'w') as file:
+        with open(merged_file_path, "w") as file:
             # Write the lines up to the first WZB line to the output file
             file.writelines(lines[:insert_position])
 
@@ -161,6 +168,7 @@ class HOPSMerger:
 
             # Write the rest of the original lines to the output file
             file.writelines(lines[insert_position:])
+
 
 class FrenchRidgeProcess:
 
@@ -351,23 +359,6 @@ class DoubleCutStepJointProcess:
         self.ref_orientation = None
         self.pts = self.generate_process_params()
 
-    @staticmethod
-    def frame_to_yaw_pitch(frame_to, frame_from):
-        frame = Frame(frame_to.point, [1, 0, 0], [0, 1, 0])
-
-        target_normal = frame_from.zaxis
-        factor = 1
-        flipped = False
-
-        # Angle to rotate around the z-axis to align the normal vector with the x-y plane
-        beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
-        frame.rotate(beta, frame.zaxis, frame.point)
-        # Angle to rotate around the x-axis to align the normal vector with the z-axis
-        theta = angle_vectors_signed([0, 0, 1], target_normal, frame.xaxis)
-        theta = wrap_to_pi(theta) if factor == 1 else wrap_to_pi(-theta)
-        frame.rotate(theta, frame.xaxis, frame.point)
-        return frame, theta, beta
-
     def generate_planes(self):
         frame = Frame.worldXY()
         ref_angles = [math.pi / 2, math.pi, -math.pi / 2, 0]
@@ -418,36 +409,12 @@ class DoubleCutStepJointProcess:
                 Translation.from_vector(Vector(*ref_translations[i]))
             )
 
-    def format_to_hops(self, points, frame, theta, beta, orientation=0, ref_height=0.0):
+    def format_to_hops(self, points, orientation=0):
         hop = ""
-        ref = deepcopy(frame)
-        ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(
-            ref.point.x, ref.point.y, ref.point.z, theta, beta
+        start_point, end_point = points 
+        hop += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},0,0,0,{},90,0,0,0,2,0,0)\n".format(
+            start_point.x, start_point.y, start_point.z, end_point.x, end_point.y, end_point.z, orientation
         )
-        hop += ebenef + "\n"
-
-        Tr = Transformation.from_change_of_basis(
-            Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), ref
-        )
-        pts = [point.transformed(Tr) for point in points]
-        for pt in pts:
-            # if it is point 0 then it is the start point
-            if pts.index(pt) == 0:
-                hop += (
-                    "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
-                        pt.x, pt.y, pt.z + ref_height, orientation
-                    )
-                    + "\n"
-                )
-            else:
-                reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
-                hop += (
-                    "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
-                        pt.x, pt.y, pt.z + ref_height, reference
-                    )
-                    + "\n"
-                )
-        hop += "EP(3,2.0,0)\n"
 
         return hop
 
@@ -457,17 +424,46 @@ class DoubleCutStepJointProcess:
         opp_face_index = (
             int(self.ref_face) + 2 if int(self.ref_face) < 3 else int(self.ref_face) - 2
         )
-        ref = self.ref_faces[opp_face_index - 1]
-        point = Point(
+        other_faces = [
+            i-1 for i in range(1, 5) if i not in [self.ref_face, opp_face_index]
+        ]
+
+        print(self.ref_face)
+        sp_0 = Point(
             *intersection_plane_plane_plane(
                 Plane.from_frame(self.frame1),
-                Plane.from_frame(self.frame2),
-                Plane.from_frame(ref),
+                Plane.from_frame(self.ref_plane),
+                Plane.from_frame(self.ref_faces[other_faces[0]]),
             )
         )
-        return self.frame1.point, Point(point.x, point.y, point.z)
 
-    def rotate_things(self, start_point, end_point, frame1, frame2, ref_plane):
+        ep_0 = Point(
+            *intersection_plane_plane_plane(
+                Plane.from_frame(self.frame1),
+                Plane.from_frame(self.ref_plane),
+                Plane.from_frame(self.ref_faces[other_faces[1]]),
+            )
+        )
+
+        sp_1 = Point(
+            *intersection_plane_plane_plane(
+                Plane.from_frame(self.frame2),
+                Plane.from_frame(self.ref_plane),
+                Plane.from_frame(self.ref_faces[other_faces[0]]),
+            )
+        )
+
+        ep_1 = Point(
+            *intersection_plane_plane_plane(
+                Plane.from_frame(self.frame2),
+                Plane.from_frame(self.ref_plane),
+                Plane.from_frame(self.ref_faces[other_faces[1]]),
+            )
+        )    
+        
+        return sp_0, ep_0, sp_1, ep_1
+
+    def rotate_things(self, sp0, ep0, sp1, ep1):
         if self.ref_face == 1:
             alpha = -math.pi / 2
             self.ref_orientation = alpha
@@ -482,53 +478,36 @@ class DoubleCutStepJointProcess:
             self.ref_orientation = 0
         T = Rotation.from_axis_and_angle([1, 0, 0], alpha, point=[0, 30, 30])
         return (
-            start_point.transformed(T),
-            end_point.transformed(T),
-            frame1.transformed(T),
-            frame2.transformed(T),
-            ref_plane.transformed(T),
+            sp0.transformed(T),
+            ep0.transformed(T),
+            sp1.transformed(T),
+            ep1.transformed(T),
         )
 
     def generate_process_params(self):
         pts = self.generate_endpoint()
         if pts == None:
             return
-        start_point, end_point = pts
-        orientation1 = 2 if self.orientation == "start" else 1
-        orientation2 = 1 if self.orientation == "start" else 2
-        start_point, end_point, self.frame1, self.frame2, self.ref_plane = (
-            self.rotate_things(
-                start_point, end_point, self.frame1, self.frame2, self.ref_plane
-            )
-          )
-        self.cf1, theta, beta = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame1
-        )
-
-        if start_point.z < end_point.z:
+        sp0, ep0, sp1, ep1 = self.rotate_things(*pts)
+        if sp0.z < ep0.z:
             print("flipped, ref face was at bottom")
-            start_point, end_point = end_point, start_point
-            orientation1 = 1
-            orientation2 = 2
+            sp0, ep0 = ep0, sp0
+        
+        if sp1.z < ep1.z:
+            print("flipped, ref face was at bottom")
+            sp1, ep1 = ep1, sp1
 
+        self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
+        self.params += "EBENE0()\n"
         self.params += self.format_to_hops(
-            points=[start_point, end_point],
-            frame=deepcopy(self.cf1),
-            theta=math.degrees(theta),
-            beta=math.degrees(beta),
-            orientation=orientation1,
-        )
-        self.cf2, theta, beta = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame2
+            points=[sp0, ep0],
+            orientation = 1 if self.orientation == "start" else 2 
         )
         self.params += self.format_to_hops(
-            points=[start_point, end_point],
-            frame=deepcopy(self.cf2),
-            theta=math.degrees(theta),
-            beta=math.degrees(beta),
-            orientation=orientation2,
+            points=[sp1, ep1],
+            orientation = 2 if self.orientation == "start" else 1
         )
-        return [start_point, end_point]
+        return [sp0, ep0, sp1, ep1]
 
 
 class DoubleCutProcess:
@@ -749,20 +728,6 @@ class DoubleCutProcess:
         return [start_point, end_point]
 
 
-def wrap_to_pi(angle):
-    # Normalize the angle to be within [-pi, pi]
-    angle = (angle + math.pi) % (2 * math.pi) - math.pi
-    # If the angle is negative, convert it to the positive equivalent
-    if angle < 0:
-        angle += 2 * math.pi
-
-    # If the angle is greater than pi, wrap it to the range [0, pi]
-    if angle > math.pi:
-        angle = 2 * math.pi - angle
-
-    return angle
-
-
 class TextProcess:
     def __init__(self, hopper, btlx_params, ref_orientation=0.0):
         self.hopper = hopper
@@ -799,40 +764,19 @@ class TextProcess:
         self.frame.rotate(angle, rotation_axis, rotation_pt)
 
 
-# class HopFileMerger:
-#     def __init__(self):
-#         self.merged_content = ""
+def wrap_to_pi(angle):
+    # Normalize the angle to be within [-pi, pi]
+    angle = (angle + math.pi) % (2 * math.pi) - math.pi
+    # If the angle is negative, convert it to the positive equivalent
+    if angle < 0:
+        angle += 2 * math.pi
 
-#     def merge_fabrication_files(self, folder_path, index):
-#         file_paths = self.get_fabrication_file_paths(folder_path, index)
-#         for path in file_paths:
-#             with open(path, 'r') as file:
-#                 self.merged_content += file.read() + '\n'
-#         self.save_merged_file(folder_path, index)
+    # If the angle is greater than pi, wrap it to the range [0, pi]
+    if angle > math.pi:
+        angle = 2 * math.pi - angle
 
-#     def get_fabrication_file_paths(self, folder_path, index):
-#         file_paths = []
-#         file_suffixes = ["_bis.hop", ".hop", "_.hop"]
-#         for suffix in file_suffixes:
-#             file_name = f"{index}{suffix}"
-#             file_path = os.path.join(folder_path, file_name)
-#             if os.path.exists(file_path):
-#                 file_paths.append(file_path)
-#         return file_paths
+    return angle
 
-#     def save_merged_file(self, folder_path, index):
-#         merged_file_path = os.path.join(folder_path, f"{index}.hop")
-#         with open(merged_file_path, 'w') as file:
-#             file.write(self.merged_content)
-#         self.delete_merged_files(folder_path, index)
-
-#     def delete_merged_files(self, folder_path, index):
-#         file_suffixes = ["_bis.hop", "_.hop"]
-#         for suffix in file_suffixes:
-#             file_name = f"{index}{suffix}"
-#             file_path = os.path.join(folder_path, file_name)
-#             if os.path.exists(file_path):
-#                 os.remove(file_path)
 
 if __name__ == "__main__":
     import os
