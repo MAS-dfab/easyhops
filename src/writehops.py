@@ -315,7 +315,7 @@ class FrenchRidgeProcess:
             self.width, 0.0, 0.0, self.width, self.width, 0.0
         )
         self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.length - self.width, 0.0, 0.0, 0.0, self.width, self.width
+            self.length - self.width, 0.0, 0.0, self.length - self.width, self.width, 0.0
         )
         cf0 = Frame.worldYZ()
         cf0.point = Point(self.width, 0, 0)
