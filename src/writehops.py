@@ -71,16 +71,17 @@ class HOPSMerger:
             if self.types[i] == "_bis.hop":
                 print("_bis.hop")
                 with open(path, "r") as file:
-                    # # find DX in file
-                    # for line in file:
-                    #     # Check if the line contains "DX"
-                    #     if "DX" in line and ":=" in line:
-                    #         # Extract the value after ":=" and before ";"
-                    #         length = float(line.split(":=")[1].split(";")[0].strip())
-                    #         # Break the loop after finding the first DX
-                    #         break
+                    # find DX in file
+                    with open(path, "r") as filecopy:
+                        for line in filecopy:
+                            # Check if the line contains "DX"
+                            if "DX" in line and ":=" in line:
+                                # Extract the value after ":=" and before ";"
+                                length = float(line.split(":=")[1].split(";")[0].strip())
+                                # Break the loop after finding the first DX
+                                break
                     self.merged_content += file.read() + "\n"
-                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)".format(
+                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='flip beam 180deg',R7:=0)".format(
                     length + 600
                 )
                 self.merged_content += add_pause + "\n"
