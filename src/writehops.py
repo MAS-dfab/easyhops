@@ -314,9 +314,6 @@ class FrenchRidgeProcess:
         self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
             self.width, 0.0, 0.0, self.width, self.width, 0.0
         )
-        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.length - self.width, 0.0, 0.0, self.length - self.width, self.width, 0.0
-        )
         cf0 = Frame.worldYZ()
         cf0.point = Point(self.width, 0, 0)
         cf1 = Frame.worldYZ()
@@ -340,6 +337,10 @@ class FrenchRidgeProcess:
                 [point1, point2], plane, theta, beta, orientation=1
             )
             self.frame1.append(plane)
+
+        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
+            self.length - self.width, 0.0, 0.0, self.length - self.width, self.width, 0.0
+        )
 
         face_front_end = True if self.face_front[1] == "1" else False
         if self.face_front[1] != "0":
@@ -518,6 +519,13 @@ class DoubleCutStepJointProcess:
             print("flipped, ref face was at bottom")
             sp1, ep1 = ep1, sp1
 
+        if sp0.y > ep0.y:
+            print("end point flipped")
+            sp0, ep0 = ep0, sp0
+        if sp1.y > ep1.y:
+            print("end point flipped")
+            sp1, ep1 = ep1, sp1
+            
         self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         self.params += "EBENE0()\n"
         self.params += self.format_to_hops(
@@ -526,7 +534,7 @@ class DoubleCutStepJointProcess:
         )
         self.params += self.format_to_hops(
             points=[sp1, ep1],
-            orientation = 2 if self.orientation == "start" else 1
+            orientation = 2 if self.orientation == "start" else 2
         )
         return [sp0, ep0, sp1, ep1]
 
