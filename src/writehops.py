@@ -112,7 +112,7 @@ class HOPSMerger:
         )
         with open(merged_file_path, "w") as file:
             file.write(self.merged_content)
-        self.add_centering_holes(merged_file_path)
+        # self.add_centering_holes(merged_file_path)
         self.delete_merged_files(folder_path, index)
 
     def delete_merged_files(self, folder_path, index):
@@ -186,6 +186,7 @@ class FrenchRidgeProcess:
         self.ref_face = int(ref_face)
         self.params = ""
         self.frame1, self.frame2 = [], []
+        self.frames = []
         self.pts = []
         self.ref_orientation = self.calculate_rotation()
         self.generate_process_params()
@@ -220,14 +221,14 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
         point1 = (
-            Point(self.width, 0, self.width / 3)
+            Point(self.width*2, 0, self.width / 3)
             if face_front
-            else Point(self.width, 0, self.width / 2)
+            else Point(self.width*2, 0, self.width / 2)
         )
         point2 = (
-            Point(self.width, self.width, self.width / 2)
+            Point(self.width*2, self.width, self.width / 2)
             if face_front
-            else Point(self.width, self.width, self.width / 3)
+            else Point(self.width*2, self.width, self.width / 3)
         )
         self.pts.append([point1.copy(), point2.copy()])
 
@@ -250,14 +251,14 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
         point1 = (
-            Point(self.length - self.width, 0, self.width / 3)
+            Point(self.length - self.width*2, 0, self.width / 3)
             if face_front
-            else Point(self.length - self.width, 0, self.width / 2)
+            else Point(self.length - self.width*2, 0, self.width / 2)
         )
         point2 = (
-            Point(self.length - self.width, self.width, self.width / 2)
+            Point(self.length - self.width*2, self.width, self.width / 2)
             if face_front
-            else Point(self.length - self.width, self.width, self.width / 3)
+            else Point(self.length - self.width*2, self.width, self.width / 3)
         )
         self.pts.append([point1.copy(), point2.copy()])
         return [point1, point2], plane, theta, beta
@@ -303,6 +304,21 @@ class FrenchRidgeProcess:
 
     def generate_process_params(self):
         # self.face_front = "11"
+        self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
+        self.params += "EBENE0()\n"
+        self.params += "SAEGEN({.3f},{.3f},{.3f},{.3f},{.3f},{.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
+            self.width, 0, 0, self.width, self.width, 0
+        )
+        self.params += "SAEGEN({.3f},{.3f},{.3f},{.3f},{.3f},{.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
+            self.length - self.width, 0, 0, 0, self.width, self.width
+        )
+        cf0 = Frame.worldYZ()
+        cf0.point = Point(self.width, 0, 0)
+        cf1 = Frame.worldYZ()
+        cf1.point = Point(self.length - self.width, 0, 0)
+        self.frames.append(cf1)
+        self.frames.append(cf0)
+
         face_front_start = True if self.face_front[0] == "1" else False
         if self.face_front[0] != "0":
             [point1, point2], plane, theta, beta = self.generate_params_start(
@@ -412,7 +428,7 @@ class DoubleCutStepJointProcess:
     def format_to_hops(self, points, orientation=0):
         hop = ""
         start_point, end_point = points 
-        hop += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},0,0,0,{},90,0,0,0,2,0,0)\n".format(
+        hop += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{},0,0,1,0,-2,1,1,0,0,0)\n".format(
             start_point.x, start_point.y, start_point.z, end_point.x, end_point.y, end_point.z, orientation
         )
 
