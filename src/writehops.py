@@ -72,15 +72,16 @@ class HOPSMerger:
                 print("_bis.hop")
                 with open(path, "r") as file:
                     # find DX in file
-                    for line in file:
-                        # Check if the line contains "DX"
-                        if "DX" in line and ":=" in line:
-                            # Extract the value after ":=" and before ";"
-                            length = float(line.split(":=")[1].split(";")[0].strip())
-                            # Break the loop after finding the first DX
-                            break
+                    with open(path, "r") as filecopy:
+                        for line in filecopy:
+                            # Check if the line contains "DX"
+                            if "DX" in line and ":=" in line:
+                                # Extract the value after ":=" and before ";"
+                                length = float(line.split(":=")[1].split(";")[0].strip())
+                                # Break the loop after finding the first DX
+                                break
                     self.merged_content += file.read() + "\n"
-                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='',R7:=0)".format(
+                add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=6,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='flip beam 180deg',R7:=0)".format(
                     length + 600
                 )
                 self.merged_content += add_pause + "\n"
@@ -213,9 +214,9 @@ class FrenchRidgeProcess:
         Generate the parameters for the start of the part
         """
         if face_front == True:
-            plane_pt = Point(0, 0, self.width / 2)
+            plane_pt = Point(0+self.width, 0, self.width / 2)
         else:
-            plane_pt = Point(0, self.width, self.width / 2)
+            plane_pt = Point(0+self.width, self.width, self.width / 2)
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = 45.0, 13.263
@@ -243,9 +244,9 @@ class FrenchRidgeProcess:
         Generate the parameters for the end of the part
         """
         if face_front == True:
-            plane_pt = Point(self.length, 0, self.width / 2)
+            plane_pt = Point(self.length - self.width, 0, self.width / 2)
         else:
-            plane_pt = Point(self.length, self.width, self.width / 2)
+            plane_pt = Point(self.length - self.width, self.width, self.width / 2)
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = -45.0, 13.263
@@ -310,11 +311,11 @@ class FrenchRidgeProcess:
         # self.face_front = "11"
         self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         self.params += "EBENE0()\n"
-        self.params += "SAEGEN({.3f},{.3f},{.3f},{.3f},{.3f},{.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.width, 0, 0, self.width, self.width, 0
+        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
+            self.width, 0.0, 0.0, self.width, self.width, 0.0
         )
-        self.params += "SAEGEN({.3f},{.3f},{.3f},{.3f},{.3f},{.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.length - self.width, 0, 0, 0, self.width, self.width
+        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
+            self.length - self.width, 0.0, 0.0, 0.0, self.width, self.width
         )
         cf0 = Frame.worldYZ()
         cf0.point = Point(self.width, 0, 0)
