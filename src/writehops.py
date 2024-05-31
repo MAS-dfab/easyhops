@@ -135,7 +135,8 @@ class HOPSMerger:
                 parts[4] = "-5"  # change depth to 5mm
             return ",".join(parts)
 
-        lines = self.merged_content
+        with open(merged_file_path, 'r') as file:
+            lines = file.readlines()
 
         # List to store EBENE and HORZB lines
         ebene_horzb_pairs = []
@@ -155,19 +156,22 @@ class HOPSMerger:
             (i for i, line in enumerate(lines) if "WZB" in line), len(lines)
         )
 
-        with open(merged_file_path, "w") as file:
-            # Write the lines up to the first WZB line to the output file
-            file.writelines(lines[:insert_position])
+        if len(ebene_horzb_pairs) > 0:
+            with open(merged_file_path, "w") as file:
+                # Write the lines up to the first WZB line to the output file
+                file.writelines(lines[:insert_position])
 
-            # Insert the new EBENE, WZB, and modified HORZB lines
-            for ebene_line, horzb_line in ebene_horzb_pairs:
-                file.write("\n; Added EBENE and HORZB parts\n")
-                file.write(ebene_line)
-                file.write("WZB(301,_VE,_V,_VA,_SD,_ANF,'1')\n")
-                file.write(horzb_line)
+                # Insert the new EBENE, WZB, and modified HORZB lines
+                for ebene_line, horzb_line in ebene_horzb_pairs:
+                    file.write("\n; Added EBENE and HORZB parts\n")
+                    file.write(ebene_line)
+                    file.write("WZB(301,_VE,_V,_VA,_SD,_ANF,'1')\n")
+                    file.write(horzb_line)
 
-            # Write the rest of the original lines to the output file
-            file.writelines(lines[insert_position:])
+                # Write the rest of the original lines to the output file
+                file.writelines(lines[insert_position:])
+            return True
+        return False
 
 
 class FrenchRidgeProcess:
@@ -680,7 +684,7 @@ class DoubleCutProcess:
         )
         if (
             dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0
-            and dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0
+            or dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0
         ):
             secondary_rotation = Rotation.from_axis_and_angle(
                 [1, 0, 0], math.pi, point=[0, 30, 30]
@@ -795,28 +799,12 @@ def wrap_to_pi(angle):
 
 
 if __name__ == "__main__":
-    import os
-    from parse_btlx import BTLXParser
-
-    file_path = os.path.join(os.path.dirname(__file__), "240514_Module81.btlx")
-    parser = BTLXParser(file_path)
-    remachining_dict = parser.get_remachining_dict()
-    index = 27
-    print(remachining_dict)
-    for index, value in remachining_dict.items():
-        hopper = HOPSWriter(remachining_dict[str(index)]["length"])
-        processes = []
-        for machining in remachining_dict[str(index)]["machinings"]:
-            if machining["Name"] == "French ridge lap":
-                process = FrenchRidgeProcess(
-                    hopper, machining["facefront"], machining["ReferencePlaneID"]
-                )
-            elif machining["Name"] == "T-Butt Joint":
-                process = DoubleCutProcess(hopper, machining)
-                processes.append(process)
-        hopper.generate_hops(processes)
-        # create folder with btlx name
-        filename = os.path.join(
-            os.path.dirname(__file__), "hops", "%s_.hop" % str(index)
-        )
-        hopper.write_to_file(file_path=filename)
+    hops = HOPSMerger()
+    folder_path = "C:\\Users\\akango\\Documents\\github\\mas-t2-2324\\production\\fabrication\\Module_69\\btlx\\Module_69"
+    for i in range(0,21):
+        file_str = str(i).zfill(2) + ".hop"
+        file_path = os.path.join(folder_path, file_str)
+        if hops.add_centering_holes(file_path):
+            print("Added centering holes to ", file_str)
+        else:
+            print("No centering holes added to ", file_str)
