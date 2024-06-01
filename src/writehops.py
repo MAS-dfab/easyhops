@@ -398,14 +398,21 @@ class DoubleCutStepJointProcess:
         T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
 
+        if self.orientation == "start":
+            print ("okay")
+            angle1, angle2 = self.angle1, self.angle2
+        else:
+            angle1, angle2 = 180.0 - self.angle1, 180.0 - self.angle2
         frame1 = deepcopy(ref_frame)
         frame1.point = ref_frame.point
-        frame1.rotate(math.radians(-self.angle1), frame1.zaxis, frame1.point)
+        print (self.angle1, self.inclination1)
+        frame1.rotate(math.radians(-angle1), frame1.zaxis, frame1.point)
         frame1.rotate(math.radians(self.inclination1), frame1.xaxis, frame1.point)
 
         frame2 = deepcopy(ref_frame)
         frame2.point = ref_frame.point
-        frame2.rotate(math.radians(-self.angle2), frame2.zaxis, frame2.point)
+        print (self.angle2, self.inclination2)
+        frame2.rotate(math.radians(-angle2), frame2.zaxis, frame2.point)
         frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
 
         if (
@@ -809,8 +816,8 @@ def wrap_to_pi(angle):
 
 if __name__ == "__main__":
     hops = HOPSMerger()
-    folder_path = "C:\\Users\\akango\\Documents\\github\\mas-t2-2324\\production\\fabrication\\Module_69\\btlx\\Module_69"
-    for i in range(0,21):
+    folder_path = "C:\\Users\\akango\\Documents\\github\\mas-t2-2324\\production\\fabrication\\Module_62\\btlx\\Module_62"
+    for i in range(0,19):
         file_str = str(i).zfill(2) + ".hop"
         file_path = os.path.join(folder_path, file_str)
         if hops.add_centering_holes(file_path):
