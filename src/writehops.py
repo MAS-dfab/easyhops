@@ -400,9 +400,9 @@ class DoubleCutStepJointProcess:
 
         if self.orientation == "start":
             print ("okay")
-            angle1, angle2 = self.angle1, self.angle2
+            angle1, angle2 = -self.angle1, -self.angle2
         else:
-            angle1, angle2 = 180.0 - self.angle1, 180.0 - self.angle2
+            angle1, angle2 = self.angle1, self.angle2
         frame1 = deepcopy(ref_frame)
         frame1.point = ref_frame.point
         print (self.angle1, self.inclination1)
@@ -442,7 +442,7 @@ class DoubleCutStepJointProcess:
         hop = ""
         start_point, end_point = points 
         hop += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{},0,0,1,0,-2,1,1,0,0,0)\n".format(
-            start_point.x, start_point.y, start_point.z, end_point.x, end_point.y, end_point.z, orientation
+            start_point.x, start_point.y, 0.0, end_point.x, end_point.y, 0.0, orientation
         )
 
         return hop
@@ -518,13 +518,6 @@ class DoubleCutStepJointProcess:
         if pts == None:
             return
         sp0, ep0, sp1, ep1 = self.rotate_things(*pts)
-        if sp0.z < ep0.z:
-            print("flipped, ref face was at bottom")
-            sp0, ep0 = ep0, sp0
-        
-        if sp1.z < ep1.z:
-            print("flipped, ref face was at bottom")
-            sp1, ep1 = ep1, sp1
 
         if sp0.y > ep0.y:
             print("end point flipped")
