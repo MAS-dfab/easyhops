@@ -534,7 +534,7 @@ class DoubleCutStepJointProcess:
         )
         self.params += self.format_to_hops(
             points=[sp1, ep1],
-            orientation = 2 if self.orientation == "start" else 2
+            orientation = 1 if self.orientation == "start" else 2
         )
         return [sp0, ep0, sp1, ep1]
 
@@ -707,6 +707,42 @@ class DoubleCutProcess:
 
         return sp1, ep1, f1, f2, rp
 
+    def generate_safe_points (self, start_point, end_point, plane, is_front):
+        for ref in self.ref_faces:
+            point = intersection_plane_plane_plane(
+                    Plane.from_frame(self.ref_plane),
+                    Plane.from_frame(plane),
+                    Plane.from_frame(ref),
+                )
+
+            if point is not None:
+                print("point is ", point)
+                if is_front:
+                    if 60.1 > point[1] > 59.9:
+                        point = Point(*point)
+                        if 0.1 < point[2] < 0.1:
+                            ref = start_point
+                        else:
+                            ref = end_point
+                        vec = Vector.from_start_end(ref, point)
+                        vec.unitize()
+                        vec *= 200.0
+                        point = ref + vec
+                        return point
+                else:
+                    if -0.1 < point[1] < 0.1:
+                        point = Point(*point)
+                        if 0.1 < point[2] < 0.1:
+                            ref = start_point
+                        else:
+                            ref = end_point
+                        vec = Vector.from_start_end(ref, point)
+                        vec.unitize()
+                        vec *= 200.0
+                        point = ref + vec
+                        return point
+                
+                    
     def generate_process_params(self):
         pts = self.generate_endpoint()
         if pts == None:
@@ -728,10 +764,23 @@ class DoubleCutProcess:
             start_point, end_point = end_point, start_point
             orientation1 = 1
             orientation2 = 2
+        
+        # Frame 1 points
         if flipped1:
             print("frame1 flipped")
             ref_height = -3.2
             orientation1 = 2 if orientation1 == 1 else 1
+
+        is_front = True if orientation1 == 1 and not flipped1 else False
+        entry_point = self.generate_safe_points(start_point, end_point, self.frame1, is_front)
+        entry_point.z = 60
+        exit_point = entry_point.copy()
+        exit_point.z = 0
+
+        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame2
+        )
+
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf1),
@@ -739,13 +788,21 @@ class DoubleCutProcess:
             beta=math.degrees(beta),
             orientation=orientation1,
         )
-        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame2
-        )
+
+        # Frame 2 points
         if flipped2:
             print("frame2 flipped")
             ref_height = -3.2
             orientation2 = 1 if orientation2 == 2 else 2
+
+        is_front = True if orientation2 == 1 and not flipped2 else False
+        
+        entry_point = self.generate_safe_points(start_point, end_point, self.frame2, is_front)
+        entry_point.z = 60
+        exit_point = entry_point.copy()
+        exit_point.z = 0
+
+
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf2),
@@ -754,7 +811,7 @@ class DoubleCutProcess:
             orientation=orientation2,
             ref_height=ref_height,
         )
-        return [start_point, end_point]
+        return [start_point, end_point, entry_point, exit_point]
 
 
 class TextProcess:
@@ -809,8 +866,8 @@ def wrap_to_pi(angle):
 
 if __name__ == "__main__":
     hops = HOPSMerger()
-    folder_path = "C:\\Users\\akango\\Documents\\github\\mas-t2-2324\\production\\fabrication\\Module_62\\btlx\\Module_62"
-    for i in range(0,19):
+    folder_path = "..\mas-t2-2324\\production\\fabrication\\Module_71\\btlx\\Module_71"
+    for i in range(0,27):
         file_str = str(i).zfill(2) + ".hop"
         file_path = os.path.join(folder_path, file_str)
         if hops.add_centering_holes(file_path):
