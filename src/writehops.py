@@ -772,16 +772,6 @@ class DoubleCutProcess:
             ref_height = -3.2
             orientation1 = 2 if orientation1 == 1 else 1
 
-        is_front = True if orientation1 == 1 and not flipped1 else False
-        entry_point = self.generate_safe_points(start_point, end_point, self.frame1, is_front)
-        entry_point.z = 60
-        exit_point = entry_point.copy()
-        exit_point.z = 0
-
-        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame2
-        )
-
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf1),
@@ -790,20 +780,19 @@ class DoubleCutProcess:
             orientation=orientation1,
         )
 
-        # Frame 2 points
+
+
+
+        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
+            deepcopy(self.ref_plane), self.frame2
+        )
+            
+                # Frame 2 points
         if flipped2:
             print("frame2 flipped")
             ref_height = -3.2
             orientation2 = 1 if orientation2 == 2 else 2
-
-        is_front = True if orientation2 == 1 and not flipped2 else False
-        
-        entry_point = self.generate_safe_points(start_point, end_point, self.frame2, is_front)
-        entry_point.z = 60
-        exit_point = entry_point.copy()
-        exit_point.z = 0
-
-
+            
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf2),
@@ -812,7 +801,7 @@ class DoubleCutProcess:
             orientation=orientation2,
             ref_height=ref_height,
         )
-        return [start_point, end_point, entry_point, exit_point]
+        return [start_point, end_point]
 
 
 class TextProcess:
@@ -867,7 +856,7 @@ def wrap_to_pi(angle):
 
 if __name__ == "__main__":
     hops = HOPSMerger()
-    folder_path = "..\mas-t2-2324\\production\\fabrication\\Module_71\\btlx\\Module_71"
+    folder_path = "..\mas-t2-2324\\production\\fabrication\\Module_70\\btlx\\Module_70"
     for i in range(0,27):
         file_str = str(i).zfill(2) + ".hop"
         file_path = os.path.join(folder_path, file_str)
