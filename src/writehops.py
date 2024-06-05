@@ -792,7 +792,7 @@ class DoubleCutProcess:
             print("frame2 flipped")
             ref_height = -3.2
             orientation2 = 1 if orientation2 == 2 else 2
-            
+
         self.params += self.format_to_hops(
             points=[start_point, end_point],
             frame=deepcopy(self.cf2),
@@ -856,8 +856,10 @@ def wrap_to_pi(angle):
 
 if __name__ == "__main__":
     hops = HOPSMerger()
-    folder_path = "..\mas-t2-2324\\production\\fabrication\\Module_70\\btlx\\Module_70"
-    for i in range(0,27):
+    folder_path = "..\mas-t2-2324\\production\\fabrication\\Module_67\\btlx\\Module_67"
+    # lissst = [28]
+    for i in range(0,29):
+    # for i in lissst:
         file_str = str(i).zfill(2) + ".hop"
         file_path = os.path.join(folder_path, file_str)
         if hops.add_centering_holes(file_path):
