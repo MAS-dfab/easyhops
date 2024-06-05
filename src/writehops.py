@@ -9,6 +9,7 @@ from compas.geometry import (
 from copy import deepcopy
 import math
 import os
+import shutil
 
 
 class HOPSWriter:
@@ -114,7 +115,8 @@ class HOPSMerger:
         with open(merged_file_path, "w") as file:
             file.write(self.merged_content)
         # self.add_centering_holes(merged_file_path)
-        self.delete_merged_files(folder_path, index)
+        # self.delete_merged_files(folder_path, index)
+        self.archive_merged_files(folder_path, index)
 
     def delete_merged_files(self, folder_path, index):
         file_suffixes = ["_bis.hop", "_.hop"]
@@ -123,6 +125,20 @@ class HOPSMerger:
             file_path = os.path.join(folder_path, file_name)
             if os.path.exists(file_path):
                 os.remove(file_path)
+
+    def archive_merged_files(self, folder_path, index):
+        archive_folder = os.path.join(folder_path, "_")
+        if not os.path.exists(archive_folder):
+            os.makedirs(archive_folder)
+        
+        file_suffixes = ["_bis.hop", "_.hop"]
+        for suffix in file_suffixes:
+            file_name = "{}{}".format(str(index).zfill(2), suffix)
+            file_path = os.path.join(folder_path, file_name)
+            if os.path.exists(file_path):
+                archive_path = os.path.join(archive_folder, file_name)
+                shutil.move(file_path, archive_path)
+
 
     def add_centering_holes(self, merged_file_path):
         def modify_horzb_line(horzb_line):
