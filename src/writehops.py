@@ -190,8 +190,10 @@ class HOPSMerger:
             return True
         return False
 
-    def get_hop_files_count(folder_path):
+    def get_hop_files_count(self, folder_path):
         hop_files = [file for file in os.listdir(folder_path) if file.endswith(".hop")]
+        if len(hop_files) == 0:
+            pass
         return len(hop_files)
 class FrenchRidgeProcess:
 
@@ -677,14 +679,12 @@ class DoubleCutProcess:
     def generate_endpoint(self):
         self.generate_planes()
         for ref in self.ref_faces:
-            point = Point(
-                *intersection_plane_plane_plane(
+            int_points = intersection_plane_plane_plane(
                     Plane.from_frame(self.frame1),
                     Plane.from_frame(self.frame2),
-                    Plane.from_frame(ref),
-                )
-            )
-            if point is not None:
+                    Plane.from_frame(ref))
+            if int_points is not None:
+                point = Point(*int_points)
                 if Vector.from_start_end(point, self.frame1.point).length > 0.01:
                     if -0.1 <= point.y <= 60.1 and -0.1 <= point.z <= 60.1:
                         return self.frame1.point, Point(point.x, point.y, point.z)
