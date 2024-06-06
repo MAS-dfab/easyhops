@@ -869,6 +869,9 @@ def wrap_to_pi(angle):
 
     return angle
 
+def get_hop_files_count(folder_path):
+    hop_files = [file for file in os.listdir(folder_path) if file.endswith(".hop")]
+    return len(hop_files)
 
 if __name__ == "__main__":
     hops = HOPSMerger()
