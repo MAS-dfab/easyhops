@@ -234,9 +234,9 @@ class FrenchRidgeProcess:
         Generate the parameters for the start of the part
         """
         if face_front == True:
-            plane_pt = Point(0+self.width, 0, self.width / 2)
+            plane_pt = Point(0+self.width/2.0, 0, self.width / 2)
         else:
-            plane_pt = Point(0+self.width, self.width, self.width / 2)
+            plane_pt = Point(0+self.width/2.0, self.width, self.width / 2)
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = 45.0, 13.263
@@ -246,14 +246,14 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
         point1 = (
-            Point(self.width*2, 0, self.width / 3)
+            Point(self.width + self.width/2.0, 0, self.width / 3)
             if face_front
-            else Point(self.width*2, 0, self.width / 2)
+            else Point(self.width + self.width/2.0, 0, self.width / 2)
         )
         point2 = (
-            Point(self.width*2, self.width, self.width / 2)
+            Point(self.width + self.width/2.0, self.width, self.width / 2)
             if face_front
-            else Point(self.width*2, self.width, self.width / 3)
+            else Point(self.width + self.width/2.0, self.width, self.width / 3)
         )
         self.pts.append([point1.copy(), point2.copy()])
 
@@ -264,9 +264,9 @@ class FrenchRidgeProcess:
         Generate the parameters for the end of the part
         """
         if face_front == True:
-            plane_pt = Point(self.length - self.width, 0, self.width / 2)
+            plane_pt = Point(self.length - self.width/2.0, 0, self.width / 2)
         else:
-            plane_pt = Point(self.length - self.width, self.width, self.width / 2)
+            plane_pt = Point(self.length - self.width/2.0, self.width, self.width / 2)
 
         plane = Frame(plane_pt, [1, 0, 0], [0, 1, 0])
         beta, theta = -45.0, 13.263
@@ -276,14 +276,14 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
         point1 = (
-            Point(self.length - self.width*2, 0, self.width / 3)
+            Point(self.length - (self.width + self.width/2.0), 0, self.width / 3)
             if face_front
-            else Point(self.length - self.width*2, 0, self.width / 2)
+            else Point(self.length - (self.width + self.width/2.0), 0, self.width / 2)
         )
         point2 = (
-            Point(self.length - self.width*2, self.width, self.width / 2)
+            Point(self.length - (self.width + self.width/2.0), self.width, self.width / 2)
             if face_front
-            else Point(self.length - self.width*2, self.width, self.width / 3)
+            else Point(self.length - (self.width + self.width/2.0), self.width, self.width / 3)
         )
         self.pts.append([point1.copy(), point2.copy()])
         return [point1, point2], plane, theta, beta
@@ -332,7 +332,7 @@ class FrenchRidgeProcess:
         self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         self.params += "EBENE0()\n"
         self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.width, 0.0, 0.0, self.width, self.width, 0.0
+            self.width/2.0, 0.0, 0.0, self.width/2.0, self.width, 0.0
         )
         cf0 = Frame.worldYZ()
         cf0.point = Point(self.width, 0, 0)
@@ -360,7 +360,7 @@ class FrenchRidgeProcess:
 
         self.params += "EBENE0()\n"
         self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},2,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.length - self.width, 0.0, 0.0, self.length - self.width, self.width, 0.0
+            self.length - self.width/2.0, 0.0, 0.0, self.length - self.width/2.0, self.width, 0.0
         )
 
         face_front_end = True if self.face_front[1] == "1" else False
@@ -379,7 +379,6 @@ class FrenchRidgeProcess:
                 [point1, point2], plane, theta, beta, orientation=2
             )
             self.frame2.append(plane)
-
 
 class DoubleCutStepJointProcess:
     def __init__(self, hopper, btlx_params):
