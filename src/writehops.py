@@ -64,13 +64,14 @@ class HOPSMerger:
     def __init__(self):
         self.merged_content = ""
         self.types = []
+        self.has_bis = None
 
     def merge_fabrication_files(self, folder_path, index):
         file_paths = self.get_fabrication_file_paths(folder_path, index)
-        print(file_paths)
         for i, path in enumerate(file_paths):
+            print(self.types[i])
             if self.types[i] == "_bis.hop":
-                print("_bis.hop")
+                self.has_bis = True
                 with open(path, "r") as file:
                     # find DX in file
                     with open(path, "r") as filecopy:
@@ -87,11 +88,13 @@ class HOPSMerger:
                 )
                 self.merged_content += add_pause + "\n"
             elif self.types[i] == ".hop":
-                print(".hop")
-                with open(path, "r") as file:
-                    self.merged_content += file.read() + "\n"
+                if self.has_bis == True:
+                    print("removing intro")
+                    self.remove_intro(path)
+                else:
+                    with open(path, "r") as file:
+                        self.merged_content += file.read() + "\n"
             elif self.types[i] == "_.hop":
-                print("_.hop")
                 with open(path, "r") as file:
                     self.merged_content += file.read() + "\n"
         self.save_merged_file(folder_path, index)
@@ -107,6 +110,19 @@ class HOPSMerger:
                 file_paths.append(file_path)
                 self.types.append(suffix)
         return file_paths
+
+    def remove_intro(self, file_path):
+        with open(file_path, "r") as file:
+            lines = file.readlines()
+
+        end_index = None
+        for i, line in enumerate(lines):
+            if "CALL Park" in line:
+                end_index = i
+                break
+        if end_index is not None:
+            lines = lines[end_index + 1:]
+        self.merged_content += ''.join(lines) + "\n"
 
     def save_merged_file(self, folder_path, index):
         merged_file_path = os.path.join(
