@@ -84,7 +84,7 @@ class HOPSMerger:
                                 break
                     self.merged_content += file.read() + "\n"
                 add_pause = "CALL MachineStop_V7 ( VAL MODE:=0,PARKMODE:=10,PARKPOSX:={:.3f},PARKPOSY:=0,TYP:=0,R6:=0, STR:='flip beam 180deg',R7:=0)".format(
-                    length + 750
+                    length + 1500
                 )
                 self.merged_content += add_pause + "\n"
             elif self.types[i] == ".hop":
