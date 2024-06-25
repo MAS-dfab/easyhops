@@ -636,14 +636,20 @@ class DoubleCutProcess:
         T = Transformation.from_change_of_basis(ref_frame, Frame.worldXY())
         ref_frame.point = Point(self.startx, self.starty, 0.0).transformed(T)
 
+        if self.orientation == "start":
+            print ("okay")
+            angle1, angle2 = -self.angle1, -self.angle2
+        else:
+            angle1, angle2 = self.angle1, self.angle2
+
         frame1 = deepcopy(ref_frame)
         frame1.point = ref_frame.point
-        frame1.rotate(math.radians(-self.angle1), frame1.zaxis, frame1.point)
+        frame1.rotate(math.radians(-angle1), frame1.zaxis, frame1.point)
         frame1.rotate(math.radians(self.inclination1), frame1.xaxis, frame1.point)
 
         frame2 = deepcopy(ref_frame)
         frame2.point = ref_frame.point
-        frame2.rotate(math.radians(-self.angle2), frame2.zaxis, frame2.point)
+        frame2.rotate(math.radians(-angle2), frame2.zaxis, frame2.point)
         frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
 
         self.frame1 = frame1
