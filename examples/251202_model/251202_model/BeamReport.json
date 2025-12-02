@@ -1,0 +1,48 @@
+{
+    "ForceEstimateTlc": false,
+    "ForceNoSimulation": true,
+    "ProcessAborted": false,
+    "ProcessType": "Generate",
+    "RawParts": [
+        {
+            "CamStatus": "Success",
+            "CncFile": "C:\\Users\\kapso\\OneDrive\\Documents\\GitHub\\fall_demo_2025\\data\\models\\production\\251202_model\\251202_model\\_133b.cnc",
+            "DispStatus": "Success",
+            "GenStatus": "Success",
+            "Message": [
+                {
+                    "Flag": "Warning",
+                    "Id": "-1",
+                    "Text": "\n--> WARNING! <--\nCampus Version >= 6.4.4.2\nExtsetup.zip >= 6.86\n\n"
+                },
+                {
+                    "Flag": "Warning",
+                    "Id": "297127",
+                    "Text": "Feature:LongitudinalCut\n\nNot executed\n"
+                },
+                {
+                    "Flag": "Warning",
+                    "Id": "297129",
+                    "Text": "Feature:Lap\n\nNot executed\n"
+                },
+                {
+                    "Flag": "Warning",
+                    "Id": "297133",
+                    "Text": "Feature:Lap(1)\n\nNot executed\n"
+                },
+                {
+                    "Flag": "Warning",
+                    "Id": "297139",
+                    "Text": "Feature:JackRafterCut(1)\n\nNot executed\n"
+                }
+            ],
+            "Parts": "_133b,",
+            "RawPart": "_133b",
+            "RawPartLength": 1352.233,
+            "RawPartThickness": 140.0,
+            "RawPartWidth": 140.0
+        }
+    ],
+    "TimeCreated": "18:38:23 - 02/12/2025 (h:m:s - d/m/Y)",
+    "WorkingDirectory": "C:\\Users\\kapso\\OneDrive\\Documents\\GitHub\\fall_demo_2025\\data\\models\\production\\251202_model\\251202_model"
+}
