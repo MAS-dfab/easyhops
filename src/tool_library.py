@@ -1,9 +1,3 @@
-"""Dynamic tool library parser for .too files.
-
-Parses HOPS .too (tool) files from CNC machines and provides dynamic
-access to tool configurations with their feedrates and parameters.
-"""
-
 import re
 import configparser
 from pathlib import Path
