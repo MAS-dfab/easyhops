@@ -6,8 +6,8 @@ The tool library system provides **dynamic tool loading from .too files** for CN
 
 ## Architecture
 
-- **`tool_library.py`**: Core implementation with `MachiningTool`, predefined tool subclasses (`BirdsmouthW41`, `SaegeD350`, `CastorD61`), `ToolLibrary`, and `HopsMacro`
-- **Predefined tools**: Subclasses with fixed positions and holder types
+- **`tool_library.py`**: Core implementation with `MachiningTool`, predefined tool subclasses (`BirdsmouthW41`, `SaegeD350`, `CastorD61`), `ToolLibrary`, and `HopsSystemVars`
+- **Predefined tools**: Subclasses with fixed positions and tool types
 - **Dynamic loading**: Parse all tools from .too files
 
 ## Usage Patterns
@@ -65,11 +65,11 @@ tool = library.get_tool('Birdsmouth')
 ### 4. Manual Tool Creation
 
 ```python
-from src.tool_library import MachiningTool, ToolHolderType
+from src.tool_library import MachiningTool, ToolCallType
 
 # Create tool with machine defaults (None parameters = HOPS macros)
 tool = MachiningTool(
-    holder_type=ToolHolderType.CASSETTE,
+    tool_type=ToolCallType.ROUTER,
     position=504,
     name='Birdsmouth W41'
 )
@@ -77,11 +77,11 @@ print(str(tool))  # WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 
 # Override specific parameters
 tool = MachiningTool(
-    holder_type=ToolHolderType.CASSETTE,
+    tool_type=ToolCallType.ROUTER,
     position=1,
     lead_in_feedrate=5000,
     feedrate=8000,
-    surface_feedrate=5000,
+    lead_out_feedrate=5000,
     name='DIA20_R'
 )
 print(str(tool))  # WZF(1,5000,8000,5000,_SD,_ANF,'1')
@@ -110,7 +110,7 @@ print(str(tool))  # WZF(1,5000,8000,5000,_SD,_ANF,'1')
 ```python
 # Use HOPS macro variables (None = machine defaults)
 tool = MachiningTool(
-    holder_type=ToolHolderType.CASSETTE,
+    tool_type=ToolCallType.ROUTER,
     position=504,
     name='Birdsmouth'
 )
@@ -118,10 +118,10 @@ command = str(tool)  # WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 
 # Override specific parameters
 tool = MachiningTool(
-    holder_type=ToolHolderType.CASSETTE,
+    tool_type=ToolCallType.ROUTER,
     position=504,
     feedrate=3500,
-    surface_feedrate=4000,
+    lead_out_feedrate=4000,
     name='Birdsmouth'
 )
 command = str(tool)  # WZF(504,_VE,3500,4000,_SD,_ANF,'1')
@@ -133,28 +133,28 @@ command = str(tool)  # WZF(504,_VE,4000,4000,_SD,_ANF,'1')
 
 ### Tool Properties
 
-- `holder_type`: `ToolHolderType.CASSETTE`, `ToolHolderType.BLADE`, or `ToolHolderType.DRILLS`
+- `tool_type`: `ToolCallType.ROUTER`, `ToolCallType.SAW`, or `ToolCallType.DRILLER`
 - `position`: Tool position number (e.g., 504 for birdsmouth, 201 for saw blade)
 - `lead_in_feedrate`: Lead in/out feedrate in mm/min (None = `_VE` macro)
 - `feedrate`: General/rapid feedrate in mm/min (None = `_V` macro)
-- `surface_feedrate`: Surface/cutting feedrate in mm/min (None = `_VA` macro)
+- `lead_out_feedrate`: Lead out feedrate in mm/min (None = `_VA` macro)
 - `motor_speed`: Motor speed in RPM (None = `_SD` macro)
-- `lead_in_factor`: Lead-in/out factor multiplier (None = `_ANF` macro)
-- `slot`: Tool slot identifier (default: `'1'`)
+- `lead_in_out_factor`: Lead-in/out factor multiplier (None = `_ANF` macro)
+- `head_id`: Tool head identifier (default: `'1'`)
 - `name`: Tool name/description
 
-### HOPS Macro Variables (HopsMacro enum)
+### HOPS System Variables (HopsSystemVars enum)
 
 When tool parameters are `None`, these HOPS macro variables are used:
 
-- `HopsMacro.LEAD_IN_FEEDRATE` = `_VE` - Lead in/out speed
-- `HopsMacro.FEEDRATE` = `_V` - General/rapid feed rate
-- `HopsMacro.SURFACE_FEEDRATE` = `_VA` - Surface/cutting speed
-- `HopsMacro.MOTOR_SPEED` = `_SD` - Motor speed
-- `HopsMacro.LEAD_IN_OUT_FACTOR` = `_ANF` - Lead in/out factor
-- `HopsMacro.TOOL_DIAMETER` = `_WZD` - Tool diameter
-- `HopsMacro.TOOL_RADIUS` = `_WZR` - Tool radius
-- `HopsMacro.SAW_WIDTH` = `_SBB` - Saw blade width
+- `HopsSystemVars.LEAD_IN_FEEDRATE` = `_VE` - Lead in/out speed
+- `HopsSystemVars.FEEDRATE` = `_V` - General/rapid feed rate
+- `HopsSystemVars.LEAD_OUT_FEEDRATE` = `_VA` - Lead out speed
+- `HopsSystemVars.MOTOR_SPEED` = `_SD` - Motor speed
+- `HopsSystemVars.LEAD_IN_OUT_FACTOR` = `_ANF` - Lead in/out factor
+- `HopsSystemVars.TOOL_DIAMETER` = `_WZD` - Tool diameter
+- `HopsSystemVars.TOOL_RADIUS` = `_WZR` - Tool radius
+- `HopsSystemVars.SAW_WIDTH` = `_SBB` - Saw blade width
 
 The CNC machine substitutes these with configured values during program execution.
 
@@ -162,17 +162,17 @@ The CNC machine substitutes these with configured values during program executio
 
 ### BirdsmouthW41
 - **Position**: 504 (WZF)
-- **Type**: Cassette
+- **Type**: Router (ToolCallType.ROUTER)
 - **Use**: Contour milling and pocketing
 
 ### SaegeD350
 - **Position**: 201 (WZS)
-- **Type**: Blade
+- **Type**: Saw (ToolCallType.SAW)
 - **Use**: Saw cutting operations
 
 ### CastorD61
 - **Position**: 503 (WZF)
-- **Type**: Cassette
+- **Type**: Router (ToolCallType.ROUTER)
 - **Use**: General milling tasks
 
 ## .too File Parsing
@@ -236,17 +236,17 @@ tool.feedrate = 3500
 print(str(tool))  # WZF(504,_VE,3500,_VA,_SD,_ANF,'1')
 
 # Predefined subclass
-saw = SaegeD350(feedrate=10000, surface_feedrate=7000)
+saw = SaegeD350(feedrate=10000, lead_out_feedrate=7000)
 print(str(saw))  # WZS(201,_VE,10000,7000,_SD,_ANF,'1')
 ```
 
 ## Implementation Notes
 
 ### Tool Detection & Assignment
-- **Tool positions**: Uses `ToolNo` from .too file as position for cassette tools
+- **Tool positions**: Uses `ToolNo` from .too file as position for router tools
 - **Saw blades**: Automatically detected (`ToolType=2`) and assigned position 201
-- **Tool type**: Cassette (`WZF`), Blade (`WZS`), or Drills (`WZB`) determined from `ToolType` field
-- **ToolType values**: 0=Schaft (cassette), 1=Drill (drill head), 2=Säge (saw blade), 3=Laser/Special
+- **Tool type**: Router (`WZF`), Saw (`WZS`), or Driller (`WZB`) determined from `ToolType` field
+- **ToolType values**: 0=Schaft (router), 1=Drill (drill head), 2=Säge (saw blade), 3=Laser/Special
 
 ### Default Parameter Behavior
 - **All tools from .too files use HOPS macro variables** - parameters default to `None`

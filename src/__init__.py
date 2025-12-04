@@ -2,8 +2,8 @@ from .merge_stock_hops import StockHopsMerger
 from .tool_library import (
     MachiningTool,
     ToolLibrary,
-    ToolHolderType,
-    HopsMacro,
+    ToolCallType,
+    HopsSystemVars,
     BirdsmouthW41,
     SaegeD350,
     CastorD61,
@@ -27,8 +27,8 @@ __all__ = [
     # Tool Library
     "MachiningTool",
     "ToolLibrary",
-    "ToolHolderType",
-    "HopsMacro",
+    "ToolCallType",
+    "HopsSystemVars",
     "BirdsmouthW41",
     "SaegeD350",
     "CastorD61",

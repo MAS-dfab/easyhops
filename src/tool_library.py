@@ -5,8 +5,8 @@ from typing import Dict, Optional, Union
 from enum import StrEnum
 
 
-class HopsMacro(StrEnum):
-    """HOPS global macro variables for tool parameters.
+class HopsSystemVars(StrEnum):
+    """HOPS global system variables for tool parameters.
 
     These macro variables reference the CNC machine's configured default values.
     When used in HOPS commands, the machine substitutes them with current values
@@ -16,10 +16,10 @@ class HopsMacro(StrEnum):
     -----------
     FEEDRATE : str
         Current feed rate from tool manager (_V) - general/rapid feed rate
-    SURFACE_FEEDRATE : str
-        Current surface feed rate from tool manager (_VA) - surface/cutting speed
+    LEAD_OUT_FEEDRATE : str
+        Current lead out feed rate from tool manager (_VA) - lead out speed
     LEAD_IN_FEEDRATE : str
-        Current lead in feed rate from tool manager (_VE) - lead in/out speed
+        Current lead in feed rate from tool manager (_VE) - lead in speed
     MOTOR_SPEED : str
         Current motor speed from tool manager (_SD)
     LEAD_IN_OUT_FACTOR : str
@@ -32,9 +32,9 @@ class HopsMacro(StrEnum):
         Current saw blade width from tool manager (_SBB)
     """
 
-    FEEDRATE = "_V"  # Current feed rate (tool manager)
-    SURFACE_FEEDRATE = "_VA"  # Current surface feed rate (tool manager)
     LEAD_IN_FEEDRATE = "_VE"  # Current lead in feed rate (tool manager)
+    FEEDRATE = "_V"  # Current feed rate (tool manager)
+    LEAD_OUT_FEEDRATE = "_VA"  # Current lead out feed rate (tool manager)
     MOTOR_SPEED = "_SD"  # Current motor speed (tool manager)
     LEAD_IN_OUT_FACTOR = "_ANF"  # Current tool lead in/out factor (tool manager)
     TOOL_DIAMETER = "_WZD"  # Current tool diameter (tool manager)
@@ -42,22 +42,22 @@ class HopsMacro(StrEnum):
     SAW_WIDTH = "_SBB"  # Current saw blade width (tool manager)
 
 
-class ToolHolderType(StrEnum):
+class ToolCallType(StrEnum):
     """Tool holder types for HOPS commands.
 
     Parameters:
     -----------
-    CASSETTE : str
+    ROUTER : str
         Cassette for multiple milling tools
-    BLADE : str
+    SAW : str
         Blade holder (single saw blade)
-    UNKNOWN : str
-        Unknown or unspecified tool type
+    DRILLER : str
+        Drill holder (multiple drill)
     """
 
-    CASSETTE = "WZF"  # Cassette for multiple milling tools
-    BLADE = "WZS"  # Blade holder (single saw blade)
-    DRILLS = "WZB"  # Drill holder (single drill)
+    ROUTER = "WZF"  # Cassette for multiple milling tools ("TOOLM")
+    SAW = "WZS"  # Blade holder (single saw blade) ("TOOLS")
+    DRILLER = "WZB"  # Drill holder (multiple drills) ("TOOLD")
 
 
 class MachiningTool:
@@ -70,23 +70,23 @@ class MachiningTool:
 
     Parameters:
     -----------
-    holder_type : :class:`ToolHolderType`
-        Type of tool holder (`ToolHolderType.CASSETTE` or `ToolHolderType.BLADE`)
+    tool_type : :class:`ToolCallType`
+        Type of tool (`ToolCallType.ROUTER`,  `ToolCallType.SAW`, `ToolCallType.DRILLER`)
     position : int
         Tool position number in the holder
     lead_in_feedrate : Optional[float]
-        Lead in/out feedrate in mm/min. If None, uses HopsMacro.LEAD_IN_FEEDRATE (_VE)
+        Lead in/out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_IN_FEEDRATE (_VE)
     feedrate : Optional[float]
-        General/rapid feedrate in mm/min. If None, uses HopsMacro.FEEDRATE (_V)
-    surface_feedrate : Optional[float]
-        Surface/cutting feedrate in mm/min. If None, uses HopsMacro.SURFACE_FEEDRATE (_VA)
+        General/rapid feedrate in mm/min. If None, uses HopsSystemVars.FEEDRATE (_V)
+    lead_out_feedrate : Optional[float]
+        Lead out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_OUT_FEEDRATE (_VA)
     motor_speed : Optional[float]
-        Motor speed (RPM). If None, uses HopsMacro.MOTOR_SPEED (_SD)
-    lead_in_factor : Optional[float]
+        Motor speed (RPM). If None, uses HopsSystemVars.MOTOR_SPEED (_SD)
+    lead_in_out_factor : Optional[float]
         Lead-in/out factor. This is a multiplying factor of the default value set in the tool manager.
-        If None, uses HopsMacro.LEAD_IN_OUT_FACTOR (_ANF)
-    slot : str
-        Tool slot identifier (default: '1')
+        If None, uses HopsSystemVars.LEAD_IN_OUT_FACTOR (_ANF)
+    head_id : str
+        Tool head identifier (default: '1')
     name : str
         Tool name/description (e.g., 'Birdsmouth W41', 'Saw blade Ø350')
 
@@ -109,105 +109,103 @@ class MachiningTool:
 
     def __init__(
         self,
-        holder_type: ToolHolderType,
+        tool_type: ToolCallType,
         position: int,
         lead_in_feedrate: Optional[float] = None,
         feedrate: Optional[float] = None,
-        surface_feedrate: Optional[float] = None,
+        lead_out_feedrate: Optional[float] = None,
         motor_speed: Optional[float] = None,
-        lead_in_factor: Optional[float] = None,
-        slot: str = "1",
+        lead_in_out_factor: Optional[float] = None,
+        head_id: str = "1",
         name: str = "",
     ):
-        self.holder_type = holder_type
+        self.tool_type = tool_type
         self.position = position
         self.lead_in_feedrate = lead_in_feedrate
         self.feedrate = feedrate
-        self.surface_feedrate = surface_feedrate
+        self.lead_out_feedrate = lead_out_feedrate
         self.motor_speed = motor_speed
-        self.lead_in_factor = lead_in_factor
-        self.slot = slot
+        self.lead_in_out_factor = lead_in_out_factor
+        self.head_id = head_id
         self.name = name
 
     def __str__(self) -> str:
-        """Return HOPS command string for this tool.
-
-        Uses HOPS macro variables for parameters that are None:
-        - lead_in_feedrate=None -> HopsMacro.LEAD_IN_FEEDRATE (_VE - lead in/out speed)
-        - feedrate=None -> HopsMacro.FEEDRATE (_V - general/rapid feed)
-        - surface_feedrate=None -> HopsMacro.SURFACE_FEEDRATE (_VA - surface/cutting speed)
-        - motor_speed=None -> HopsMacro.MOTOR_SPEED (_SD)
-        - lead_in_factor=None -> HopsMacro.LEAD_IN_OUT_FACTOR (_ANF)
-
-        Returns formatted command like: WZF(7,_VE,_V,_VA,_SD,_ANF,'1')
-        or with overrides: WZF(1,5000,8000,5000,_SD,_ANF,'1')
-        """
-        cmd_prefix = self.holder_type.value
+        """Return HOPS tool command string."""
+        cmd_prefix = self.tool_type.value
         lead_in_feedrate_str = (
             str(self.lead_in_feedrate)
             if self.lead_in_feedrate is not None
-            else HopsMacro.LEAD_IN_FEEDRATE
+            else HopsSystemVars.LEAD_IN_FEEDRATE
         )
         feedrate_str = (
-            str(self.feedrate) if self.feedrate is not None else HopsMacro.FEEDRATE
+            str(self.feedrate) if self.feedrate is not None else HopsSystemVars.FEEDRATE
         )
-        surface_feedrate_str = (
-            str(self.surface_feedrate)
-            if self.surface_feedrate is not None
-            else HopsMacro.SURFACE_FEEDRATE
+        lead_out_feedrate_str = (
+            str(self.lead_out_feedrate)
+            if self.lead_out_feedrate is not None
+            else HopsSystemVars.LEAD_OUT_FEEDRATE
         )
         motor_speed_str = (
             str(self.motor_speed)
             if self.motor_speed is not None
-            else HopsMacro.MOTOR_SPEED
+            else HopsSystemVars.MOTOR_SPEED
         )
-        lead_in_factor_str = (
-            str(self.lead_in_factor)
-            if self.lead_in_factor is not None
-            else HopsMacro.LEAD_IN_OUT_FACTOR
+        lead_in_out_factor_str = (
+            str(self.lead_in_out_factor)
+            if self.lead_in_out_factor is not None
+            else HopsSystemVars.LEAD_IN_OUT_FACTOR
         )
 
-        return f"{cmd_prefix}({self.position},{lead_in_feedrate_str},{feedrate_str},{surface_feedrate_str},{motor_speed_str},{lead_in_factor_str},'{self.slot}')"
+        return f"{cmd_prefix}({self.position},{lead_in_feedrate_str},{feedrate_str},{lead_out_feedrate_str},{motor_speed_str},{lead_in_out_factor_str},'{self.slot}')"
 
     def __repr__(self) -> str:
         """Return detailed string representation for debugging."""
-        return f"Tool({self.holder_type.name}, position={self.position}, name='{self.name}')"
+        return (
+            f"Tool({self.tool_type.name}, position={self.position}, name='{self.name}')"
+        )
 
     def get_code(self) -> str:
         """Return tool code string (e.g., 'WZF504', 'WZS201')."""
-        return f"{self.holder_type.value}{self.position}"
+        return f"{self.tool_type.value}{self.position}"
 
     @classmethod
     def from_code(cls, tool_code: str, **kwargs) -> "MachiningTool":
         """Parse tool code string into Tool instance.
 
         Parameters:
-            tool_code: Tool code string (e.g., 'WZF504', 'WZS201')
-            **kwargs: Additional parameters for MachiningTool (feedrate, plunge_rate, etc.)
+        -----------
+        tool_code : str
+            Tool code string (e.g., 'WZF504', 'WZS201')
+
+        Returns:
+        -----------
+        :class:`easyhops.MachiningTool`
+            Parsed tool instance with parameters from code and overrides from kwargs.
 
         Example:
+        -----------
             >>> MachiningTool.from_code('WZF504', feedrate=3500)
-            MachiningTool(CASSETTE, position=504, name='', priority=0)
+            MachiningTool(ROUTER, position=504, name='', priority=0)
             >>> MachiningTool.from_code('WZS201')
-            MachiningTool(BLADE, position=201, name='', priority=100)
+            MachiningTool(SAW, position=201, name='', priority=100)
         """
         match = re.match(r"(WZ[SFB])(\d+)", tool_code)
         if not match:
             raise ValueError(f"Unknown tool holder type in code: {tool_code}")
 
-        holder_str, position_str = match.groups()
+        tool_str, position_str = match.groups()
         position = int(position_str)
 
-        if holder_str == "WZF":
-            holder_type = ToolHolderType.CASSETTE
-        elif holder_str == "WZS":
-            holder_type = ToolHolderType.BLADE
-        elif holder_str == "WZB":
-            holder_type = ToolHolderType.DRILLS
+        if tool_str == "WZF":
+            tool_type = ToolCallType.ROUTER
+        elif tool_str == "WZS":
+            tool_type = ToolCallType.SAW
+        elif tool_str == "WZB":
+            tool_type = ToolCallType.DRILLER
         else:
             raise ValueError(f"Unknown tool holder type in code: {tool_code}")
 
-        return cls(holder_type, position, **kwargs)
+        return cls(tool_type, position, **kwargs)
 
 
 # ==================== Tool Library ====================
@@ -217,12 +215,28 @@ class MachiningTool:
 class BirdsmouthW41(MachiningTool):
     """Birdsmouth W41 wheel tool (WZF504) for contour milling and pocketing.
 
+    Parameters:
+    -----------
+    lead_in_feedrate : Optional[float]
+        Lead in/out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_IN_FEEDRATE (_VE)
+    feedrate : Optional[float]
+        General/rapid feedrate in mm/min. If None, uses HopsSystemVars.FEEDRATE (_V)
+    lead_out_feedrate : Optional[float]
+        Lead out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_OUT_FEEDRATE (_VA)
+    motor_speed : Optional[float]
+        Motor speed (RPM). If None, uses HopsSystemVars.MOTOR_SPEED (_SD)
+    lead_in_out_factor : Optional[float]
+        Lead-in/out factor. This is a multiplying factor of the default value set in the tool manager.
+        If None, uses HopsSystemVars.LEAD_IN_OUT_FACTOR (_ANF)
+    head_id : str
+        Tool head identifier (default: '1')
+
     Example:
-        >>> tool = BirdsmouthW41(surface_feedrate=4500)
+        >>> tool = BirdsmouthW41(lead_out_feedrate=4500)
         >>> str(tool)
         "WZF(504,_VE,_V,4500,_SD,_ANF,'1')"
 
-        >>> tool = BirdsmouthW41(feedrate=3000, surface_feedrate=4000)
+        >>> tool = BirdsmouthW41(feedrate=3000, lead_out_feedrate=4000)
         >>> str(tool)
         "WZF(504,_VE,3000,4000,_SD,_ANF,'1')"
     """
@@ -231,20 +245,20 @@ class BirdsmouthW41(MachiningTool):
         self,
         lead_in_feedrate: Optional[float] = None,
         feedrate: Optional[float] = None,
-        surface_feedrate: Optional[float] = None,
+        lead_out_feedrate: Optional[float] = None,
         motor_speed: Optional[float] = None,
-        lead_in_factor: Optional[float] = None,
-        slot: str = "1",
+        lead_in_out_factor: Optional[float] = None,
+        head_id: str = "1",
     ):
         super().__init__(
-            holder_type=ToolHolderType.CASSETTE,
+            tool_type=ToolCallType.ROUTER,
             position=504,
             lead_in_feedrate=lead_in_feedrate,
             feedrate=feedrate,
-            surface_feedrate=surface_feedrate,
+            lead_out_feedrate=lead_out_feedrate,
             motor_speed=motor_speed,
-            lead_in_factor=lead_in_factor,
-            slot=slot,
+            lead_in_out_factor=lead_in_out_factor,
+            head_id=head_id,
             name="Birdsmouth W41",
         )
 
@@ -252,12 +266,28 @@ class BirdsmouthW41(MachiningTool):
 class SaegeD350(MachiningTool):
     """Saw blade Ø350 (WZS201) for cutting operations.
 
+    Parameters:
+    -----------
+    lead_in_feedrate : Optional[float]
+        Lead in/out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_IN_FEEDRATE (_VE)
+    feedrate : Optional[float]
+        General/rapid feedrate in mm/min. If None, uses HopsSystemVars.FEEDRATE (_V)
+    lead_out_feedrate : Optional[float]
+        Lead out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_OUT_FEEDRATE (_VA)
+    motor_speed : Optional[float]
+        Motor speed (RPM). If None, uses HopsSystemVars.MOTOR_SPEED (_SD)
+    lead_in_out_factor : Optional[float]
+        Lead-in/out factor. This is a multiplying factor of the default value set in the tool manager.
+        If None, uses HopsSystemVars.LEAD_IN_OUT_FACTOR (_ANF)
+    head_id : str
+        Tool head identifier (default: '1')
+
     Example:
         >>> tool = SaegeD350()
         >>> str(tool)
         "WZS(201,_VE,_V,_VA,_SD,_ANF,'1')"
 
-        >>> tool = SaegeD350(feedrate=10000, surface_feedrate=7000)
+        >>> tool = SaegeD350(feedrate=10000, lead_out_feedrate=7000)
         >>> str(tool)
         "WZS(201,_VE,10000,7000,_SD,_ANF,'1')"
     """
@@ -266,26 +296,42 @@ class SaegeD350(MachiningTool):
         self,
         lead_in_feedrate: Optional[float] = None,
         feedrate: Optional[float] = None,
-        surface_feedrate: Optional[float] = None,
+        lead_out_feedrate: Optional[float] = None,
         motor_speed: Optional[float] = None,
-        lead_in_factor: Optional[float] = None,
-        slot: str = "1",
+        lead_in_out_factor: Optional[float] = None,
+        head_id: str = "1",
     ):
         super().__init__(
-            holder_type=ToolHolderType.BLADE,
+            tool_type=ToolCallType.SAW,
             position=201,
             lead_in_feedrate=lead_in_feedrate,
             feedrate=feedrate,
-            surface_feedrate=surface_feedrate,
+            lead_out_feedrate=lead_out_feedrate,
             motor_speed=motor_speed,
-            lead_in_factor=lead_in_factor,
-            slot=slot,
+            lead_in_out_factor=lead_in_out_factor,
+            head_id=head_id,
             name="Saw blade Ø350",
         )
 
 
 class CastorD61(MachiningTool):
     """Castor Ø61 milling tool (WZF503) for general milling tasks.
+
+    Parameters:
+    -----------
+    lead_in_feedrate : Optional[float]
+        Lead in/out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_IN_FEEDRATE (_VE)
+    feedrate : Optional[float]
+        General/rapid feedrate in mm/min. If None, uses HopsSystemVars.FEEDRATE (_V)
+    lead_out_feedrate : Optional[float]
+        Lead out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_OUT_FEEDRATE (_VA)
+    motor_speed : Optional[float]
+        Motor speed (RPM). If None, uses HopsSystemVars.MOTOR_SPEED (_SD)
+    lead_in_out_factor : Optional[float]
+        Lead-in/out factor. This is a multiplying factor of the default value set in the tool manager.
+        If None, uses HopsSystemVars.LEAD_IN_OUT_FACTOR (_ANF)
+    head_id : str
+        Tool head identifier (default: '1')
 
     Example:
         >>> tool = CastorD61()
@@ -301,20 +347,20 @@ class CastorD61(MachiningTool):
         self,
         lead_in_feedrate: Optional[float] = None,
         feedrate: Optional[float] = None,
-        surface_feedrate: Optional[float] = None,
+        lead_out_feedrate: Optional[float] = None,
         motor_speed: Optional[float] = None,
-        lead_in_factor: Optional[float] = None,
-        slot: str = "1",
+        lead_in_out_factor: Optional[float] = None,
+        head_id: str = "1",
     ):
         super().__init__(
-            holder_type=ToolHolderType.CASSETTE,
+            tool_type=ToolCallType.ROUTER,
             position=503,
             lead_in_feedrate=lead_in_feedrate,
             feedrate=feedrate,
-            surface_feedrate=surface_feedrate,
+            lead_out_feedrate=lead_out_feedrate,
             motor_speed=motor_speed,
-            lead_in_factor=lead_in_factor,
-            slot=slot,
+            lead_in_out_factor=lead_in_out_factor,
+            head_id=head_id,
             name="Castor Ø61",
         )
 
@@ -326,7 +372,13 @@ class ToolLibrary:
     feedrates, and other parameters. Provides dynamic access to all tools
     defined in the CNC machine's tool library.
 
+    Parameters:
+    -----------
+    too_path : Union[str, Path]
+        Path to .too file. If None, uses default 'data/7235C_219.too' included with easyhops.
+
     Example:
+    -----------
         >>> # Use default tool library from data/7235C_219.too
         >>> tool = ToolLibrary.get('Birdsmouth')
         >>> str(tool)
@@ -346,17 +398,6 @@ class ToolLibrary:
     _default_instance: Optional["ToolLibrary"] = None
 
     def __init__(self, too_path: Union[str, Path] = None):
-        """Parse .too file and create tool library.
-
-        Args:
-            too_path: Path to .too file. If None, uses 'data/7235C_219.too'
-
-        Example:
-            >>> library = ToolLibrary()  # Uses default
-            >>> library = ToolLibrary('data/7235C_219.too')
-            >>> len(library)
-            27
-        """
         self._tools_by_name: Dict[str, MachiningTool] = {}
         self._tools_by_number: Dict[int, MachiningTool] = {}
         self._tool_count: int = 0
@@ -387,17 +428,30 @@ class ToolLibrary:
     def get(cls, name: str = None, tool_no: int = None) -> Optional[MachiningTool]:
         """Get tool by name or tool number from default library.
 
+        If both name and tool_no are provided, validates they refer to the same tool.
+
         This is a class method that uses the default tool library (data/7235C_219.too).
         For custom tool libraries, create an instance and call get() on it.
 
-        Args:
-            name: Tool name (case-insensitive, partial match supported)
-            tool_no: Tool number from .too file
+        Parameters:
+        -----------
+        name : str
+            Tool name (case-insensitive, partial match supported)
+        tool_no : int
+            Tool number from .too file
 
         Returns:
+        -----------
+        :class:`easyhops.MachiningTool`
             MachiningTool instance if found, None otherwise
 
+        Raises:
+        -----------
+        ValueError
+            If both name and tool_no are provided but don't match the same tool
+
         Example:
+        -----------
             >>> # Direct access without instantiation
             >>> tool = ToolLibrary.get('Birdsmouth')
             >>> str(tool)
@@ -420,40 +474,83 @@ class ToolLibrary:
     ) -> Optional[MachiningTool]:
         """Get tool by name or tool number from this library instance.
 
-        Args:
-            name: Tool name (case-insensitive, partial match supported)
-            tool_no: Tool number from .too file
+        If both name and tool_no are provided, validates they refer to the same tool.
+
+        Parameters:
+        -----------
+        name : str
+            Tool name (case-insensitive, partial match supported)
+        tool_no : int
+            Tool number from .too file
 
         Returns:
+        -----------
+        :class:`easyhops.MachiningTool`
             MachiningTool instance if found, None otherwise
+
+        Raises:
+        -----------
+        ValueError
+            If both name and tool_no are provided but don't match the same tool
 
         Example:
             >>> library = ToolLibrary()
             >>> tool = library.get_tool('Birdsmouth')
             >>> str(tool)
             "WZF(504,_VE,_V,_VA,_SD,_ANF,'1')"
+            >>>
+            >>> # Validate name and number match
+            >>> tool = library.get_tool('Birdsmouth', tool_no=504)
         """
+        if name is None and tool_no is None:
+            raise ValueError("Must provide either `name` or `tool_no` to get tool.")
+
+        tool_by_name = None
+        tool_by_number = None
+
         if name is not None:
             # Try exact match first (case-insensitive)
-            tool = self._tools_by_name.get(name.lower())
-            if tool:
-                return tool
+            tool_by_name = self._tools_by_name.get(name.lower())
 
-            # Try partial match
-            name_lower = name.lower()
-            for tool_name, tool in self._tools_by_name.items():
-                if name_lower in tool_name:
-                    return tool
-            return None
-        elif tool_no is not None:
-            return self._tools_by_number.get(tool_no)
-        else:
-            raise ValueError("Must provide either name or tool_no")
+            # Try partial match if exact match failed
+            if tool_by_name is None:
+                name_lower = name.lower()
+                for tool_name, tool in self._tools_by_name.items():
+                    if name_lower in tool_name:
+                        tool_by_name = tool
+                        break
+
+        if tool_no is not None:
+            tool_by_number = self._tools_by_number.get(tool_no)
+
+        # If both provided, validate they match
+        if name is not None and tool_no is not None:
+            if tool_by_name is None and tool_by_number is None:
+                return None  # Neither found
+            elif tool_by_name is None:
+                raise ValueError(
+                    f"Tool name '{name}' not found, but tool_no {tool_no} exists"
+                )
+            elif tool_by_number is None:
+                raise ValueError(
+                    f"Tool number {tool_no} not found, but name '{name}' exists"
+                )
+            elif tool_by_name is not tool_by_number:
+                raise ValueError(
+                    f"Tool name '{name}' (position {tool_by_name.position}) does not match "
+                    f"tool_no {tool_no} (name '{tool_by_number.name}')"
+                )
+            return tool_by_name  # Both match, return either one
+
+        # Return whichever was found
+        return tool_by_name if tool_by_name is not None else tool_by_number
 
     def list_tools(self) -> list[str]:
         """List all tool names in library.
 
         Returns:
+        -----------
+        List[str]
             List of tool names
         """
         return sorted(self._tools_by_name.keys())
@@ -483,27 +580,26 @@ class ToolLibrary:
                 # Extract tool metadata
                 name = config.get(section, "Name", fallback="")
                 tool_no = config.getint(section, "ToolNo", fallback=-1)
-                tool_type = config.getint(section, "ToolType", fallback=0)
+                tool_type_idx = config.getint(section, "ToolType", fallback=0)
 
                 # Skip tools with invalid numbers
                 if tool_no == -1:
                     continue
 
-                # Determine holder type based on tool type
+                # Determine tool type based on tool type index
                 # ToolType: 0=Schaft (cassette), 1=Drill (drill head), 2=Säge (saw blade), 3=Laser/Special
-                if tool_type == 2:  # Saw blade
-                    holder_type = ToolHolderType.BLADE
-                    position = 201  # Standard saw blade position
-                else:  # Cassette tools
-                    holder_type = ToolHolderType.CASSETTE
-                    # Use tool_no as position for cassette tools
-                    position = tool_no
+                if tool_type_idx == 2:  # Saw blade
+                    tool_type = ToolCallType.SAW
+                elif tool_type_idx == 1:  # Drill
+                    tool_type = ToolCallType.DRILLER
+                elif tool_type_idx == 0:  # Cassette tools
+                    tool_type = ToolCallType.ROUTER
 
                 # Create MachiningTool instance
                 # Don't pass feedrates - let them default to None so HOPS macro variables are used
                 tool = MachiningTool(
-                    holder_type=holder_type,
-                    position=position,
+                    tool_type=tool_type,
+                    position=tool_no,
                     name=name,
                 )
 
