@@ -15,21 +15,21 @@ class HopsSystemVars(StrEnum):
     Parameters:
     -----------
     FEEDRATE : str
-        Current feed rate from tool manager (_V) - general/rapid feed rate
+        Current feed rate from tool manager ("_V")
     LEAD_OUT_FEEDRATE : str
-        Current lead out feed rate from tool manager (_VA) - lead out speed
+        Current lead out feed rate from tool manager ("_VA")
     LEAD_IN_FEEDRATE : str
-        Current lead in feed rate from tool manager (_VE) - lead in speed
+        Current lead in feed rate from tool manager ("_VE")
     MOTOR_SPEED : str
-        Current motor speed from tool manager (_SD)
+        Current motor speed from tool manager ("_SD")
     LEAD_IN_OUT_FACTOR : str
-        Current tool lead in and lead out factor from tool manager (_ANF)
+        Current tool lead in and lead out factor from tool manager ("_ANF")
     TOOL_DIAMETER : str
-        Current tool diameter from tool manager (_WZD)
+        Current tool diameter from tool manager ("_WZD")
     TOOL_RADIUS : str
-        Current tool radius from tool manager (_WZR)
+        Current tool radius from tool manager ("_WZR")
     SAW_WIDTH : str
-        Current saw blade width from tool manager (_SBB)
+        Current saw blade width from tool manager ("_SBB")
     """
 
     LEAD_IN_FEEDRATE = "_VE"  # Current lead in feed rate (tool manager)
@@ -48,16 +48,17 @@ class ToolCallType(StrEnum):
     Parameters:
     -----------
     ROUTER : str
-        Cassette for multiple milling tools
+        Router/milling tool ("WZF")
     SAW : str
-        Blade holder (single saw blade)
+        Saw blade tool ("WZS")
     DRILLER : str
-        Drill holder (multiple drill)
+        Drilling tool ("WZB")
+
     """
 
-    ROUTER = "WZF"  # Cassette for multiple milling tools ("TOOLM")
-    SAW = "WZS"  # Blade holder (single saw blade) ("TOOLS")
-    DRILLER = "WZB"  # Drill holder (multiple drills) ("TOOLD")
+    ROUTER = "WZF"  # TOOLM
+    SAW = "WZS"  # TOOLS
+    DRILLER = "WZB"  # TOOLD
 
 
 class MachiningTool:
