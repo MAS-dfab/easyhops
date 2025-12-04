@@ -8,9 +8,12 @@ from .tool_library import (
     SaegeD350,
     CastorD61,
 )
-from .hop_core import HopOperation, HopFile
+from .hop_core import HopOperation, HopFile, EasySnapXY, EasySnapZ
 from .work_planes import WorkPlane, FreePlane
 from .machining_commands import (
+    CompensationMode,
+    LeadInOutMode,
+    ProcessMode,
     MachiningCommand,
     StartPoint,
     G01,
@@ -33,10 +36,15 @@ __all__ = [
     "StockHopsMerger",
     "HopOperation",
     "HopFile",
+    "EasySnapXY",
+    "EasySnapZ",
     # Work Planes
     "WorkPlane",
     "FreePlane",
     # Machining Commands
+    "CompensationMode",
+    "LeadInOutMode",
+    "ProcessMode",
     "MachiningCommand",
     "StartPoint",
     "G01",
