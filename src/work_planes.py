@@ -5,6 +5,9 @@ from compas.geometry import Frame
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_projected
 
+from .hop_core import EasySnapXY
+from .hop_core import EasySnapZ
+
 
 class WorkPlane(StrEnum):
     """Standard HOPS work plane type definitions.
@@ -59,18 +62,17 @@ class FreePlane:
     tilt_angle : float
         Tilt angle β2 in degrees (rotation around X-axis)
         Applied first in transformation sequence
-    z_offset : Optional[float]
-        Z-offset in the direction of the defined view
-        Shifts working plane perpendicular to tilted/rotated surface
-    additional_param : Optional[float]
-        Optional 7th parameter for extended functionality
+    easy_snap_xy : Optional[EasySnapXY]
+        Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
+    easy_snap_z : Optional[EasySnapZ]
+        Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
 
     Example:
     --------
         >>> plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
         >>> str(plane)
         'EBENEF(100,50,0,45,0)'
-        >>> plane.z_offset = 10
+        >>> plane.easy_snap_xy = 10
         >>> str(plane)
         'EBENEF(100,50,0,45,0,10)'
     """
@@ -82,16 +84,16 @@ class FreePlane:
         z: float,
         rotation_angle: float,
         tilt_angle: float,
-        z_offset: Optional[float] = 0.0,
-        additional_param: Optional[float] = 0.0,
+        easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
         self.x = x
         self.y = y
         self.z = z
         self.rotation_angle = rotation_angle
         self.tilt_angle = tilt_angle
-        self.z_offset = z_offset
-        self.additional_param = additional_param
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
 
     def __str__(self) -> str:
         """Return EBENEF command string.
@@ -105,8 +107,8 @@ class FreePlane:
             self.z,
             self.rotation_angle,
             self.tilt_angle,
-            self.z_offset,
-            self.additional_param,
+            self.easy_snap_xy,
+            self.easy_snap_z,
         ]
         return f"EBENEF({','.join(map(str, params))})"
 
@@ -115,7 +117,7 @@ class FreePlane:
         return (
             f"FreePlane(x={self.x}, y={self.y}, z={self.z}, "
             f"rotation={self.rotation_angle}°, tilt={self.tilt_angle}°, "
-            f"z_offset={self.z_offset}, additional_param={self.additional_param})"
+            f"easy_snap_xy={self.easy_snap_xy}, easy_snap_z={self.easy_snap_z})"
         )
 
     @classmethod
