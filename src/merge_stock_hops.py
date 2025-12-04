@@ -1,8 +1,8 @@
 """
 Stock-Level HOPS Merger for Nested Beams
 
-This module merges multiple .hop files (representing individual beams) into a single
-.hop file for a timber stock, based on nesting information from a JSON file.
+This module provides functionality for merging multiple .hop files (representing individual beams)
+into a single .hop file for a timber stock, based on nesting information from a JSON file.
 
 The merger handles:
 - Reading nesting data to determine beam positions within stock
@@ -11,8 +11,6 @@ The merger handles:
 - Generating a merged HOPS file for the entire stock
 
 Classes:
-    HopOperation: Represents a single machining operation block with offset capabilities
-    HopFile: Parses and represents a single .hop file
     StockHopsMerger: Main class for merging multiple beams into a stock
 
 Usage Example:
@@ -41,263 +39,7 @@ import os
 import re
 import glob
 from typing import List, Tuple
-
-
-class HopOperation:
-    """
-    Represents a single machining operation block in a HOPS file.
-
-    An operation consists of:
-    - Tool command (WZF or WZS)
-    - Work plane definition (EBENEF or EBENE0/EBENE2/EBENE4)
-    - Machining commands (SP, G01, EP for milling; SAEGEN for sawing)
-    - Associated comment lines
-
-    Attributes:
-        tool_command (str): Full tool command line (e.g., "WZS(201,10000,7000,20000,_SD,_ANF,'1')")
-        tool_type (str): Extracted tool identifier (e.g., "WZS201", "WZF504")
-        lines (List[str]): All lines comprising this operation
-        has_ebenef (bool): True if operation uses EBENEF work plane
-        min_x (float): Minimum X-coordinate for sorting purposes
-    """
-
-    def __init__(self, tool_command: str, lines: List[str]):
-        """
-        Initialize a machining operation.
-
-        Args:
-            tool_command: The tool selection command line
-            lines: All lines belonging to this operation block
-        """
-        self.tool_command = tool_command
-        self.lines = lines
-        self.tool_type = self._extract_tool_type()
-        self.has_ebenef = self._check_ebenef()
-        self.min_x = None
-
-    def _extract_tool_type(self) -> str:
-        """Extract tool identifier from tool command (e.g., 'WZS201' from 'WZS(201,...)')."""
-        match = re.match(r"(WZ[SF])\((\d+)", self.tool_command)
-        if match:
-            return f"{match.group(1)}{match.group(2)}"
-        return "UNKNOWN"
-
-    def _check_ebenef(self) -> bool:
-        """Check if this operation uses EBENEF work plane definition."""
-        return any("EBENEF" in line for line in self.lines)
-
-    def calculate_min_x(self) -> float:
-        """
-        Calculate minimum X-coordinate in this operation for sorting.
-
-        Returns:
-            Minimum X-coordinate found in operation commands
-        """
-        x_coords = []
-
-        for line in self.lines:
-            # Extract X from EBENEF
-            if "EBENEF" in line:
-                match = re.search(r"EBENEF\(([-+]?\d+\.?\d*)", line)
-                if match:
-                    x_coords.append(float(match.group(1)))
-
-            # Extract X from SP
-            elif line.strip().startswith("SP("):
-                match = re.search(r"SP\(([-+]?\d+\.?\d*)", line)
-                if match:
-                    x_coords.append(float(match.group(1)))
-
-            # Extract X from SAEGEN
-            elif "SAEGEN" in line:
-                match = re.search(r"SAEGEN\(([-+]?\d+\.?\d*)", line)
-                if match:
-                    x_coords.append(float(match.group(1)))
-
-        self.min_x = min(x_coords) if x_coords else 0.0
-        return self.min_x
-
-    def apply_offset(self, x_offset: float) -> List[str]:
-        """
-        Apply X-offset to all coordinates in this operation.
-
-        Offsetting rules:
-        - EBENEF: Only first parameter (X-coordinate)
-        - SP, G01 (after EBENE0): First parameter (X-coordinate)
-        - SAEGEN: Parameters 1 and 4 (X1 and X2)
-
-        Args:
-            x_offset: Distance to offset X-coordinates (mm)
-
-        Returns:
-            List of offset lines for this operation
-        """
-        offset_lines = []
-        in_ebene0_block = False
-
-        for line in self.lines:
-            # Check if we're entering an EBENE0 block
-            if "EBENE0()" in line or "EBENE2()" in line or "EBENE4()" in line:
-                in_ebene0_block = True
-                offset_lines.append(line)
-                continue
-
-            # EBENEF: offset only first parameter (X)
-            if "EBENEF" in line:
-                in_ebene0_block = False
-                offset_lines.append(self._offset_ebenef(line, x_offset))
-
-            # SAEGEN: offset parameters 1 and 4 (X1, X2)
-            elif "SAEGEN" in line:
-                offset_lines.append(self._offset_saegen(line, x_offset))
-
-            # SP, G01: offset first parameter (X) if in EBENE0 block
-            elif (
-                line.strip().startswith("SP(") or line.strip().startswith("G01(")
-            ) and in_ebene0_block:
-                offset_lines.append(self._offset_coordinate_line(line, x_offset))
-
-            # All other lines pass through unchanged
-            else:
-                offset_lines.append(line)
-
-        return offset_lines
-
-    def _offset_ebenef(self, line: str, x_offset: float) -> str:
-        """Offset X-coordinate (first parameter) in EBENEF command."""
-        match = re.match(r"EBENEF\(([-+]?\d+\.?\d*)(,.*)", line)
-        if match:
-            x_val = float(match.group(1)) + x_offset
-            return f"EBENEF({x_val:.4f}{match.group(2)}\n"
-        return line
-
-    def _offset_saegen(self, line: str, x_offset: float) -> str:
-        """Offset X1 and X2 (parameters 1 and 4) in SAEGEN command."""
-        # SAEGEN(x1, y1, z1, x2, y2, z2, ...)
-        match = re.match(
-            r"SAEGEN\(([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*)(,.*)",
-            line,
-        )
-        if match:
-            x1 = float(match.group(1)) + x_offset
-            y1 = float(match.group(2))
-            z1 = float(match.group(3))
-            x2 = float(match.group(4)) + x_offset
-            y2 = float(match.group(5))
-            z2 = float(match.group(6))
-            rest = match.group(7)
-            return (
-                f"SAEGEN({x1:.3f},{y1:.3f},{z1:.3f},{x2:.3f},{y2:.3f},{z2:.3f}{rest}\n"
-            )
-        return line
-
-    def _offset_coordinate_line(self, line: str, x_offset: float) -> str:
-        """Offset X-coordinate (first parameter) in SP or G01 command."""
-        # SP(x, y, z, ...) or G01(x, y, z, ...)
-        match = re.match(r"(SP|G01)\(([-+]?\d+\.?\d*)(,.*)", line)
-        if match:
-            command = match.group(1)
-            x_val = float(match.group(2)) + x_offset
-            rest = match.group(3)
-            return f"{command}({x_val:.3f}{rest}\n"
-        return line
-
-
-class HopFile:
-    """
-    Represents and parses a single .hop file.
-
-    Parses the file into:
-    - Header comments (lines starting with ';')
-    - VARS section (variable definitions)
-    - Operations (machining command blocks)
-
-    Attributes:
-        filepath (str): Path to the .hop file
-        header (List[str]): Comment lines at top of file
-        vars_section (List[str]): VARS...START section
-        operations (List[HopOperation]): Parsed machining operations
-        dx (float): Piece length extracted from VARS section
-        dy (float): Piece height
-        dz (float): Piece thickness
-    """
-
-    def __init__(self, filepath: str):
-        """
-        Initialize HopFile parser.
-
-        Args:
-            filepath: Path to the .hop file
-        """
-        self.filepath = filepath
-        self.header = []
-        self.vars_section = []
-        self.operations = []
-        self.dx = None
-        self.dy = None
-        self.dz = None
-        self._parse()
-
-    def _parse(self):
-        """Parse the .hop file into header, vars, and operations."""
-        with open(self.filepath, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
-
-        # Extract header comments
-        i = 0
-        while i < len(lines) and lines[i].startswith(";"):
-            self.header.append(lines[i])
-            i += 1
-
-        # Extract VARS section (up to START)
-        while i < len(lines) and "START" not in lines[i]:
-            self.vars_section.append(lines[i])
-            # Extract DX, DY, DZ values
-            if "DX :=" in lines[i]:
-                match = re.search(r"DX := ([-+]?\d+\.?\d*)", lines[i])
-                if match:
-                    self.dx = float(match.group(1))
-            elif "DY :=" in lines[i]:
-                match = re.search(r"DY := ([-+]?\d+\.?\d*)", lines[i])
-                if match:
-                    self.dy = float(match.group(1))
-            elif "DZ :=" in lines[i]:
-                match = re.search(r"DZ := ([-+]?\d+\.?\d*)", lines[i])
-                if match:
-                    self.dz = float(match.group(1))
-            i += 1
-
-        # Add START line
-        if i < len(lines):
-            self.vars_section.append(lines[i])
-            i += 1
-
-        # Skip FERTIGTEIL and Park lines (part of initialization, not operations)
-        while i < len(lines) and not (lines[i].strip().startswith("WZ")):
-            i += 1
-
-        # Parse operations (WZF/WZS blocks)
-        while i < len(lines):
-            if lines[i].strip().startswith("WZ"):
-                tool_command = lines[i]
-                operation_lines = [tool_command]
-                i += 1
-
-                # Collect lines until next tool command or end of file
-                while i < len(lines) and not lines[i].strip().startswith("WZ"):
-                    # Stop at EBENE0() at root level (signals end of operation)
-                    if (
-                        lines[i].strip() == "EBENE0()"
-                        and i + 1 < len(lines)
-                        and not lines[i + 1].strip().startswith("SAEGEN")
-                    ):
-                        break
-                    operation_lines.append(lines[i])
-                    i += 1
-
-                self.operations.append(HopOperation(tool_command, operation_lines))
-            else:
-                i += 1
+from .hop_core import HopFile, HopOperation
 
 
 class StockHopsMerger:
@@ -326,6 +68,7 @@ class StockHopsMerger:
             hop_directory: Directory containing the .hop files to merge
         """
         self.nesting_data = self._load_nesting(nesting_json_path)
+        self.hop_directory = hop_directory
         self.stock_info = self._extract_stock_info()
         self.hop_files = []
         self._auto_load_hop_files(hop_directory)
@@ -339,6 +82,8 @@ class StockHopsMerger:
         """
         Extract stock information from nesting data.
 
+        Automatically finds the correct stock by matching beam keys from .hop filenames.
+
         Returns:
             dict: {
                 'length': stock length,
@@ -351,18 +96,53 @@ class StockHopsMerger:
                 }
             }
         """
-        # Assuming we're working with the first stock in the nesting data
-        # Adjust if you need to handle multiple stocks
-        stock = self.nesting_data["data"]["stocks"][0]
-        stock_data = stock["data"]
+        # Get beam keys from .hop filenames
+        hop_beam_keys = self._get_beam_keys_from_files()
+
+        if not hop_beam_keys:
+            raise ValueError("No R_00 .hop files found in directory")
+
+        # Find which stock contains these beam keys
+        stocks = self.nesting_data["data"]["stocks"]
+        matching_stock = None
+
+        for stock_idx, stock in enumerate(stocks):
+            stock_data = stock["data"]
+            stock_beam_keys = set()
+
+            for element_data in stock_data["element_data"].values():
+                stock_beam_keys.add(element_data["key"])
+
+            # Check if all hop file beam keys are in this stock
+            if hop_beam_keys.issubset(stock_beam_keys):
+                matching_stock = stock
+                print(
+                    f"Found matching stock (index {stock_idx}) containing beams: {sorted(hop_beam_keys)}"
+                )
+                break
+
+        if matching_stock is None:
+            raise ValueError(
+                f"No stock found containing all beam keys from .hop files: {sorted(hop_beam_keys)}\n"
+                f"Available stocks have these beam keys:\n"
+                + "\n".join(
+                    [
+                        f"  Stock {i}: {sorted([e['key'] for e in s['data']['element_data'].values()])}"
+                        for i, s in enumerate(stocks[:5])
+                    ]
+                )
+            )
+
+        stock_data = matching_stock["data"]
 
         stock_info = {
             "length": stock_data["length"],
             "cross_section": stock_data["cross_section"],
             "elements": {},
+            "element_order": [],  # Preserve order from nesting JSON
         }
 
-        # Extract element data (beams)
+        # Extract element data (beams) - preserve insertion order
         for element_id, element_data in stock_data["element_data"].items():
             beam_key = element_data["key"]
             beam_length = element_data["length"]
@@ -372,62 +152,81 @@ class StockHopsMerger:
                 "length": beam_length,
                 "offset": x_offset,
             }
+            stock_info["element_order"].append(beam_key)
 
         return stock_info
 
-    def _get_sorted_beam_keys(self) -> List[int]:
+    def _get_beam_keys_from_files(self) -> set:
+        """Extract beam keys from R_00 .hop filenames in the directory."""
+        all_hop_files = glob.glob(os.path.join(self.hop_directory, "*.hop"))
+        hop_files = [
+            f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))
+        ]
+
+        beam_keys = set()
+        for hop_path in hop_files:
+            filename = os.path.basename(hop_path)
+            match = re.search(r"R_?0{2}_(\d+)\.hop", filename)
+            if match:
+                beam_keys.add(int(match.group(1)))
+
+        return beam_keys
+
+    def _get_beam_keys_in_order(self) -> List[int]:
         """
-        Get beam keys sorted by X-position (left to right in stock).
+        Get beam keys in the order they appear in the nesting result.
 
         Returns:
-            List of beam keys sorted by position
+            List of beam keys in nesting order
         """
-        sorted_items = sorted(
-            self.stock_info["elements"].items(), key=lambda item: item[1]["offset"]
-        )
-        return [key for key, _ in sorted_items]
+        return self.stock_info["element_order"]
 
     def _auto_load_hop_files(self, directory: str):
         """
         Automatically discover and load .hop files, matching them to beams.
 
-        Files are matched by:
-        1. Sorting filenames alphabetically
-        2. Sorting beam keys by X-position
-        3. Pairing by index
-        4. Validating dimensions match (with tolerance)
+        Files are matched by extracting beam key from filename (e.g., R_00_163.hop → beam 163)
+        and matching to the nesting result beam keys.
 
         Args:
             directory: Directory containing .hop files
         """
-        hop_files = sorted(glob.glob(os.path.join(directory, "*.hop")))
-        beam_keys = self._get_sorted_beam_keys()
+        # Filter for files containing "R" followed by two zeros (R_00, R00, etc.)
+        all_hop_files = glob.glob(os.path.join(directory, "*.hop"))
+        hop_files = [
+            f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))
+        ]
 
-        if len(hop_files) != len(beam_keys):
-            raise ValueError(
-                f"Mismatch: {len(hop_files)} .hop files but {len(beam_keys)} beams in nesting"
-            )
+        available_beam_keys = set(self.stock_info["elements"].keys())
 
-        # Match by index and validate dimensions
-        for hop_path, beam_key in zip(hop_files, beam_keys):
+        # Match each file to its beam key from filename
+        for hop_path in hop_files:
+            filename = os.path.basename(hop_path)
+
+            # Extract beam key from filename (e.g., R_00_163.hop → 163)
+            match = re.search(r"R_?0{2}_(\d+)\.hop", filename)
+            if not match:
+                print(f"⚠ Skipping {filename}: Cannot extract beam key from filename")
+                continue
+
+            beam_key = int(match.group(1))
+
+            # Check if this beam exists in nesting data
+            if beam_key not in available_beam_keys:
+                print(
+                    f"⚠ Skipping {filename}: Beam {beam_key} not found in nesting data"
+                )
+                continue
+
             hop_file = HopFile(hop_path)
-            hop_dx = hop_file.dx
-            beam_length = self.stock_info["elements"][beam_key]["length"]
             x_offset = self.stock_info["elements"][beam_key]["offset"]
 
-            # Validate dimensions match (with tolerance)
-            tolerance = 10  # mm
-            if abs(hop_dx - beam_length) > tolerance:
-                raise AssertionError(
-                    f"Dimension mismatch for {os.path.basename(hop_path)}:\n"
-                    f"  .hop DX = {hop_dx:.2f}mm\n"
-                    f"  Nesting beam {beam_key} length = {beam_length:.2f}mm\n"
-                    f"  Difference = {abs(hop_dx - beam_length):.2f}mm (tolerance: {tolerance}mm)"
-                )
-
             self.hop_files.append((hop_file, x_offset, beam_key))
-            print(
-                f"✓ Matched {os.path.basename(hop_path)} → Beam {beam_key} (DX: {hop_dx:.2f}mm, Offset: {x_offset:.2f}mm)"
+            print(f"✓ Matched {filename} → Beam {beam_key} (Offset: {x_offset:.2f}mm)")
+
+        if len(self.hop_files) != len(available_beam_keys):
+            raise ValueError(
+                f"Incomplete match: Found {len(self.hop_files)} matching .hop files but {len(available_beam_keys)} beams in nesting"
             )
 
     def merge(self, output_path: str):
@@ -458,10 +257,9 @@ class StockHopsMerger:
                 all_operations.append((operation, offset_lines))
 
         # Sort operations by tool type and position
-        tool_priority = {"WZF504": 0, "WZF503": 1, "WZS201": 2}  # Priority order
         all_operations.sort(
             key=lambda x: (
-                tool_priority.get(x[0].tool_type, 99),  # Tool type priority
+                x[0].tool_type.value,  # Tool type priority from enum
                 x[0].min_x,  # Position along stock
             )
         )
