@@ -1,57 +1,34 @@
+import os
+
+import compas
+
 __version__ = "0.1.0"
 
-from .merge_stock_hops import StockHopsMerger
-from .tool_library import MachiningTool
-from .tool_library import ToolLibrary
-from .tool_library import ToolCallType
-from .tool_library import HopsSystemVars
-from .tool_library import BirdsmouthW41
-from .tool_library import SaegeD350
-from .tool_library import CastorD61
-from .hop_core import HopOperation
-from .hop_core import HopFile
-from .hop_core import EasySnapXY
-from .hop_core import EasySnapZ
-from .work_planes import WorkPlane
-from .work_planes import FreePlane
-from .machining_commands import CompensationMode
-from .machining_commands import LeadInOutMode
-from .machining_commands import ProcessMode
-from .machining_commands import MachiningCommand
-from .machining_commands import StartPoint
-from .machining_commands import G01
-from .machining_commands import EndPoint
-from .machining_commands import MillingCommand
-from .machining_commands import SawingCommand
-from .machining_commands import DrillingCommand
+HERE = os.path.dirname(__file__)
+HOME = os.path.abspath(os.path.join(HERE, "..", ".."))
+DATA = os.path.abspath(os.path.join(HOME, "data"))
 
-__all__ = [
-    # Tool Library
-    "MachiningTool",
-    "ToolLibrary",
-    "ToolCallType",
-    "HopsSystemVars",
-    "BirdsmouthW41",
-    "SaegeD350",
-    "CastorD61",
-    # Core
-    "StockHopsMerger",
-    "HopOperation",
-    "HopFile",
-    "EasySnapXY",
-    "EasySnapZ",
-    # Work Planes
-    "WorkPlane",
-    "FreePlane",
-    # Machining Commands
-    "CompensationMode",
-    "LeadInOutMode",
-    "ProcessMode",
-    "MachiningCommand",
-    "StartPoint",
-    "G01",
-    "EndPoint",
-    "MillingCommand",
-    "SawingCommand",
-    "DrillingCommand",
-]
+
+# Check if easyhops is installed from git
+# If that's the case, try to append the current head's hash to __version__
+try:
+    git_head_file = compas._os.absjoin(HOME, ".git", "HEAD")
+
+    if os.path.exists(git_head_file):
+        # git head file contains one line that looks like this:
+        # ref: refs/heads/main
+        with open(git_head_file, "r") as git_head:
+            _, ref_path = git_head.read().strip().split(" ")
+            ref_path = ref_path.split("/")
+
+            git_head_refs_file = compas._os.absjoin(HOME, ".git", *ref_path)
+
+        if os.path.exists(git_head_refs_file):
+            with open(git_head_refs_file, "r") as git_head_ref:
+                git_commit = git_head_ref.read().strip()
+                __version__ += "-" + git_commit[:8]
+except Exception:
+    pass
+
+
+__all__ = ["__version__", "DATA", "HOME"]
