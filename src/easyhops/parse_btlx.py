@@ -1,5 +1,6 @@
-import xml.etree.ElementTree as ET
 import os
+import xml.etree.ElementTree as ET
+
 
 class BTLXParser:
     def __init__(self, file_path):
@@ -12,7 +13,7 @@ class BTLXParser:
         self.text_dict = {}
         self.part_lengths = {}
         self._parse_file()
-    
+
     @property
     def __data__(self):
         data_dict = {
@@ -22,10 +23,10 @@ class BTLXParser:
             "double_cut_machinings": self.double_cut_machinings,
             "remachining_dict": self.remachining_dict,
             text_dict: self.text_dict,
-            "part_lengths": self.part_lengths
+            "part_lengths": self.part_lengths,
         }
         return data_dict
-    
+
     @classmethod
     def __from_data__(cls, data):
         instance = cls(data["file_path"])
@@ -84,41 +85,13 @@ class BTLXParser:
                     "Process": machining.get("Process"),
                     "ProcessID": machining.get("ProcessID"),
                     "ReferencePlaneID": machining.get("ReferencePlaneID"),
-                    "Orientation": (
-                        machining.find("d2m:Orientation", self.namespaces).text
-                        if machining.find("d2m:Orientation", self.namespaces) is not None
-                        else None
-                    ),
-                    "StartX": (
-                        machining.find("d2m:StartX", self.namespaces).text
-                        if machining.find("d2m:StartX", self.namespaces) is not None
-                        else None
-                    ),
-                    "StartY": (
-                        machining.find("d2m:StartY", self.namespaces).text
-                        if machining.find("d2m:StartY", self.namespaces) is not None
-                        else None
-                    ),
-                    "Angle1": (
-                        machining.find("d2m:Angle1", self.namespaces).text
-                        if machining.find("d2m:Angle1", self.namespaces) is not None
-                        else None
-                    ),
-                    "Inclination1": (
-                        machining.find("d2m:Inclination1", self.namespaces).text
-                        if machining.find("d2m:Inclination1", self.namespaces) is not None
-                        else None
-                    ),
-                    "Angle2": (
-                        machining.find("d2m:Angle2", self.namespaces).text
-                        if machining.find("d2m:Angle2", self.namespaces) is not None
-                        else None
-                    ),
-                    "Inclination2": (
-                        machining.find("d2m:Inclination2", self.namespaces).text
-                        if machining.find("d2m:Inclination2", self.namespaces) is not None
-                        else None
-                    ),
+                    "Orientation": (machining.find("d2m:Orientation", self.namespaces).text if machining.find("d2m:Orientation", self.namespaces) is not None else None),
+                    "StartX": (machining.find("d2m:StartX", self.namespaces).text if machining.find("d2m:StartX", self.namespaces) is not None else None),
+                    "StartY": (machining.find("d2m:StartY", self.namespaces).text if machining.find("d2m:StartY", self.namespaces) is not None else None),
+                    "Angle1": (machining.find("d2m:Angle1", self.namespaces).text if machining.find("d2m:Angle1", self.namespaces) is not None else None),
+                    "Inclination1": (machining.find("d2m:Inclination1", self.namespaces).text if machining.find("d2m:Inclination1", self.namespaces) is not None else None),
+                    "Angle2": (machining.find("d2m:Angle2", self.namespaces).text if machining.find("d2m:Angle2", self.namespaces) is not None else None),
+                    "Inclination2": (machining.find("d2m:Inclination2", self.namespaces).text if machining.find("d2m:Inclination2", self.namespaces) is not None else None),
                 }
             machinings.append(machining_data)
         return machinings
@@ -130,15 +103,15 @@ class BTLXParser:
             ref_face_id = {}
             face_front = ""
             for machining in machinings:
-                FRL_face_front["Name"] = machining['Name']
-                FRL_face_front["ReferencePlaneID"] = machining['ReferencePlaneID']
-                if machining['ReferencePlaneID'] == "2":
-                    if machining['RefPosition'] == "refedge":
+                FRL_face_front["Name"] = machining["Name"]
+                FRL_face_front["ReferencePlaneID"] = machining["ReferencePlaneID"]
+                if machining["ReferencePlaneID"] == "2":
+                    if machining["RefPosition"] == "refedge":
                         face_front += str(1)
                     else:
                         face_front += str(2)
-                elif machining['ReferencePlaneID'] == "4":
-                    if machining['RefPosition'] == "refedge":
+                elif machining["ReferencePlaneID"] == "4":
+                    if machining["RefPosition"] == "refedge":
                         face_front += str(1)
                     else:
                         face_front += str(2)
@@ -146,8 +119,8 @@ class BTLXParser:
                 else:
                     face_front += str(0)
             FRL_face_front["face_front"] = face_front
-            self.remachining_dict[part_id]["machinings"].append(FRL_face_front)            
-                    
+            self.remachining_dict[part_id]["machinings"].append(FRL_face_front)
+
         for part_id, machinings in self.double_cut_machinings.items():
             if part_id not in self.remachining_dict:
                 self.remachining_dict[part_id] = {"length": self.part_lengths[part_id], "machinings": []}
@@ -156,7 +129,7 @@ class BTLXParser:
 
     def get_remachining_dict(self):
         return self.remachining_dict
-    
+
     def _parse_text(self, part, tag):
         texts = []
         for text in part.findall(tag, self.namespaces):

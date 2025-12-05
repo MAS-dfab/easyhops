@@ -1,8 +1,10 @@
-import re
 import configparser
-from pathlib import Path
-from typing import Dict, Optional, Union
+import re
 from enum import StrEnum
+from pathlib import Path
+from typing import Dict
+from typing import Optional
+from typing import Union
 
 
 class HopsSystemVars(StrEnum):
@@ -93,12 +95,12 @@ class MachiningTool:
 
     Example:
         >>> # Use machine defaults
-        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 7, name='Example Tool')
+        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 7, name="Example Tool")
         >>> str(tool)
         'WZF(7,_VE,_V,_VA,_SD,_ANF,'1')'
 
         >>> # Override specific parameters (lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000)
-        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 1, lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000, name='DIA20_R')
+        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 1, lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000, name="DIA20_R")
         >>> str(tool)
         'WZF(1,5000,8000,5000,_SD,_ANF,'1')'
 
@@ -133,37 +135,17 @@ class MachiningTool:
     def __str__(self) -> str:
         """Return HOPS tool command string."""
         cmd_prefix = self.tool_type.value
-        lead_in_feedrate_str = (
-            str(self.lead_in_feedrate)
-            if self.lead_in_feedrate is not None
-            else HopsSystemVars.LEAD_IN_FEEDRATE
-        )
-        feedrate_str = (
-            str(self.feedrate) if self.feedrate is not None else HopsSystemVars.FEEDRATE
-        )
-        lead_out_feedrate_str = (
-            str(self.lead_out_feedrate)
-            if self.lead_out_feedrate is not None
-            else HopsSystemVars.LEAD_OUT_FEEDRATE
-        )
-        motor_speed_str = (
-            str(self.motor_speed)
-            if self.motor_speed is not None
-            else HopsSystemVars.MOTOR_SPEED
-        )
-        lead_in_out_factor_str = (
-            str(self.lead_in_out_factor)
-            if self.lead_in_out_factor is not None
-            else HopsSystemVars.LEAD_IN_OUT_FACTOR
-        )
+        lead_in_feedrate_str = str(self.lead_in_feedrate) if self.lead_in_feedrate is not None else HopsSystemVars.LEAD_IN_FEEDRATE
+        feedrate_str = str(self.feedrate) if self.feedrate is not None else HopsSystemVars.FEEDRATE
+        lead_out_feedrate_str = str(self.lead_out_feedrate) if self.lead_out_feedrate is not None else HopsSystemVars.LEAD_OUT_FEEDRATE
+        motor_speed_str = str(self.motor_speed) if self.motor_speed is not None else HopsSystemVars.MOTOR_SPEED
+        lead_in_out_factor_str = str(self.lead_in_out_factor) if self.lead_in_out_factor is not None else HopsSystemVars.LEAD_IN_OUT_FACTOR
 
-        return f"{cmd_prefix}({self.position},{lead_in_feedrate_str},{feedrate_str},{lead_out_feedrate_str},{motor_speed_str},{lead_in_out_factor_str},'{self.slot}')"
+        return f"{cmd_prefix}({self.position},{lead_in_feedrate_str},{feedrate_str},{lead_out_feedrate_str},{motor_speed_str},{lead_in_out_factor_str},'{self.head_id}')"
 
     def __repr__(self) -> str:
         """Return detailed string representation for debugging."""
-        return (
-            f"Tool({self.tool_type.name}, position={self.position}, name='{self.name}')"
-        )
+        return f"Tool({self.tool_type.name}, position={self.position}, name='{self.name}')"
 
     def get_code(self) -> str:
         """Return tool code string (e.g., 'WZF504', 'WZS201')."""
@@ -185,9 +167,9 @@ class MachiningTool:
 
         Example:
         -----------
-            >>> MachiningTool.from_code('WZF504', feedrate=3500)
+            >>> MachiningTool.from_code("WZF504", feedrate=3500)
             MachiningTool(ROUTER, position=504, name='', priority=0)
-            >>> MachiningTool.from_code('WZS201')
+            >>> MachiningTool.from_code("WZS201")
             MachiningTool(SAW, position=201, name='', priority=100)
         """
         match = re.match(r"(WZ[SFB])(\d+)", tool_code)
@@ -381,14 +363,14 @@ class ToolLibrary:
     Example:
     -----------
         >>> # Use default tool library from data/7235C_219.too
-        >>> tool = ToolLibrary.get('Birdsmouth')
+        >>> tool = ToolLibrary.get("Birdsmouth")
         >>> str(tool)
         "WZF(504,_VE,_V,_VA,_SD,_ANF,'1')"
         >>> tool.feedrate = 3500  # Override as needed
         >>>
         >>> # Or create custom library instance
-        >>> library = ToolLibrary('custom_tools.too')
-        >>> tool = library.get('Birdsmouth')
+        >>> library = ToolLibrary("custom_tools.too")
+        >>> tool = library.get("Birdsmouth")
         >>>
         >>> # Get by tool number
         >>> tool = ToolLibrary.get(tool_no=27)
@@ -454,7 +436,7 @@ class ToolLibrary:
         Example:
         -----------
             >>> # Direct access without instantiation
-            >>> tool = ToolLibrary.get('Birdsmouth')
+            >>> tool = ToolLibrary.get("Birdsmouth")
             >>> str(tool)
             "WZF(504,_VE,_V,_VA,_SD,_ANF,'1')"
             >>>
@@ -464,15 +446,13 @@ class ToolLibrary:
             'Birdsmouth'
             >>>
             >>> # For custom tool library, create instance
-            >>> library = ToolLibrary('custom_tools.too')
-            >>> tool = library.get_tool('CustomTool')
+            >>> library = ToolLibrary("custom_tools.too")
+            >>> tool = library.get_tool("CustomTool")
         """
         instance = cls._get_default_instance()
         return instance.get_tool(name=name, tool_no=tool_no)
 
-    def get_tool(
-        self, name: str = None, tool_no: int = None
-    ) -> Optional[MachiningTool]:
+    def get_tool(self, name: str = None, tool_no: int = None) -> Optional[MachiningTool]:
         """Get tool by name or tool number from this library instance.
 
         If both name and tool_no are provided, validates they refer to the same tool.
@@ -496,12 +476,12 @@ class ToolLibrary:
 
         Example:
             >>> library = ToolLibrary()
-            >>> tool = library.get_tool('Birdsmouth')
+            >>> tool = library.get_tool("Birdsmouth")
             >>> str(tool)
             "WZF(504,_VE,_V,_VA,_SD,_ANF,'1')"
             >>>
             >>> # Validate name and number match
-            >>> tool = library.get_tool('Birdsmouth', tool_no=504)
+            >>> tool = library.get_tool("Birdsmouth", tool_no=504)
         """
         if name is None and tool_no is None:
             raise ValueError("Must provide either `name` or `tool_no` to get tool.")
@@ -529,18 +509,11 @@ class ToolLibrary:
             if tool_by_name is None and tool_by_number is None:
                 return None  # Neither found
             elif tool_by_name is None:
-                raise ValueError(
-                    f"Tool name '{name}' not found, but tool_no {tool_no} exists"
-                )
+                raise ValueError(f"Tool name '{name}' not found, but tool_no {tool_no} exists")
             elif tool_by_number is None:
-                raise ValueError(
-                    f"Tool number {tool_no} not found, but name '{name}' exists"
-                )
+                raise ValueError(f"Tool number {tool_no} not found, but name '{name}' exists")
             elif tool_by_name is not tool_by_number:
-                raise ValueError(
-                    f"Tool name '{name}' (position {tool_by_name.position}) does not match "
-                    f"tool_no {tool_no} (name '{tool_by_number.name}')"
-                )
+                raise ValueError(f"Tool name '{name}' (position {tool_by_name.position}) does not match tool_no {tool_no} (name '{tool_by_number.name}')")
             return tool_by_name  # Both match, return either one
 
         # Return whichever was found
@@ -580,11 +553,18 @@ class ToolLibrary:
             if match := re.match(r"^ToolData(\d+)$", section):
                 # Extract tool metadata
                 name = config.get(section, "Name", fallback="")
-                tool_no = config.getint(section, "ToolNo", fallback=-1)
                 tool_type_idx = config.getint(section, "ToolType", fallback=0)
 
-                # Skip tools with invalid numbers
-                if tool_no == -1:
+                # Look for corresponding CuttingEdge section to get the actual tool ID
+                cutting_edge_section = f"{section}CuttingEdge0"
+                if cutting_edge_section not in config:
+                    continue
+
+                # Get the actual tool ID from CuttingEdge section
+                tool_id = config.getint(cutting_edge_section, "ID", fallback=-1)
+
+                # Skip tools with invalid IDs
+                if tool_id == -1:
                     continue
 
                 # Determine tool type based on tool type index
@@ -600,11 +580,11 @@ class ToolLibrary:
                 # Don't pass feedrates - let them default to None so HOPS macro variables are used
                 tool = MachiningTool(
                     tool_type=tool_type,
-                    position=tool_no,
+                    position=tool_id,
                     name=name,
                 )
 
-                # Register tool by name and number
+                # Register tool by name and ID
                 if name:
                     self._tools_by_name[name.lower()] = tool
-                self._tools_by_number[tool_no] = tool
+                self._tools_by_number[tool_id] = tool

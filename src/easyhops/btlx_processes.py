@@ -21,20 +21,20 @@ Usage:
     hopper.write_to_file("output.hop")
 """
 
-from copy import deepcopy
 import math
+from copy import deepcopy
 
 from compas.geometry import Frame
-from compas.geometry import Transformation
-from compas.geometry import Rotation
-from compas.geometry import Translation
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Rotation
+from compas.geometry import Transformation
+from compas.geometry import Translation
+from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
-from compas.geometry import angle_vectors
+from compas.geometry import intersection_plane_plane_plane
 
 
 class FrenchRidgeProcess:
@@ -102,16 +102,8 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = (
-            Point(self.width + self.width / 2.0, 0, self.width / 3)
-            if face_front
-            else Point(self.width + self.width / 2.0, 0, self.width / 2)
-        )
-        point2 = (
-            Point(self.width + self.width / 2.0, self.width, self.width / 2)
-            if face_front
-            else Point(self.width + self.width / 2.0, self.width, self.width / 3)
-        )
+        point1 = Point(self.width + self.width / 2.0, 0, self.width / 3) if face_front else Point(self.width + self.width / 2.0, 0, self.width / 2)
+        point2 = Point(self.width + self.width / 2.0, self.width, self.width / 2) if face_front else Point(self.width + self.width / 2.0, self.width, self.width / 3)
         self.pts.append([point1.copy(), point2.copy()])
 
         return [point1, point2], plane, theta, beta
@@ -132,11 +124,7 @@ class FrenchRidgeProcess:
         plane.rotate(math.radians(beta), plane.zaxis, plane.point)
         plane.rotate(math.radians(theta), plane.xaxis, plane.point)
 
-        point1 = (
-            Point(self.length - (self.width + self.width / 2.0), 0, self.width / 3)
-            if face_front
-            else Point(self.length - (self.width + self.width / 2.0), 0, self.width / 2)
-        )
+        point1 = Point(self.length - (self.width + self.width / 2.0), 0, self.width / 3) if face_front else Point(self.length - (self.width + self.width / 2.0), 0, self.width / 2)
         point2 = (
             Point(
                 self.length - (self.width + self.width / 2.0),
@@ -163,9 +151,7 @@ class FrenchRidgeProcess:
             ebenef = "EBENE4()"
         else:
             ref_plane = plane
-            ebenef = "EBENEF({:.3f},{:.3f},{:.3f},{},{},0,0)".format(
-                plane.point.x, plane.point.y, plane.point.z, theta, beta
-            )
+            ebenef = "EBENEF({:.3f},{:.3f},{:.3f},{},{},0,0)".format(plane.point.x, plane.point.y, plane.point.z, theta, beta)
         hop += ebenef + "\n"
 
         T = Transformation.from_change_of_basis(Frame.worldXY(), ref_plane)
@@ -174,20 +160,10 @@ class FrenchRidgeProcess:
         for pt in points:
             # if it is point 0 then it is the start point
             if points.index(pt) == 0:
-                hop += (
-                    "SP({:.3f},{:.3f},{:.3f},{},3,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
-                        pt.x, pt.y, pt.z + 1.6, orientation
-                    )
-                    + "\n"
-                )
+                hop += "SP({:.3f},{:.3f},{:.3f},{},3,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(pt.x, pt.y, pt.z + 1.6, orientation) + "\n"
             else:
                 reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
-                hop += (
-                    "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
-                        pt.x, pt.y, pt.z + 1.6, reference
-                    )
-                    + "\n"
-                )
+                hop += "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(pt.x, pt.y, pt.z + 1.6, reference) + "\n"
         hop += "EP(1,_ANF,0)\n"
 
         return hop
@@ -196,9 +172,7 @@ class FrenchRidgeProcess:
         # self.face_front = "11"
         self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         self.params += "EBENE0()\n"
-        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(
-            self.width / 2.0, 0.0, 0.0, self.width / 2.0, self.width, 0.0
-        )
+        self.params += "SAEGEN({:.3f},{:.3f},{:.3f},{:.3f},{:.3f},{:.3f},1,0,0,1,0,-2,1,1,0,0,0)\n".format(self.width / 2.0, 0.0, 0.0, self.width / 2.0, self.width, 0.0)
         cf0 = Frame.worldYZ()
         cf0.point = Point(self.width, 0, 0)
         cf1 = Frame.worldYZ()
@@ -208,19 +182,11 @@ class FrenchRidgeProcess:
 
         face_front_start = True if self.face_front[0] == "1" else False
         if self.face_front[0] != "0":
-            [point1, point2], plane, theta, beta = self.generate_params_start(
-                face_front_start
-            )
-            self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta, is_vert="start", orientation=2
-            )
+            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
+            self.params += self.format_to_hops([point1, point2], plane, theta, beta, is_vert="start", orientation=2)
             self.frame1.append(plane)
-            [point1, point2], plane, theta, beta = self.generate_params_start(
-                face_front_start
-            )
-            self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta, orientation=1
-            )
+            [point1, point2], plane, theta, beta = self.generate_params_start(face_front_start)
+            self.params += self.format_to_hops([point1, point2], plane, theta, beta, orientation=1)
             self.frame1.append(plane)
 
         self.params += "EBENE0()\n"
@@ -235,19 +201,11 @@ class FrenchRidgeProcess:
 
         face_front_end = True if self.face_front[1] == "1" else False
         if self.face_front[1] != "0":
-            [point1, point2], plane, theta, beta = self.generate_params_end(
-                face_front_end
-            )
-            self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta, is_vert="end", orientation=1
-            )
+            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
+            self.params += self.format_to_hops([point1, point2], plane, theta, beta, is_vert="end", orientation=1)
             self.frame2.append(plane)
-            [point1, point2], plane, theta, beta = self.generate_params_end(
-                face_front_end
-            )
-            self.params += self.format_to_hops(
-                [point1, point2], plane, theta, beta, orientation=2
-            )
+            [point1, point2], plane, theta, beta = self.generate_params_end(face_front_end)
+            self.params += self.format_to_hops([point1, point2], plane, theta, beta, orientation=2)
             self.frame2.append(plane)
 
 
@@ -322,28 +280,19 @@ class DoubleCutStepJointProcess:
         frame2.rotate(math.radians(-angle2), frame2.zaxis, frame2.point)
         frame2.rotate(math.radians(self.inclination2), frame2.xaxis, frame2.point)
 
-        if (
-            dot_vectors(frame1.zaxis, Vector.Xaxis()) > 0
-            and self.orientation == "start"
-        ):
+        if dot_vectors(frame1.zaxis, Vector.Xaxis()) > 0 and self.orientation == "start":
             frame1.rotate(math.pi, frame1.yaxis, frame1.point)
             frame2.rotate(math.pi, frame2.yaxis, frame2.point)
-        elif (
-            dot_vectors(frame1.zaxis, Vector.Xaxis()) < 0 and self.orientation == "end"
-        ):
+        elif dot_vectors(frame1.zaxis, Vector.Xaxis()) < 0 and self.orientation == "end":
             frame1.rotate(math.pi, frame1.yaxis, frame1.point)
             frame2.rotate(math.pi, frame2.yaxis, frame2.point)
         self.frame1 = frame1
         self.frame2 = frame2
 
         self.ref_point = ref_frame.point
-        self.ref_faces = [
-            frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
-        ]
+        self.ref_faces = [frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles]
         for i in range(len(self.ref_faces)):
-            self.ref_faces[i].transform(
-                Translation.from_vector(Vector(*ref_translations[i]))
-            )
+            self.ref_faces[i].transform(Translation.from_vector(Vector(*ref_translations[i])))
 
     def format_to_hops(self, points, orientation=0):
         hop = ""
@@ -363,12 +312,8 @@ class DoubleCutStepJointProcess:
     def generate_endpoint(self):
         self.generate_planes()
         # Opp face is basically 1 for 3, 3 for 1, 2 for 4, 4 for 2
-        opp_face_index = (
-            int(self.ref_face) + 2 if int(self.ref_face) < 3 else int(self.ref_face) - 2
-        )
-        other_faces = [
-            i - 1 for i in range(1, 5) if i not in [self.ref_face, opp_face_index]
-        ]
+        opp_face_index = int(self.ref_face) + 2 if int(self.ref_face) < 3 else int(self.ref_face) - 2
+        other_faces = [i - 1 for i in range(1, 5) if i not in [self.ref_face, opp_face_index]]
 
         print(self.ref_face)
         sp_0 = Point(
@@ -441,12 +386,8 @@ class DoubleCutStepJointProcess:
 
         self.params += "WZS(201,10000,7000,20000,_SD,_ANF,'1')\n"
         self.params += "EBENE0()\n"
-        self.params += self.format_to_hops(
-            points=[sp0, ep0], orientation=1 if self.orientation == "start" else 2
-        )
-        self.params += self.format_to_hops(
-            points=[sp1, ep1], orientation=1 if self.orientation == "start" else 2
-        )
+        self.params += self.format_to_hops(points=[sp0, ep0], orientation=1 if self.orientation == "start" else 2)
+        self.params += self.format_to_hops(points=[sp1, ep1], orientation=1 if self.orientation == "start" else 2)
         return [sp0, ep0, sp1, ep1]
 
 
@@ -547,43 +488,25 @@ class DoubleCutProcess:
         self.frame2 = frame2
 
         self.ref_point = ref_frame.point
-        self.ref_faces = [
-            frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles
-        ]
+        self.ref_faces = [frame.rotated(angle, frame.xaxis, frame.point) for angle in ref_angles]
         for i in range(len(self.ref_faces)):
-            self.ref_faces[i].transform(
-                Translation.from_vector(Vector(*ref_translations[i]))
-            )
+            self.ref_faces[i].transform(Translation.from_vector(Vector(*ref_translations[i])))
 
     def format_to_hops(self, points, frame, theta, beta, orientation=0, ref_height=0.0):
         hop = ""
         ref = deepcopy(frame)
-        ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(
-            ref.point.x, ref.point.y, ref.point.z, theta, beta
-        )
+        ebenef = "EBENEF({:.4f},{:.4f},{:.4f},{:.4f},{:.4f},0,0)".format(ref.point.x, ref.point.y, ref.point.z, theta, beta)
         hop += ebenef + "\n"
 
-        Tr = Transformation.from_change_of_basis(
-            Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), ref
-        )
+        Tr = Transformation.from_change_of_basis(Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), ref)
         pts = [point.transformed(Tr) for point in points]
         for pt in pts:
             # if it is point 0 then it is the start point
             if pts.index(pt) == 0:
-                hop += (
-                    "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(
-                        pt.x, pt.y, pt.z + ref_height, orientation
-                    )
-                    + "\n"
-                )
+                hop += "SP({:.3f},{:.3f},{:.3f},{},1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)".format(pt.x, pt.y, pt.z + ref_height, orientation) + "\n"
             else:
                 reference = 0  # Z Reference : 0 for top, 1 for bottom, 2 for relative
-                hop += (
-                    "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(
-                        pt.x, pt.y, pt.z + ref_height, reference
-                    )
-                    + "\n"
-                )
+                hop += "G01({:.3f},{:.3f},{:.3f},0,0,{})".format(pt.x, pt.y, pt.z + ref_height, reference) + "\n"
         hop += "EP(3,2.0,0)\n"
 
         return hop
@@ -623,13 +546,8 @@ class DoubleCutProcess:
             frame2.transformed(T),
             ref_plane.transformed(T),
         )
-        if (
-            dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0
-            or dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0
-        ):
-            secondary_rotation = Rotation.from_axis_and_angle(
-                [1, 0, 0], math.pi, point=[0, 30, 30]
-            )
+        if dot_vectors(-f1.zaxis, Vector.Zaxis()) < 0 or dot_vectors(-f2.zaxis, Vector.Zaxis()) < 0:
+            secondary_rotation = Rotation.from_axis_and_angle([1, 0, 0], math.pi, point=[0, 30, 30])
             sp1.transform(secondary_rotation)
             ep1.transform(secondary_rotation)
             f1.transform(secondary_rotation)
@@ -681,14 +599,8 @@ class DoubleCutProcess:
         start_point, end_point = pts
         orientation1 = 1 if self.orientation == "start" else 2
         orientation2 = 2 if self.orientation == "start" else 1
-        start_point, end_point, self.frame1, self.frame2, self.ref_plane = (
-            self.rotate_things(
-                start_point, end_point, self.frame1, self.frame2, self.ref_plane
-            )
-        )
-        self.cf1, theta, beta, flipped1 = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame1
-        )
+        start_point, end_point, self.frame1, self.frame2, self.ref_plane = self.rotate_things(start_point, end_point, self.frame1, self.frame2, self.ref_plane)
+        self.cf1, theta, beta, flipped1 = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame1)
         ref_height = 0.0
         if start_point.z < end_point.z:
             print("point order flipped")
@@ -710,9 +622,7 @@ class DoubleCutProcess:
             orientation=orientation1,
         )
 
-        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(
-            deepcopy(self.ref_plane), self.frame2
-        )
+        self.cf2, theta, beta, flipped2 = self.frame_to_yaw_pitch(deepcopy(self.ref_plane), self.frame2)
 
         # Frame 2 points
         if flipped2:

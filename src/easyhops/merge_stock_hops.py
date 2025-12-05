@@ -18,13 +18,10 @@ Usage Example:
     from merge_stock_hops import StockHopsMerger
 
     # Initialize merger with nesting JSON and hop files directory
-    merger = StockHopsMerger(
-        nesting_json_path='path/to/nesting.json',
-        hop_directory='path/to/hop/files/'
-    )
+    merger = StockHopsMerger(nesting_json_path="path/to/nesting.json", hop_directory="path/to/hop/files/")
 
     # Merge and write output
-    merger.merge('output_merged.hop')
+    merger.merge("output_merged.hop")
     ```
 
 Coordinate System Notes:
@@ -34,12 +31,15 @@ Coordinate System Notes:
     - SP/G01: First parameter (X-coordinate) is offset when following EBENE0()
 """
 
+import glob
 import json
 import os
 import re
-import glob
-from typing import List, Tuple
-from .hop_core import HopFile, HopOperation
+from typing import List
+from typing import Tuple
+
+from .hop_core import HopFile
+from .hop_core import HopOperation
 
 
 class StockHopsMerger:
@@ -116,21 +116,14 @@ class StockHopsMerger:
             # Check if all hop file beam keys are in this stock
             if hop_beam_keys.issubset(stock_beam_keys):
                 matching_stock = stock
-                print(
-                    f"Found matching stock (index {stock_idx}) containing beams: {sorted(hop_beam_keys)}"
-                )
+                print(f"Found matching stock (index {stock_idx}) containing beams: {sorted(hop_beam_keys)}")
                 break
 
         if matching_stock is None:
             raise ValueError(
                 f"No stock found containing all beam keys from .hop files: {sorted(hop_beam_keys)}\n"
                 f"Available stocks have these beam keys:\n"
-                + "\n".join(
-                    [
-                        f"  Stock {i}: {sorted([e['key'] for e in s['data']['element_data'].values()])}"
-                        for i, s in enumerate(stocks[:5])
-                    ]
-                )
+                + "\n".join([f"  Stock {i}: {sorted([e['key'] for e in s['data']['element_data'].values()])}" for i, s in enumerate(stocks[:5])])
             )
 
         stock_data = matching_stock["data"]
@@ -159,9 +152,7 @@ class StockHopsMerger:
     def _get_beam_keys_from_files(self) -> set:
         """Extract beam keys from R_00 .hop filenames in the directory."""
         all_hop_files = glob.glob(os.path.join(self.hop_directory, "*.hop"))
-        hop_files = [
-            f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))
-        ]
+        hop_files = [f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))]
 
         beam_keys = set()
         for hop_path in hop_files:
@@ -193,9 +184,7 @@ class StockHopsMerger:
         """
         # Filter for files containing "R" followed by two zeros (R_00, R00, etc.)
         all_hop_files = glob.glob(os.path.join(directory, "*.hop"))
-        hop_files = [
-            f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))
-        ]
+        hop_files = [f for f in all_hop_files if re.search(r"R_?0{2}", os.path.basename(f))]
 
         available_beam_keys = set(self.stock_info["elements"].keys())
 
@@ -213,9 +202,7 @@ class StockHopsMerger:
 
             # Check if this beam exists in nesting data
             if beam_key not in available_beam_keys:
-                print(
-                    f"⚠ Skipping {filename}: Beam {beam_key} not found in nesting data"
-                )
+                print(f"⚠ Skipping {filename}: Beam {beam_key} not found in nesting data")
                 continue
 
             hop_file = HopFile(hop_path)
@@ -225,9 +212,7 @@ class StockHopsMerger:
             print(f"✓ Matched {filename} → Beam {beam_key} (Offset: {x_offset:.2f}mm)")
 
         if len(self.hop_files) != len(available_beam_keys):
-            raise ValueError(
-                f"Incomplete match: Found {len(self.hop_files)} matching .hop files but {len(available_beam_keys)} beams in nesting"
-            )
+            raise ValueError(f"Incomplete match: Found {len(self.hop_files)} matching .hop files but {len(available_beam_keys)} beams in nesting")
 
     def merge(self, output_path: str):
         """
@@ -270,9 +255,7 @@ class StockHopsMerger:
         self._write_merged_file(output_path, all_operations)
         print(f"✅ Merged file written to: {output_path}")
 
-    def _write_merged_file(
-        self, output_path: str, sorted_operations: List[Tuple[HopOperation, List[str]]]
-    ):
+    def _write_merged_file(self, output_path: str, sorted_operations: List[Tuple[HopOperation, List[str]]]):
         """
         Write the merged HOPS file.
 
@@ -301,9 +284,7 @@ class StockHopsMerger:
             # Write all operations
             for operation, offset_lines in sorted_operations:
                 f.write("; ---------------------------------\n")
-                f.write(
-                    f"; Operation: {operation.tool_type} at X={operation.min_x:.1f}\n"
-                )
+                f.write(f"; Operation: {operation.tool_type} at X={operation.min_x:.1f}\n")
                 f.write("; ---------------------------------\n")
                 for line in offset_lines:
                     f.write(line)
@@ -331,16 +312,10 @@ if __name__ == "__main__":
 
         if os.path.exists(test_path):
             merger = StockHopsMerger(
-                nesting_json_path=os.path.join(
-                    test_path, "2811_whole_model_nesting.json"
-                ),
+                nesting_json_path=os.path.join(test_path, "2811_whole_model_nesting.json"),
                 hop_directory=os.path.join(test_path, "2811_whole_model"),
             )
-            output_file = os.path.join(
-                test_path, "2811_whole_model", "merged_stock.hop"
-            )
+            output_file = os.path.join(test_path, "2811_whole_model", "merged_stock.hop")
             merger.merge(output_file)
         else:
-            print(
-                "Usage: python merge_stock_hops.py <nesting_json> <hop_directory> [output_file]"
-            )
+            print("Usage: python merge_stock_hops.py <nesting_json> <hop_directory> [output_file]")

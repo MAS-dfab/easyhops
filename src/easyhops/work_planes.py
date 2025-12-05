@@ -1,5 +1,5 @@
-from typing import Optional
 from enum import StrEnum
+from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Vector
@@ -134,12 +134,8 @@ class FreePlane:
         :class:`FreePlane`
             The constructed FreePlane object.
         """
-        rotation_angle = angle_vectors_projected(
-            Vector.Xaxis(), frame.xaxis, Vector.Zaxis(), deg=True
-        )
-        tilt_angle = angle_vectors_projected(
-            frame.yaxis, Vector.Yaxis(), frame.xaxis, deg=True
-        )
+        rotation_angle = angle_vectors_projected(Vector.Xaxis(), frame.xaxis, Vector.Zaxis(), deg=True)
+        tilt_angle = angle_vectors_projected(frame.yaxis, Vector.Yaxis(), frame.xaxis, deg=True)
         return cls(
             x=frame.point.x,
             y=frame.point.y,
