@@ -238,9 +238,9 @@ class FinishedPart:
         """
         pattern = (
             r"FERTIGTEIL\(\s*"
-            r"(?P<dx>[-+]?\d*\.?\d+|VARS DX)\s*,\s*"
-            r"(?P<dy>[-+]?\d*\.?\d+|VARS DY)\s*,\s*"
-            r"(?P<dz>[-+]?\d*\.?\d+|VARS DZ)\s*,\s*"
+            r"(?P<dx>[-+]?\d*\.?\d+|VARS DX|DX)\s*,\s*"
+            r"(?P<dy>[-+]?\d*\.?\d+|VARS DY|DY)\s*,\s*"
+            r"(?P<dz>[-+]?\d*\.?\d+|VARS DZ|DZ)\s*,\s*"
             r"(?P<rotation_flag>\d+)\s*,\s*"
             r"(?P<empty_parameter>\d+)\s*,\s*"
             r"(?P<offset_x>[-+]?\d*\.?\d+)\s*,\s*"
@@ -258,9 +258,9 @@ class FinishedPart:
             dy_str = match.group("dy")
             dz_str = match.group("dz")
 
-            dx = float(dx_str) if dx_str != "VARS DX" else None
-            dy = float(dy_str) if dy_str != "VARS DY" else None
-            dz = float(dz_str) if dz_str != "VARS DZ" else None
+            dx = float(dx_str) if dx_str not in ("VARS DX", "DX") else None
+            dy = float(dy_str) if dy_str not in ("VARS DY", "DY") else None
+            dz = float(dz_str) if dz_str not in ("VARS DZ", "DZ") else None
 
             return cls(
                 dx=dx,
