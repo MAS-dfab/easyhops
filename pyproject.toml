@@ -1,0 +1,116 @@
+# ============================================================================
+# Project info
+# ============================================================================
+
+[project]
+name = "easyhops"
+version = "0.1.0"
+description = "COMPAS package for generating HOPS CNC machining programs for timber fabrication."
+authors = [
+    { name = "MAS-dfab", email = "contact@mas-dfab.arch.ethz.ch" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["dependencies", "optional-dependencies"]
+keywords = ["cnc", "hops", "manufacturing", "timber", "fabrication"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Manufacturing",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/MAS-dfab/easyhops"
+Repository = "https://github.com/MAS-dfab/easyhops"
+Issues = "https://github.com/MAS-dfab/easyhops/issues"
+
+# ============================================================================
+# Setup and build
+# ============================================================================
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.dynamic]
+dependencies = { file = "requirements.txt" }
+optional-dependencies = { dev = { file = "requirements-dev.txt" } }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+easyhops = ["data/*.too"]
+
+# ============================================================================
+# Release
+# ============================================================================
+
+[tool.bumpversion]
+current_version = "0.1.0"
+message = "Bump version to {new_version}"
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "src/easyhops/__init__.py"
+search = "{current_version}"
+replace = "{new_version}"
+
+# ============================================================================
+# linting and formatting
+# ============================================================================
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 179
+indent-width = 4
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["I001"]
+"tests/*" = ["I001"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = [
+    "easyhops",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 179
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = [
+    "test_*.py",
+]
+addopts = "-ra --strict --doctest-modules --tb=short"
+filterwarnings = "ignore::DeprecationWarning"
