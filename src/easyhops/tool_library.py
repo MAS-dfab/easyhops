@@ -323,6 +323,78 @@ class MachiningTool:
 
         return cls(tool_type, position, **kwargs)
 
+    @classmethod
+    def from_hop_line(cls, line: str) -> "MachiningTool":
+        """Parse a HOPS tool command line into a MachiningTool instance.
+
+        Parameters:
+        -----------
+        line : str
+            HOPS tool command line (e.g., "WZF(504,3000,4000,5000,_SD,_ANF,'1')")
+
+        Returns:
+        -----------
+        :class:`easyhops.MachiningTool`
+            Parsed tool instance
+
+        Example:
+        -----------
+            >>> MachiningTool.from_hop_line("WZF(504,3000,4000,5000,_SD,_ANF,'1')")
+            MachiningTool(ROUTER, position=504, ...)
+        """
+        # Match WZF(pos,lead_in,feed,lead_out,motor,factor,'head') or similar
+        # Allow optional whitespace around commas
+        pattern = r"(WZ[FSB])\(\s*(\d+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*'([^']*)'\s*\)"
+        match = re.match(pattern, line.strip())
+
+        if not match:
+            raise ValueError(f"Invalid tool line: {line}")
+
+        tool_str = match.group(1)
+        position = int(match.group(2))
+        lead_in_str = match.group(3)
+        feedrate_str = match.group(4)
+        lead_out_str = match.group(5)
+        motor_str = match.group(6)
+        factor_str = match.group(7)
+        head_id = match.group(8)
+
+        # Determine tool type
+        if tool_str == "WZF":
+            tool_type = ToolCallType.ROUTER
+        elif tool_str == "WZS":
+            tool_type = ToolCallType.SAW
+        elif tool_str == "WZB":
+            tool_type = ToolCallType.DRILLER
+        else:
+            raise ValueError(f"Unknown tool type: {tool_str}")
+
+        # Parse numeric parameters (handle _SD, _V, etc. as None)
+        def parse_param(s: str) -> Optional[float]:
+            if s.startswith("_"):
+                return None
+            try:
+                return float(s)
+            except ValueError:
+                return None
+
+        lead_in_feedrate = parse_param(lead_in_str)
+        feedrate = parse_param(feedrate_str)
+        lead_out_feedrate = parse_param(lead_out_str)
+        motor_speed = parse_param(motor_str)
+        lead_in_out_factor = parse_param(factor_str)
+
+        return cls(
+            tool_type=tool_type,
+            position=position,
+            lead_in_feedrate=lead_in_feedrate,
+            feedrate=feedrate,
+            lead_out_feedrate=lead_out_feedrate,
+            motor_speed=motor_speed,
+            lead_in_out_factor=lead_in_out_factor,
+            head_id=head_id,
+        )
+
 
 # ==================== Tool Library ====================
 # Predefined tools with their standard configurations
