@@ -245,8 +245,8 @@ class FinishedPart:
             r"(?P<empty_parameter>\d+)\s*,\s*"
             r"(?P<offset_x>[-+]?\d*\.?\d+)\s*,\s*"
             r"(?P<offset_y>[-+]?\d*\.?\d+)\s*,\s*"
-            r"(?P<offset_z>[-+]?\d*\.?\d+)"
-            r"(?:\s*;\s*(?P<comment>[^,]+))?\s*,\s*"
+            r"(?P<offset_z>[-+]?\d*\.?\d+)\s*,\s*"
+            r"(?P<comment>'[^']*'|[^,]*)\s*,\s*"
             r"(?P<field_linking>[01])\s*,\s*"
             r"(?P<activates_laser>[01])\s*,\s*"
             r"(?P<stop_flag>\d+)\s*\)"
@@ -262,6 +262,11 @@ class FinishedPart:
             dy = float(dy_str) if dy_str not in ("VARS DY", "DY") else None
             dz = float(dz_str) if dz_str not in ("VARS DZ", "DZ") else None
 
+            # Parse comment - strip quotes if present
+            comment_str = match.group("comment") or ""
+            if comment_str.startswith("'") and comment_str.endswith("'"):
+                comment_str = comment_str[1:-1]
+
             return cls(
                 dx=dx,
                 dy=dy,
@@ -271,7 +276,7 @@ class FinishedPart:
                 offset_x=float(match.group("offset_x")),
                 offset_y=float(match.group("offset_y")),
                 offset_z=float(match.group("offset_z")),
-                comment=match.group("comment") or "",
+                comment=comment_str,
                 field_linking=bool(int(match.group("field_linking"))),
                 activates_laser=bool(int(match.group("activates_laser"))),
                 stop_flag=int(match.group("stop_flag")),
