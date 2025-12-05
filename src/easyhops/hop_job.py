@@ -308,7 +308,7 @@ class HOPSJob:
             line = lines[i].strip()
 
             # Tool change - start of new operation context
-            if line.startswith("WZF(") or line.startswith("WZS("):
+            if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
                 try:
                     # Parse tool
                     tool = MachiningTool.from_hop_line(line)
@@ -317,8 +317,12 @@ class HOPSJob:
                     # Parse work plane
                     work_plane, i = HOPSJob._parse_work_plane(lines, i, unparsed_lines, warnings_list)
 
-                    # Parse machining operation(s) with this tool/plane
-                    i = HOPSJob._parse_machining_operations(lines, i, tool, work_plane, machinings, unparsed_lines, warnings_list)
+                    # Only continue if we got a valid work plane
+                    if work_plane is not None:
+                        # Parse machining operation(s) with this tool/plane
+                        i = HOPSJob._parse_machining_operations(lines, i, tool, work_plane, machinings, unparsed_lines, warnings_list)
+                    else:
+                        warnings_list.append(f"Skipping operations for tool at line {i} due to missing work plane")
 
                 except Exception as e:
                     warnings_list.append(f"Failed to parse operation at line {i + 1}: {e}")
@@ -339,23 +343,34 @@ class HOPSJob:
             Parsed work plane and index of next line
         """
         i = start_idx
-        line = lines[i].strip()
 
-        try:
-            if line.startswith("EBENEF("):
-                plane = FreePlane.from_hop_line(line)
-                return plane, i + 1
-            elif line.startswith("EBENE"):
-                plane = WorkPlane.from_hop_line(line)
-                return plane, i + 1
-            else:
-                warnings_list.append(f"Expected work plane at line {i + 1}, found: {line}")
+        # Skip comments and empty lines to find work plane
+        while i < len(lines):
+            line = lines[i].strip()
+
+            if not line or line.startswith(";"):
+                i += 1
+                continue
+
+            try:
+                if line.startswith("EBENEF("):
+                    plane = FreePlane.from_hop_line(line)
+                    return plane, i + 1
+                elif line.startswith("EBENE"):
+                    plane = WorkPlane.from_hop_line(line)
+                    return plane, i + 1
+                else:
+                    warnings_list.append(f"Expected work plane at line {i + 1}, found: {line}")
+                    unparsed_lines.append((i, lines[i]))
+                    return None, i + 1
+            except Exception as e:
+                warnings_list.append(f"Failed to parse work plane at line {i + 1}: {e}")
                 unparsed_lines.append((i, lines[i]))
                 return None, i + 1
-        except Exception as e:
-            warnings_list.append(f"Failed to parse work plane at line {i + 1}: {e}")
-            unparsed_lines.append((i, lines[i]))
-            return None, i + 1
+
+        # Reached end without finding work plane
+        warnings_list.append(f"No work plane found after line {start_idx + 1}")
+        return None, i
 
     @staticmethod
     def _parse_machining_operations(
@@ -380,7 +395,7 @@ class HOPSJob:
             line = lines[i].strip()
 
             # Stop at next tool change
-            if line.startswith("WZF(") or line.startswith("WZS("):
+            if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
                 break
 
             # Skip comments and empty lines
