@@ -1,4 +1,4 @@
-"""HopsJob - Complete HOP file parser and container.
+"""HOPSJob - Complete HOP file parser and container.
 
 This module provides a complete parser for HOP files, creating structured
 representations of all machining operations with their associated tools and work planes.
@@ -16,7 +16,6 @@ from .hop_core import VarsDefinition
 from .machining_commands import G01
 from .machining_commands import DrillingOperation
 from .machining_commands import EndPoint
-from .machining_commands import Machining
 from .machining_commands import MillingOperation
 from .machining_commands import SawingOperation
 from .machining_commands import StartPoint
@@ -25,10 +24,68 @@ from .work_planes import FreePlane
 from .work_planes import WorkPlane
 
 
-class HopsJob:
+class HOPSMachining:
+    """Represents a machining operation with its tool and work plane.
+
+    This class associates a machining operation (milling, sawing, or drilling)
+    with the tool and work plane used for that operation.
+
+    Attributes:
+    -----------
+    tool : MachiningTool
+        The machining tool used for this operation
+    work_plane : Union[WorkPlane, FreePlane]
+        The work plane on which this operation is performed
+    operation : Union[MillingOperation, SawingOperation, DrillingOperation]
+        The actual machining operation
+
+    Example:
+    --------
+    >>> from .tool_library import MachiningTool
+    >>> from .work_planes import WorkPlane
+    >>> tool = MachiningTool.from_hop_line("WZF(1,10,0,0)")
+    >>> plane = WorkPlane.from_hop_line("EBENE(1)")
+    >>> op = MillingOperation(SP(...), [G01(...)], EP(...))
+    >>> machining = Machining(tool, plane, op)
+    """
+
+    def __init__(
+        self,
+        tool: MachiningTool,
+        work_plane: Union[WorkPlane, FreePlane],
+        operation: Union[MillingOperation, SawingOperation, DrillingOperation],
+    ):
+        """Initialize a Machining instance.
+
+        Parameters:
+        -----------
+        tool : MachiningTool
+            The machining tool
+        work_plane : Union[WorkPlane, FreePlane]
+            The work plane
+        operation : Union[MillingOperation, SawingOperation, DrillingOperation]
+            The machining operation
+        """
+        self.tool = tool
+        self.work_plane = work_plane
+        self.operation = operation
+
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, op={type(self.operation).__name__})"
+
+    def __str__(self) -> str:
+        """Generate HOPS commands for this machining.
+
+        Returns tool, work plane, and operation on separate lines.
+        """
+        return f"{str(self.tool)}\n{str(self.work_plane)}\n{str(self.operation)}"
+
+
+class HOPSJob:
     """Represents a complete HOP file with all its components.
 
-    A HopsJob contains:
+    A HOPSJob contains:
     - Variable definitions (piece dimensions)
     - Finished part definition
     - Park mode settings
@@ -53,10 +110,10 @@ class HopsJob:
     >>> finished_part = FinishedPart(dx=100.0, dy=200.0, dz=50.0)
     >>> park_mode = ParkMode(mode=11, pos_x=0, pos_y=0)
     >>> machinings = [Machining(tool, plane, operation)]
-    >>> job = HopsJob(vars_def, finished_part, park_mode, machinings)
+    >>> job = HOPSJob(vars_def, finished_part, park_mode, machinings)
 
     Or parse from file:
-    >>> job = HopsJob.from_hop_file("path/to/file.hop")
+    >>> job = HOPSJob.from_hop_file("path/to/file.hop")
     >>> print(f"Piece dimensions: {job.vars.dx} x {job.vars.dy} x {job.vars.dz}")
     >>> for i, machining in enumerate(job.machinings):
     ...     print(f"Operation {i}: {machining.tool.tool_name} on {machining.work_plane}")
@@ -67,7 +124,7 @@ class HopsJob:
         vars: VarsDefinition,
         finished_part: FinishedPart,
         park_mode: ParkMode,
-        machinings: List[Machining],
+        machinings: List[HOPSMachining],
         header: Optional[List[str]] = None,
     ):
         self.vars = vars
@@ -77,8 +134,8 @@ class HopsJob:
         self.header = header
 
     @classmethod
-    def from_hop_file(cls, filepath: str) -> "HopsJob":
-        """Parse a HOP file and create a HopsJob.
+    def from_hop_file(cls, filepath: str) -> "HOPSJob":
+        """Parse a HOP file and create a HOPSJob.
 
         Parameters:
         -----------
@@ -87,12 +144,12 @@ class HopsJob:
 
         Returns:
         --------
-        HopsJob
-            Parsed HopsJob object with all machinings
+        HOPSJob
+            Parsed HOPSJob object with all machinings
 
         Example:
         --------
-        >>> job = HopsJob.from_hop_file("part.hop")
+        >>> job = HOPSJob.from_hop_file("part.hop")
         >>> print(f"Found {len(job.machinings)} operations")
         """
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
@@ -102,7 +159,7 @@ class HopsJob:
         vars_def: Optional[VarsDefinition] = None
         finished_part_def: Optional[FinishedPart] = None
         park_mode_def: Optional[ParkMode] = None
-        machinings_list: List[Machining] = []
+        machinings_list: List[HOPSMachining] = []
         unparsed_lines: List[Tuple[int, str]] = []
         warnings_list: List[str] = []
         header_lines: List[str] = []
@@ -236,7 +293,7 @@ class HopsJob:
         return i, None
 
     @staticmethod
-    def _parse_operations(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> List[Machining]:
+    def _parse_operations(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> List[HOPSMachining]:
         """Parse all machining operations (WZF/WZS blocks).
 
         Each operation consists of:
@@ -258,10 +315,10 @@ class HopsJob:
                     i += 1
 
                     # Parse work plane
-                    work_plane, i = HopsJob._parse_work_plane(lines, i, unparsed_lines, warnings_list)
+                    work_plane, i = HOPSJob._parse_work_plane(lines, i, unparsed_lines, warnings_list)
 
                     # Parse machining operation(s) with this tool/plane
-                    i = HopsJob._parse_machining_operations(lines, i, tool, work_plane, machinings, unparsed_lines, warnings_list)
+                    i = HOPSJob._parse_machining_operations(lines, i, tool, work_plane, machinings, unparsed_lines, warnings_list)
 
                 except Exception as e:
                     warnings_list.append(f"Failed to parse operation at line {i + 1}: {e}")
@@ -306,7 +363,7 @@ class HopsJob:
         start_idx: int,
         tool: MachiningTool,
         work_plane: Union[WorkPlane, FreePlane],
-        machinings: List[Machining],
+        machinings: List[HOPSMachining],
         unparsed_lines: List[Tuple[int, str]],
         warnings_list: List[str],
     ) -> int:
@@ -335,22 +392,22 @@ class HopsJob:
             try:
                 if line.startswith("SP("):
                     # Milling operation
-                    operation, i = HopsJob._parse_milling_operation(lines, i, unparsed_lines, warnings_list)
+                    operation, i = HOPSJob._parse_milling_operation(lines, i, unparsed_lines, warnings_list)
                     if operation:
-                        machining = Machining(tool, work_plane, operation)
+                        machining = HOPSMachining(tool, work_plane, operation)
                         machinings.append(machining)
 
                 elif line.startswith("SAEGEN("):
                     # Sawing operation
                     operation = SawingOperation.from_hop_line(line)
-                    machining = Machining(tool, work_plane, operation)
+                    machining = HOPSMachining(tool, work_plane, operation)
                     machinings.append(machining)
                     i += 1
 
                 elif line.startswith("BOHR("):
                     # Drilling operation
                     operation = DrillingOperation.from_hop_line(line)
-                    machining = Machining(tool, work_plane, operation)
+                    machining = HOPSMachining(tool, work_plane, operation)
                     machinings.append(machining)
                     i += 1
 
@@ -428,7 +485,7 @@ class HopsJob:
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f"HopsJob(vars={self.vars}, machinings={len(self.machinings)})"
+        return f"HOPSJob(vars={self.vars}, machinings={len(self.machinings)})"
 
     def __str__(self) -> str:
         """Generate HOP file content from this job.

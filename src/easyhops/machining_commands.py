@@ -3,13 +3,9 @@ from abc import ABC
 from enum import IntEnum
 from typing import List
 from typing import Optional
-from typing import Union
 
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
-from .tool_library import MachiningTool
-from .work_planes import FreePlane
-from .work_planes import WorkPlane
 
 
 class CompensationMode(IntEnum):
@@ -1173,62 +1169,4 @@ class DrillingOperation:
             return str(val)
 
         diameter_str = fmt(self.diameter) if self.diameter is not None else "_WZD"
-        return f"BOHRUNG({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"
-
-
-class Machining:
-    """Represents a machining operation with its tool and work plane.
-
-    This class associates a machining operation (milling, sawing, or drilling)
-    with the tool and work plane used for that operation.
-
-    Attributes:
-    -----------
-    tool : MachiningTool
-        The machining tool used for this operation
-    work_plane : Union[WorkPlane, FreePlane]
-        The work plane on which this operation is performed
-    operation : Union[MillingOperation, SawingOperation, DrillingOperation]
-        The actual machining operation
-
-    Example:
-    --------
-    >>> from .tool_library import MachiningTool
-    >>> from .work_planes import WorkPlane
-    >>> tool = MachiningTool.from_hop_line("WZF(1,10,0,0)")
-    >>> plane = WorkPlane.from_hop_line("EBENE(1)")
-    >>> op = MillingOperation(SP(...), [G01(...)], EP(...))
-    >>> machining = Machining(tool, plane, op)
-    """
-
-    def __init__(
-        self,
-        tool: MachiningTool,
-        work_plane: Union[WorkPlane, FreePlane],
-        operation: Union[MillingOperation, SawingOperation, DrillingOperation],
-    ):
-        """Initialize a Machining instance.
-
-        Parameters:
-        -----------
-        tool : MachiningTool
-            The machining tool
-        work_plane : Union[WorkPlane, FreePlane]
-            The work plane
-        operation : Union[MillingOperation, SawingOperation, DrillingOperation]
-            The machining operation
-        """
-        self.tool = tool
-        self.work_plane = work_plane
-        self.operation = operation
-
-    def __repr__(self) -> str:
-        """Return string representation."""
-        return f"Machining(tool={self.tool.tool_name}, plane={self.work_plane}, op={type(self.operation).__name__})"
-
-    def __str__(self) -> str:
-        """Generate HOPS commands for this machining.
-
-        Returns tool, work plane, and operation on separate lines.
-        """
-        return f"{str(self.tool)}\n{str(self.work_plane)}\n{str(self.operation)}"
+        return f"BOHRUNG({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"  # noqa: E501
