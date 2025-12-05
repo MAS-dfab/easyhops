@@ -35,6 +35,49 @@ class WorkPlane(StrEnum):
     END = "EBENE4()"
     UNKNOWN = "UNKNOWN"
 
+    @classmethod
+    def from_hop_line(cls, line: str) -> "WorkPlane":
+        """Parse EBENE command from HOPS line.
+
+        Parameters:
+        ----------
+        line : str
+            HOPS EBENE(...) command line
+
+        Returns:
+        --------
+        :class:`WorkPlane`
+            Parsed WorkPlane enum member
+
+        Example:
+        --------
+            >>> WorkPlane.from_hop_line("EBENE0()")
+            <WorkPlane.TOP: 'EBENE0()'>
+            >>> WorkPlane.from_hop_line("EBENE(1)")
+            <WorkPlane.FRONT: 'EBENE1()'>
+        """
+        import re
+
+        # Try to match EBENE0() format first
+        if line.strip() in cls._value2member_map_:
+            return cls(line.strip())
+
+        # Try to match EBENE(n) format
+        match = re.match(r"EBENE\((\d+)\)", line.strip())
+        if match:
+            plane_num = int(match.group(1))
+            plane_map = {
+                0: cls.TOP,
+                1: cls.FRONT,
+                2: cls.START,
+                3: cls.BACK,
+                4: cls.END,
+            }
+            if plane_num in plane_map:
+                return plane_map[plane_num]
+
+        raise ValueError(f"Invalid EBENE line: {line}")
+
 
 class FreePlane:
     """EBENEF (Free View) parametric work plane definition.
@@ -258,3 +301,43 @@ class FreePlane:
             rotation_angle=rotation_angle,
             tilt_angle=tilt_angle,
         )
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "FreePlane":
+        """Parse EBENEF command from HOPS line.
+
+        Parameters:
+        ----------
+        line : str
+            HOPS EBENEF(...) command line
+
+        Returns:
+        --------
+        :class:`FreePlane`
+            Parsed FreePlane instance
+
+        Example:
+        --------
+            >>> FreePlane.from_hop_line("EBENEF(1351.763,268.987,182.642,13.003,0,0,0)")
+            FreePlane(x=1351.763, y=268.987, z=182.642, rotation=13.003°, tilt=0.0°, ...)
+        """
+        import re
+
+        # Match EBENEF with 5 or 7 parameters
+        pattern = (
+            r"EBENEF\(\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)(?:\s*,\s*([-+]?\d+)\s*,\s*([-+]?\d+))?\s*\)"
+        )
+        match = re.match(pattern, line.strip())
+
+        if match:
+            x = float(match.group(1))
+            y = float(match.group(2))
+            z = float(match.group(3))
+            rotation = float(match.group(4))
+            tilt = float(match.group(5))
+            snap_xy = EasySnapXY(int(match.group(6))) if match.group(6) else EasySnapXY.DISABLED
+            snap_z = EasySnapZ(int(match.group(7))) if match.group(7) else EasySnapZ.RELATIVE
+
+            return cls(x, y, z, rotation, tilt, snap_xy, snap_z)
+
+        raise ValueError(f"Invalid EBENEF line: {line}")
