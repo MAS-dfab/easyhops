@@ -357,7 +357,7 @@ class TestDrillingOperation:
         """Test DrillingOperation._to_line() with diameter."""
         drill = DrillingOperation(x=100.5, y=200, z=50, depth=-30, diameter=10.5, rotation=45, tilt=-30)
         line = drill._to_line()
-        assert line.startswith("BOHR(")
+        assert line.startswith("BOHRUNG(")
         assert "100.5" in line
         assert "200," in line
         assert "10.5" in line
@@ -413,7 +413,7 @@ class TestDrillingOperation:
 
     def test_drilling_from_hop_line_invalid(self):
         """Test DrillingOperation.from_hop_line() with invalid input."""
-        with pytest.raises(ValueError, match="Invalid BOHR line"):
+        with pytest.raises(ValueError, match="Invalid BOHRUNG line"):
             DrillingOperation.from_hop_line("INVALID(1,2,3)")
 
     def test_drilling_number_formatting(self):

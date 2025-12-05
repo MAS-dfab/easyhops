@@ -1109,12 +1109,12 @@ class DrillingOperation:
 
     @classmethod
     def from_hop_line(cls, line: str) -> "DrillingOperation":
-        """Parse BOHR command from HOPS line.
+        """Parse BOHRUNG command from HOPS line.
 
         Parameters:
         -----------
         line : str
-            HOPS line starting with BOHR(...)
+            HOPS line starting with BOHRUNG(...)
 
         Returns:
         --------
@@ -1154,13 +1154,13 @@ class DrillingOperation:
                 easy_snap_xy=easy_snap_xy,
                 easy_snap_z=easy_snap_z,
             )
-        raise ValueError(f"Invalid BOHR line: {line}")
+        raise ValueError(f"Invalid BOHRUNG line: {line}")
 
     def _to_line(self) -> str:
-        """Generate HOPS BOHR command line.
+        """Generate HOPS BOHRUNG command line.
 
         Returns:
-            Formatted BOHR(...) command string
+            Formatted BOHRUNG(...) command string
         """
 
         def fmt(val):
@@ -1169,4 +1169,4 @@ class DrillingOperation:
             return str(val)
 
         diameter_str = fmt(self.diameter) if self.diameter is not None else "_WZD"
-        return f"BOHR({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"
+        return f"BOHRUNG({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"
