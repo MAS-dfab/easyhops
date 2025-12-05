@@ -6,6 +6,8 @@ from typing import Dict
 from typing import Optional
 from typing import Union
 
+from . import DATA
+
 
 class HopsSystemVars(StrEnum):
     """HOPS global system variables for tool parameters.
@@ -122,6 +124,16 @@ class MachiningTool:
         head_id: str = "1",
         name: str = "",
     ):
+        self._tool_type = None
+        self._position = None
+        self._lead_in_feedrate = None
+        self._feedrate = None
+        self._lead_out_feedrate = None
+        self._motor_speed = None
+        self._lead_in_out_factor = None
+        self._head_id = None
+        self._name = None
+
         self.tool_type = tool_type
         self.position = position
         self.lead_in_feedrate = lead_in_feedrate
@@ -132,14 +144,135 @@ class MachiningTool:
         self.head_id = head_id
         self.name = name
 
+    @property
+    def tool_type(self) -> ToolCallType:
+        """Tool type (ROUTER, SAW, or DRILLER)."""
+        return self._tool_type
+
+    @tool_type.setter
+    def tool_type(self, value: ToolCallType):
+        if not isinstance(value, ToolCallType):
+            raise TypeError(f"tool_type must be ToolCallType, got {type(value).__name__}")
+        self._tool_type = value
+
+    @property
+    def position(self) -> int:
+        """Tool position number in the holder."""
+        return self._position
+
+    @position.setter
+    def position(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError(f"position must be int, got {type(value).__name__}")
+        if value < 0:
+            raise ValueError(f"position must be non-negative, got {value}")
+        self._position = value
+
+    @property
+    def lead_in_feedrate(self) -> Optional[float]:
+        """Lead in/out feedrate in mm/min."""
+        return self._lead_in_feedrate
+
+    @lead_in_feedrate.setter
+    def lead_in_feedrate(self, value: Optional[float]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"lead_in_feedrate must be a number or None, got {type(value).__name__}")
+            if value < 0:
+                raise ValueError(f"lead_in_feedrate must be non-negative, got {value}")
+            value = float(value)
+        self._lead_in_feedrate = value
+
+    @property
+    def feedrate(self) -> Optional[float]:
+        """General/rapid feedrate in mm/min."""
+        return self._feedrate
+
+    @feedrate.setter
+    def feedrate(self, value: Optional[float]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"feedrate must be a number or None, got {type(value).__name__}")
+            if value < 0:
+                raise ValueError(f"feedrate must be non-negative, got {value}")
+            value = float(value)
+        self._feedrate = value
+
+    @property
+    def lead_out_feedrate(self) -> Optional[float]:
+        """Lead out feedrate in mm/min."""
+        return self._lead_out_feedrate
+
+    @lead_out_feedrate.setter
+    def lead_out_feedrate(self, value: Optional[float]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"lead_out_feedrate must be a number or None, got {type(value).__name__}")
+            if value < 0:
+                raise ValueError(f"lead_out_feedrate must be non-negative, got {value}")
+            value = float(value)
+        self._lead_out_feedrate = value
+
+    @property
+    def motor_speed(self) -> Optional[float]:
+        """Motor speed in RPM."""
+        return self._motor_speed
+
+    @motor_speed.setter
+    def motor_speed(self, value: Optional[float]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"motor_speed must be a number or None, got {type(value).__name__}")
+            if value < 0:
+                raise ValueError(f"motor_speed must be non-negative, got {value}")
+            value = float(value)
+        self._motor_speed = value
+
+    @property
+    def lead_in_out_factor(self) -> Optional[float]:
+        """Lead-in/out factor multiplier."""
+        return self._lead_in_out_factor
+
+    @lead_in_out_factor.setter
+    def lead_in_out_factor(self, value: Optional[float]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"lead_in_out_factor must be a number or None, got {type(value).__name__}")
+            if value < 0:
+                raise ValueError(f"lead_in_out_factor must be non-negative, got {value}")
+            value = float(value)
+        self._lead_in_out_factor = value
+
+    @property
+    def head_id(self) -> str:
+        """Tool head identifier."""
+        return self._head_id
+
+    @head_id.setter
+    def head_id(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f"head_id must be str, got {type(value).__name__}")
+        self._head_id = value
+
+    @property
+    def name(self) -> str:
+        """Tool name/description."""
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f"name must be str, got {type(value).__name__}")
+        self._name = value
+
     def __str__(self) -> str:
         """Return HOPS tool command string."""
         cmd_prefix = self.tool_type.value
-        lead_in_feedrate_str = str(self.lead_in_feedrate) if self.lead_in_feedrate is not None else HopsSystemVars.LEAD_IN_FEEDRATE
-        feedrate_str = str(self.feedrate) if self.feedrate is not None else HopsSystemVars.FEEDRATE
-        lead_out_feedrate_str = str(self.lead_out_feedrate) if self.lead_out_feedrate is not None else HopsSystemVars.LEAD_OUT_FEEDRATE
-        motor_speed_str = str(self.motor_speed) if self.motor_speed is not None else HopsSystemVars.MOTOR_SPEED
-        lead_in_out_factor_str = str(self.lead_in_out_factor) if self.lead_in_out_factor is not None else HopsSystemVars.LEAD_IN_OUT_FACTOR
+        lead_in_feedrate_str = str(int(self.lead_in_feedrate)) if self.lead_in_feedrate is not None else HopsSystemVars.LEAD_IN_FEEDRATE
+        feedrate_str = str(int(self.feedrate)) if self.feedrate is not None else HopsSystemVars.FEEDRATE
+        lead_out_feedrate_str = str(int(self.lead_out_feedrate)) if self.lead_out_feedrate is not None else HopsSystemVars.LEAD_OUT_FEEDRATE
+        motor_speed_str = str(int(self.motor_speed)) if self.motor_speed is not None else HopsSystemVars.MOTOR_SPEED
+        lead_in_out_factor_str = f"{self.lead_in_out_factor:.2f}" if self.lead_in_out_factor is not None else HopsSystemVars.LEAD_IN_OUT_FACTOR
 
         return f"{cmd_prefix}({self.position},{lead_in_feedrate_str},{feedrate_str},{lead_out_feedrate_str},{motor_speed_str},{lead_in_out_factor_str},'{self.head_id}')"
 
@@ -386,9 +519,8 @@ class ToolLibrary:
         self._tool_count: int = 0
 
         if too_path is None:
-            # Use default path relative to this module
-            module_dir = Path(__file__).parent.parent
-            too_path = module_dir / "data" / "7235C_219.too"
+            # Use default tool library from package DATA directory
+            too_path = Path(DATA) / "7235C_219.too"
 
         self._parse_too_file(Path(too_path))
 
