@@ -87,6 +87,14 @@ class FreePlane:
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
+        self._x = None
+        self._y = None
+        self._z = None
+        self._rotation_angle = None
+        self._tilt_angle = None
+        self._easy_snap_xy = None
+        self._easy_snap_z = None
+
         self.x = x
         self.y = y
         self.z = z
@@ -95,6 +103,113 @@ class FreePlane:
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
 
+    @property
+    def x(self) -> float:
+        """X-coordinate of the free view zero point."""
+        return self._x
+
+    @x.setter
+    def x(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"x must be a number, got {type(value).__name__}")
+        self._x = float(value)
+
+    @property
+    def y(self) -> float:
+        """Y-coordinate of the free view zero point."""
+        return self._y
+
+    @y.setter
+    def y(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"y must be a number, got {type(value).__name__}")
+        self._y = float(value)
+
+    @property
+    def z(self) -> float:
+        """Z-coordinate of the free view zero point."""
+        return self._z
+
+    @z.setter
+    def z(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"z must be a number, got {type(value).__name__}")
+        self._z = float(value)
+
+    @property
+    def rotation_angle(self) -> float:
+        """Rotation angle β1 in degrees (rotation around Z-axis)."""
+        return self._rotation_angle
+
+    @rotation_angle.setter
+    def rotation_angle(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"rotation_angle must be a number, got {type(value).__name__}")
+        self._rotation_angle = float(value)
+
+    @property
+    def tilt_angle(self) -> float:
+        """Tilt angle β2 in degrees (rotation around X-axis)."""
+        return self._tilt_angle
+
+    @tilt_angle.setter
+    def tilt_angle(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"tilt_angle must be a number, got {type(value).__name__}")
+        self._tilt_angle = float(value)
+
+    @property
+    def easy_snap_xy(self) -> int:
+        """Corner snap mode for XY movement (0-9)."""
+        return self._easy_snap_xy
+
+    @easy_snap_xy.setter
+    def easy_snap_xy(self, value):
+        if isinstance(value, EasySnapXY):
+            value = value.value
+        elif not isinstance(value, int):
+            raise TypeError(f"easy_snap_xy must be EasySnapXY enum or int, got {type(value).__name__}")
+
+        if not 0 <= value <= 9:
+            raise ValueError(f"easy_snap_xy must be between 0 and 9, got {value}")
+
+        self._easy_snap_xy = value
+
+    @property
+    def easy_snap_z(self) -> int:
+        """Z-axis reference mode for depth calculations (0-2)."""
+        return self._easy_snap_z
+
+    @easy_snap_z.setter
+    def easy_snap_z(self, value):
+        if isinstance(value, EasySnapZ):
+            value = value.value
+        elif not isinstance(value, int):
+            raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
+
+        if not 0 <= value <= 2:
+            raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
+
+        self._easy_snap_z = value
+
+    @staticmethod
+    def _format_number(value: float) -> str:
+        """Format number intelligently - integers without decimals, floats with 3 decimals.
+
+        Parameters
+        ----------
+        value : float
+            The number to format.
+
+        Returns
+        -------
+        str
+            Formatted number string.
+        """
+        if isinstance(value, int) or value == int(value):
+            return str(int(value))
+        return f"{value:.3f}"
+
     def __str__(self) -> str:
         """Return EBENEF command string.
 
@@ -102,15 +217,15 @@ class FreePlane:
             Formatted EBENEF command with minimal required parameters
         """
         params = [
-            self.x,
-            self.y,
-            self.z,
-            self.rotation_angle,
-            self.tilt_angle,
-            self.easy_snap_xy,
-            self.easy_snap_z,
+            self._format_number(self.x),
+            self._format_number(self.y),
+            self._format_number(self.z),
+            self._format_number(self.rotation_angle),
+            self._format_number(self.tilt_angle),
+            str(self.easy_snap_xy),
+            str(self.easy_snap_z),
         ]
-        return f"EBENEF({','.join(map(str, params))})"
+        return f"EBENEF({','.join(params)})"
 
     def __repr__(self) -> str:
         """Return detailed string representation for debugging."""
