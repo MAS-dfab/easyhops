@@ -34,11 +34,12 @@ class TestMachining:
         ep = EndPoint()
         op = MillingOperation(sp, [], ep)
 
-        machining = HOPSMachining(tool, plane, op)
+        machining = HOPSMachining(tool, plane, [op])
 
         assert machining.tool == tool
         assert machining.work_plane == plane
-        assert machining.operation == op
+        assert len(machining.operations) == 1
+        assert machining.operations[0] == op
 
     def test_machining_repr(self):
         """Test HOPSMachining __repr__."""

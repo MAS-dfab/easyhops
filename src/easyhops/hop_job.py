@@ -45,7 +45,7 @@ class UnparsedLineError(HOPParsingError):
         self.line_number = line_number
         self.line_content = line_content
         self.context = context
-        message = f"Line {line_number}: {context}\n  Content: {line_content.strip()}"
+        message = f"HOP PARSING ERROR - Line {line_number}: {context}\n  Line context: {line_content.strip()}"
         super().__init__(message)
 
 
@@ -67,51 +67,60 @@ class HOPChunk:
 
 
 class HOPSMachining:
-    """Represents a machining operation with its tool and work plane.
+    """Represents machining operations with their tool and work plane.
 
-    This class associates a machining operation (milling, sawing, or drilling)
-    with the tool and work plane used for that operation.
+    This class associates one or more machining operations (milling, sawing, or drilling)
+    with the tool and work plane used for those operations. A single tool+workplane
+    combination can have multiple operations (e.g., multiple milling paths).
 
     Attributes:
     -----------
     tool : MachiningTool
-        The machining tool used for this operation
+        The machining tool used for these operations
     work_plane : Union[WorkPlane, FreePlane]
-        The work plane on which this operation is performed
-    operation : Union[MillingOperation, SawingOperation, DrillingOperation]
-        The actual machining operation
+        The work plane on which these operations are performed
+    operations : List[Union[MillingOperation, SawingOperation, DrillingOperation]]
+        The actual machining operations (one or more)
 
     Example:
     --------
-    # TODO: this is an example for parsing a machining. Update it.
     >>> from .tool_library import MachiningTool
     >>> from .work_planes import WorkPlane
     >>> tool = MachiningTool.from_hop_line("WZF(1,10,0,0)")
     >>> plane = WorkPlane.from_hop_line("EBENE(1)")
-    >>> op = MillingOperation(SP(...), [G01(...)], EP(...))
-    >>> machining = Machining(tool, plane, op)
+    >>> op1 = MillingOperation(SP(...), [G01(...)], EP(...))
+    >>> op2 = MillingOperation(SP(...), [G01(...)], EP(...))
+    >>> machining = HOPSMachining(tool, plane, [op1, op2])
     """
 
     def __init__(
         self,
         tool: MachiningTool,
         work_plane: Union[WorkPlane, FreePlane],
-        operation: Union[MillingOperation, SawingOperation, DrillingOperation],
+        operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]],
     ):
         self.tool = tool
         self.work_plane = work_plane
-        self.operation = operation
+        # Ensure operations is always a list
+        if isinstance(operations, list):
+            self.operations = operations
+        else:
+            self.operations = [operations]
 
     def __repr__(self) -> str:
         """Return string representation."""
-        return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, op={type(self.operation).__name__})"
+        op_count = len(self.operations)
+        return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, ops={op_count}x{type(self.operations[0]).__name__ if self.operations else 'None'})"
 
     def __str__(self) -> str:
         """Generate HOPS commands for this machining.
 
-        Returns tool, work plane, and operation on separate lines.
+        Returns tool, work plane, and all operations on separate lines.
         """
-        return f"{str(self.tool)}\n{str(self.work_plane)}\n{str(self.operation)}"
+        lines = [str(self.tool), str(self.work_plane)]
+        for operation in self.operations:
+            lines.append(str(operation))
+        return "\n".join(lines)
 
 
 class HOPSJob:
@@ -452,10 +461,18 @@ class HOPSJob:
 
         # Parse machining chunks
         machinings_list = []
+        unparsed_errors = []
         for mach_chunk in mach_chunks:
-            machining = cls._parse_machining_chunk(mach_chunk)
+            machining, errors = cls._parse_machining_chunk(mach_chunk, strict=strict)
             if machining:
                 machinings_list.append(machining)
+            if errors:
+                unparsed_errors.extend(errors)
+
+        # In strict mode, raise if there were any unparsed lines
+        if strict and unparsed_errors:
+            # Raise the first error
+            raise unparsed_errors[0]
 
         # Create job with parsed components
         job = cls(
@@ -520,18 +537,30 @@ class HOPSJob:
         return None
 
     @staticmethod
-    def _parse_machining_chunk(chunk: HOPChunk) -> Optional[HOPSMachining]:
+    def _parse_machining_chunk(chunk: HOPChunk, strict: bool = False) -> Tuple[Optional[HOPSMachining], List[UnparsedLineError]]:
         """Parse a machining chunk (tool + work plane + operations).
+
+        A single chunk may contain multiple operations using the same
+        tool and work plane (e.g., multiple milling paths).
+
+        Parameters:
+        -----------
+        chunk : HOPChunk
+            The chunk to parse
+        strict : bool
+            If True, collect unparsed line errors
 
         Returns:
         --------
-        Optional[HOPSMachining]
-            Parsed HOPSMachining or None if parsing failed
+        Tuple[Optional[HOPSMachining], List[UnparsedLineError]]
+            Tuple of (parsed HOPSMachining with list of operations or None, list of errors)
         """
 
         # Find tool line (first non-comment line)
         tool = None
         work_plane = None
+        operations = []
+        errors = []
 
         chunk_idx = 0
 
@@ -544,13 +573,18 @@ class HOPSJob:
                     chunk_idx += 1
                     break
                 except Exception:
-                    return None
+                    if strict:
+                        errors.append(UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Failed to parse tool line"))
+                    return None, errors
             chunk_idx += 1
 
         if not tool:
-            return None
+            if strict:
+                errors.append(UnparsedLineError(line_number=chunk.start_line, line_content="", context="No tool definition found in machining chunk"))
+            return None, errors
 
         # Parse work plane (EBENE/EBENEF) - chunk.lines has no comments
+        work_plane_start_idx = chunk_idx
         while chunk_idx < len(chunk.lines):
             line = chunk.lines[chunk_idx].strip()
 
@@ -560,22 +594,50 @@ class HOPSJob:
                     chunk_idx += 1
                     break
                 except Exception:
-                    return None
+                    if strict:
+                        errors.append(
+                            UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Failed to parse EBENEF work plane")
+                        )
+                    return None, errors
             elif line.startswith("EBENE"):
                 try:
                     work_plane = WorkPlane.from_hop_line(line)
                     chunk_idx += 1
                     break
                 except Exception:
-                    return None
-            else:
+                    if strict:
+                        errors.append(UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Failed to parse EBENE work plane"))
+                    return None, errors
+            elif line.startswith("SP(") or line.startswith("SAEGEN(") or line.startswith("BOHR("):
+                # Found operation before work plane - this is an error
+                if strict:
+                    errors.append(
+                        UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Found operation before work plane definition")
+                    )
+                return None, errors
+            elif not line.startswith("CALL") and line:
+                # Unknown line where we expected work plane
+                if strict:
+                    errors.append(
+                        UnparsedLineError(
+                            line_number=chunk.start_line + chunk_idx,
+                            line_content=chunk.lines[chunk_idx],
+                            context="Expected work plane definition (EBENE/EBENEF), got unknown command",
+                        )
+                    )
+                    return None, errors
                 # Skip non-work plane lines (like CALL feedrate)
+                chunk_idx += 1
+            else:
+                # Skip CALL or empty lines
                 chunk_idx += 1
 
         if not work_plane:
-            return None
+            if strict:
+                errors.append(UnparsedLineError(line_number=chunk.start_line + work_plane_start_idx, line_content="", context="No work plane definition found after tool"))
+            return None, errors
 
-        # Parse operation (SP+G01+EP, SAEGEN, or BOHR)
+        # Parse ALL operations in this chunk (SP+G01+EP, SAEGEN, or BOHR)
         while chunk_idx < len(chunk.lines):
             line = chunk.lines[chunk_idx].strip()
 
@@ -587,29 +649,46 @@ class HOPSJob:
             operation = None
             try:
                 if line.startswith("SP("):
-                    operation = HOPSJob._parse_milling_from_chunk(chunk, chunk_idx)
+                    # Parse milling and get next index
+                    operation, next_idx = HOPSJob._parse_milling_from_chunk(chunk, chunk_idx)
+                    if operation:
+                        operations.append(operation)
+                        chunk_idx = next_idx
+                    else:
+                        # Parsing failed, skip this line to avoid infinite loop
+                        chunk_idx += 1
+                    # chunk_idx already advanced past EP
                 elif line.startswith("SAEGEN("):
                     operation = SawingOperation.from_hop_line(line)
+                    if operation:
+                        operations.append(operation)
+                    chunk_idx += 1
                 elif line.startswith("BOHR("):
                     operation = DrillingOperation.from_hop_line(line)
-
-                if operation:
-                    return HOPSMachining(tool, work_plane, operation)
+                    if operation:
+                        operations.append(operation)
+                    chunk_idx += 1
+                else:
+                    # Unknown line, skip it
+                    chunk_idx += 1
             except Exception:
-                pass
+                # Error parsing operation, skip this line
+                chunk_idx += 1
 
-            chunk_idx += 1
+        # Return machining with all collected operations
+        if operations:
+            return HOPSMachining(tool, work_plane, operations), errors
 
-        return None
+        return None, errors
 
     @staticmethod
-    def _parse_milling_from_chunk(chunk: HOPChunk, start_idx: int) -> Optional[MillingOperation]:
+    def _parse_milling_from_chunk(chunk: HOPChunk, start_idx: int) -> Tuple[Optional[MillingOperation], int]:
         """Parse milling operation from chunk lines starting at start_idx.
 
         Returns:
         --------
-        Optional[MillingOperation]
-            Parsed MillingOperation or None if parsing failed
+        Tuple[Optional[MillingOperation], int]
+            Tuple of (parsed MillingOperation or None, next index after EP)
         """
         chunk_idx = start_idx
 
@@ -636,17 +715,18 @@ class HOPSJob:
             # Parse EP
             if chunk_idx < len(chunk.lines) and chunk.lines[chunk_idx].strip().startswith("EP("):
                 end_point = EndPoint.from_hop_line(chunk.lines[chunk_idx].strip())
+                chunk_idx += 1  # Move past EP
 
                 return MillingOperation(
                     start_point=start_point,
                     moves=moves,
                     end_point=end_point,
-                )
+                ), chunk_idx
             else:
-                return None
+                return None, chunk_idx
 
         except Exception:
-            return None
+            return None, start_idx
 
     def _to_hop_lines(self) -> str:
         lines = []
