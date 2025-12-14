@@ -5,6 +5,8 @@ representations of all machining operations with their associated tools and work
 """
 
 import warnings
+from dataclasses import dataclass
+from dataclasses import field
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -24,6 +26,46 @@ from .work_planes import FreePlane
 from .work_planes import WorkPlane
 
 
+class HOPParsingError(Exception):
+    """Base exception for HOP file parsing errors."""
+
+    pass
+
+
+class UnparsedLineError(HOPParsingError):
+    """Exception for lines that couldn't be parsed.
+
+    Attributes:
+        line_number: Line number in the file (1-indexed)
+        line_content: The actual line content
+        context: Additional context about what was expected
+    """
+
+    def __init__(self, line_number: int, line_content: str, context: str = ""):
+        self.line_number = line_number
+        self.line_content = line_content
+        self.context = context
+        message = f"Line {line_number}: {context}\n  Content: {line_content.strip()}"
+        super().__init__(message)
+
+
+@dataclass
+class HOPChunk:
+    """Represents a logical chunk of HOP file lines.
+
+    Attributes:
+        lines: The code lines for this chunk (without comments)
+        comments: Associated comment lines (usually header comments)
+        start_line: Line number where chunk starts (1-indexed)
+        chunk_type: Type of chunk ('header', 'vars', 'finished_part', 'park_mode', 'machining')
+    """
+
+    lines: List[str]
+    comments: List[str] = field(default_factory=list)
+    start_line: int = 0
+    chunk_type: str = ""
+
+
 class HOPSMachining:
     """Represents a machining operation with its tool and work plane.
 
@@ -41,6 +83,7 @@ class HOPSMachining:
 
     Example:
     --------
+    # TODO: this is an example for parsing a machining. Update it.
     >>> from .tool_library import MachiningTool
     >>> from .work_planes import WorkPlane
     >>> tool = MachiningTool.from_hop_line("WZF(1,10,0,0)")
@@ -55,17 +98,6 @@ class HOPSMachining:
         work_plane: Union[WorkPlane, FreePlane],
         operation: Union[MillingOperation, SawingOperation, DrillingOperation],
     ):
-        """Initialize a Machining instance.
-
-        Parameters:
-        -----------
-        tool : MachiningTool
-            The machining tool
-        work_plane : Union[WorkPlane, FreePlane]
-            The work plane
-        operation : Union[MillingOperation, SawingOperation, DrillingOperation]
-            The machining operation
-        """
         self.tool = tool
         self.work_plane = work_plane
         self.operation = operation
@@ -99,7 +131,7 @@ class HOPSJob:
         Finished part definition
     park_mode : :class:`ParkMode`
         Park mode settings
-    machinings : List[:class:`Machining`]
+    machinings : List[:class:`HOPSMachining`]
         List of all machining operations with their tools and work planes
     header : Optional[List[str]]
         Comment lines from the start of the file
@@ -109,7 +141,7 @@ class HOPSJob:
     >>> vars_def = VarsDefinition(dx=100.0, dy=200.0, dz=50.0)
     >>> finished_part = FinishedPart(dx=100.0, dy=200.0, dz=50.0)
     >>> park_mode = ParkMode(mode=11, pos_x=0, pos_y=0)
-    >>> machinings = [Machining(tool, plane, operation)]
+    >>> machinings = [HOPSMachining(tool, plane, operation)]
     >>> job = HOPSJob(vars_def, finished_part, park_mode, machinings)
 
     Or parse from file:
@@ -133,61 +165,297 @@ class HOPSJob:
         self.machinings = machinings
         self.header = header
 
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return f"HOPSJob(vars={self.vars}, machinings={len(self.machinings)})"
+
+    def __str__(self) -> str:
+        """Generate HOP file content from this job.
+
+        Returns:
+        --------
+        str
+            Complete HOP file content
+        """
+        return self._to_hop_lines()
+
+    @staticmethod
+    def _extract_header_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
+        """Extract header comment lines from the beginning of the file.
+
+        Returns:
+        --------
+        Tuple of (header_chunk, next_index)
+        """
+        idx = start_idx
+        header_lines = []
+
+        while idx < len(lines) and lines[idx].strip().startswith(";"):
+            header_lines.append(lines[idx])
+            idx += 1
+
+        if header_lines:
+            header_chunk = HOPChunk(lines=header_lines, comments=[], start_line=start_idx + 1, chunk_type="header")
+            return header_chunk, idx
+
+        return None, idx
+
+    @staticmethod
+    def _extract_vars_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
+        """Extract VARS section lines (VARS...START), separating code from comments.
+
+        Returns:
+        --------
+        Tuple of (vars_chunk, next_index)
+        """
+        if start_idx >= len(lines):
+            return None, start_idx
+
+        idx = start_idx
+        vars_start = idx
+        vars_code = []
+        vars_comments = []
+
+        # Collect lines until START
+        while idx < len(lines):
+            line = lines[idx]
+            stripped = line.strip()
+
+            if stripped.startswith(";"):
+                vars_comments.append(line)
+            else:
+                vars_code.append(line)
+
+            if "START" in line:
+                idx += 1
+                vars_chunk = HOPChunk(lines=vars_code, comments=vars_comments, start_line=vars_start + 1, chunk_type="vars")
+                return vars_chunk, idx
+
+            idx += 1
+
+        return None, idx
+
+    @staticmethod
+    def _extract_finished_part_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
+        """Extract FERTIGTEIL line with any preceding comments.
+
+        Returns:
+        --------
+        Tuple of (finished_part_chunk, next_index)
+        """
+        idx = start_idx
+
+        # Skip lines until FERTIGTEIL
+        while idx < len(lines):
+            if lines[idx].strip().startswith("FERTIGTEIL("):
+                break
+            idx += 1
+
+        if idx >= len(lines):
+            return None, idx
+
+        fp_line_idx = idx
+
+        # Look back for any preceding comments
+        comment_start = fp_line_idx
+        while comment_start > 0 and lines[comment_start - 1].strip().startswith(";"):
+            comment_start -= 1
+
+        # Collect comments
+        fp_comments = []
+        for i in range(comment_start, fp_line_idx):
+            if lines[i].strip().startswith(";"):
+                fp_comments.append(lines[i])
+
+        fp_code = [lines[fp_line_idx]]
+
+        finished_part_chunk = HOPChunk(lines=fp_code, comments=fp_comments, start_line=comment_start + 1, chunk_type="finished_part")
+
+        return finished_part_chunk, fp_line_idx + 1
+
+    @staticmethod
+    def _extract_park_mode_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
+        """Extract Park_V7 line with any preceding comments.
+
+        Returns:
+        --------
+        Tuple of (park_mode_chunk, next_index)
+        """
+        idx = start_idx
+
+        # Look for Park_V7
+        while idx < len(lines):
+            line = lines[idx].strip()
+
+            if "Park_V7" in line:
+                pm_line_idx = idx
+
+                # Look back for preceding comments
+                comment_start = pm_line_idx
+                while comment_start > 0 and lines[comment_start - 1].strip().startswith(";"):
+                    comment_start -= 1
+
+                # Collect comments
+                pm_comments = []
+                for i in range(comment_start, pm_line_idx):
+                    if lines[i].strip().startswith(";"):
+                        pm_comments.append(lines[i])
+
+                pm_code = [lines[pm_line_idx]]
+
+                park_mode_chunk = HOPChunk(lines=pm_code, comments=pm_comments, start_line=comment_start + 1, chunk_type="park_mode")
+
+                return park_mode_chunk, pm_line_idx + 1
+
+            elif line.startswith("WZ"):
+                # Reached machining section
+                break
+
+            idx += 1
+
+        return None, idx
+
+    @staticmethod
+    def _extract_machining_lines(lines: List[str], start_idx: int) -> List[HOPChunk]:
+        """Extract all machining chunks (WZF/WZS/WZB blocks with operations).
+
+        Returns:
+        --------
+        List of machining chunks
+        """
+        machining_chunks = []
+        idx = start_idx
+
+        while idx < len(lines):
+            line = lines[idx].strip()
+
+            # Start of machining block
+            if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
+                mach_start = idx
+                mach_code = []
+                mach_comments = []
+
+                # Collect everything until next tool change
+                while idx < len(lines):
+                    line = lines[idx]
+                    stripped = line.strip()
+
+                    # Stop at next tool change
+                    if idx > mach_start and (stripped.startswith("WZF(") or stripped.startswith("WZS(") or stripped.startswith("WZB(")):
+                        break
+
+                    # Separate comments from code
+                    if stripped.startswith(";"):
+                        mach_comments.append(line)
+                    elif stripped:  # Non-empty, non-comment line
+                        mach_code.append(line)
+
+                    idx += 1
+
+                if mach_code:
+                    machining_chunks.append(
+                        HOPChunk(
+                            lines=mach_code,
+                            comments=mach_comments,
+                            start_line=mach_start + 1,
+                            chunk_type="machining",
+                        )
+                    )
+            else:
+                idx += 1
+
+        return machining_chunks
+
+    @staticmethod
+    def _split_lines(
+        lines: List[str],
+    ) -> Tuple[Optional[HOPChunk], Optional[HOPChunk], Optional[HOPChunk], Optional[HOPChunk], List[HOPChunk]]:
+        """Split HOP file lines into logical chunks.
+
+        Phase 1 of parsing: identify logical blocks without parsing content.
+        Separates comments from code lines for each chunk.
+
+        Returns:
+        --------
+        Tuple of (header_chunk, vars_chunk, finished_part_chunk, park_mode_chunk, machining_chunks)
+        """
+        idx = 0
+
+        # Extract each section sequentially
+        header_chunk, idx = HOPSJob._extract_header_lines(lines, idx)
+        vars_chunk, idx = HOPSJob._extract_vars_lines(lines, idx)
+        finished_part_chunk, idx = HOPSJob._extract_finished_part_lines(lines, idx)
+        park_mode_chunk, idx = HOPSJob._extract_park_mode_lines(lines, idx)
+        machining_chunks = HOPSJob._extract_machining_lines(lines, idx)
+
+        return header_chunk, vars_chunk, finished_part_chunk, park_mode_chunk, machining_chunks
+
     @classmethod
-    def from_hop_file(cls, filepath: str) -> "HOPSJob":
+    def from_hop_file(cls, filepath: str, strict: bool = False) -> "HOPSJob":
         """Parse a HOP file and create a HOPSJob.
 
         Parameters:
         -----------
         filepath : str
             Path to the HOP file to parse
+        strict : bool, optional
+            If True, raises UnparsedLineError for any unparseable lines.
+            If False (default), collects unparsed lines as warnings.
 
         Returns:
         --------
         HOPSJob
             Parsed HOPSJob object with all machinings
 
+        Raises:
+        -------
+        HOPParsingError
+            If strict=True and parsing encounters errors
+
         Example:
         --------
         >>> job = HOPSJob.from_hop_file("part.hop")
         >>> print(f"Found {len(job.machinings)} operations")
+
+        >>> # Strict mode - raises on any parsing error
+        >>> try:
+        ...     job = HOPSJob.from_hop_file("part.hop", strict=True)
+        ... except UnparsedLineError as e:
+        ...     print(f"Parse error at line {e.line_number}: {e.context}")
         """
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
-        # Initialize temporary parsing state
-        vars_def: Optional[VarsDefinition] = None
-        finished_part_def: Optional[FinishedPart] = None
-        park_mode_def: Optional[ParkMode] = None
-        machinings_list: List[HOPSMachining] = []
-        unparsed_lines: List[Tuple[int, str]] = []
-        warnings_list: List[str] = []
-        header_lines: List[str] = []
+        # PHASE 1: Split file into chunks
+        header_chunk, vars_chunk, fp_chunk, pm_chunk, mach_chunks = cls._split_lines(lines)
 
-        i = 0
+        # PHASE 2: Parse each chunk independently
+        # Parse header
+        header_lines = None
+        if header_chunk:
+            header_lines = [line.rstrip() for line in header_chunk.lines]
 
-        # Collect header comments
-        while i < len(lines) and lines[i].strip().startswith(";"):
-            header_lines.append(lines[i].rstrip())
-            i += 1
-
-        # Parse VARS section
-        i, vars_def = cls._parse_vars_section(lines, i, unparsed_lines, warnings_list)
+        # Parse VARS
+        vars_def = None
+        if vars_chunk:
+            vars_def = cls._parse_vars_chunk(vars_chunk)
 
         # Parse FERTIGTEIL
-        i, finished_part_def = cls._parse_finished_part(lines, i, unparsed_lines, warnings_list)
+        finished_part_def = None
+        if fp_chunk:
+            finished_part_def = cls._parse_finished_part_chunk(fp_chunk)
 
-        # Parse Park mode
-        i, park_mode_def = cls._parse_park_mode(lines, i, unparsed_lines, warnings_list)
+        # Parse Park Mode
+        park_mode_def = None
+        if pm_chunk:
+            park_mode_def = cls._parse_park_mode_chunk(pm_chunk)
 
-        # Parse operations
-        machinings_list = cls._parse_operations(lines, i, unparsed_lines, warnings_list)
-
-        # Emit warnings for unparsed lines
-        if unparsed_lines:
-            msg = f"Skipped {len(unparsed_lines)} unparsed line(s) in {filepath}"
-            warnings_list.append(msg)
-            warnings.warn(msg, UserWarning)
+        # Parse machining chunks
+        machinings_list = []
+        for mach_chunk in mach_chunks:
+            machining = cls._parse_machining_chunk(mach_chunk)
+            if machining:
+                machinings_list.append(machining)
 
         # Create job with parsed components
         job = cls(
@@ -201,315 +469,186 @@ class HOPSJob:
         return job
 
     @staticmethod
-    def _parse_vars_section(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> Tuple[int, Optional[VarsDefinition]]:
-        """Parse VARS section (VARS...START).
+    def _parse_vars_chunk(chunk: HOPChunk) -> Optional[VarsDefinition]:
+        """Parse VARS chunk.
 
         Returns:
         --------
-        Tuple[int, Optional[VarsDefinition]]
-            Index of the line after START and parsed VarsDefinition
+        Optional[VarsDefinition]
+            Parsed VarsDefinition or None if parsing failed
         """
-        vars_lines = []
-        i = start_idx
-
-        # Collect lines until START
-        while i < len(lines):
-            line = lines[i]
-            vars_lines.append(line)
-            if "START" in line:
-                i += 1
-                break
-            i += 1
-
-        # Parse VARS
         try:
-            vars_def = VarsDefinition.from_hop_line(vars_lines)
-            return i, vars_def
-        except Exception as e:
-            warnings_list.append(f"Failed to parse VARS section: {e}")
-            unparsed_lines.extend([(start_idx + j, line) for j, line in enumerate(vars_lines)])
-            return i, None
+            vars_def = VarsDefinition.from_hop_line(chunk.lines)
+            return vars_def
+        except Exception:
+            return None
 
     @staticmethod
-    def _parse_finished_part(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> Tuple[int, Optional[FinishedPart]]:
-        """Parse FERTIGTEIL line.
+    def _parse_finished_part_chunk(chunk: HOPChunk) -> Optional[FinishedPart]:
+        """Parse FERTIGTEIL chunk.
 
         Returns:
         --------
-        Tuple[int, Optional[FinishedPart]]
-            Index of the next line and parsed FinishedPart
+        Optional[FinishedPart]
+            Parsed FinishedPart or None if parsing failed
         """
-        i = start_idx
-
-        # Look for FERTIGTEIL
-        while i < len(lines):
-            line = lines[i].strip()
-            if line.startswith("FERTIGTEIL("):
-                try:
-                    finished_part = FinishedPart.from_hop_line(line)
-                    return i + 1, finished_part
-                except Exception as e:
-                    warnings_list.append(f"Failed to parse FERTIGTEIL at line {i + 1}: {e}")
-                    unparsed_lines.append((i, lines[i]))
-                    return i + 1, None
-            elif line and not line.startswith(";"):
-                # Non-comment, non-FERTIGTEIL line
-                break
-            i += 1
-
-        return i, None
-
-    @staticmethod
-    def _parse_park_mode(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> Tuple[int, Optional[ParkMode]]:
-        """Parse CALL Park_V7 line.
-
-        Returns:
-        --------
-        Tuple[int, Optional[ParkMode]]
-            Index of the next line and parsed ParkMode
-        """
-        i = start_idx
-
-        # Look for Park_V7
-        while i < len(lines):
-            line = lines[i].strip()
-            if "Park_V7" in line:
-                try:
-                    park_mode = ParkMode.from_hop_line(line)
-                    return i + 1, park_mode
-                except Exception as e:
-                    warnings_list.append(f"Failed to parse Park_V7 at line {i + 1}: {e}")
-                    unparsed_lines.append((i, lines[i]))
-                    return i + 1, None
-            elif line.startswith("WZ"):
-                # Reached operations section
-                break
-            elif line and not line.startswith(";"):
-                # Skip other initialization lines
-                i += 1
-            else:
-                i += 1
-
-        return i, None
-
-    @staticmethod
-    def _parse_operations(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> List[HOPSMachining]:
-        """Parse all machining operations (WZF/WZS blocks).
-
-        Each operation consists of:
-        - Tool command (WZF or WZS)
-        - Work plane (EBENE or EBENEF)
-        - Machining commands (SP+G01+EP, SAEGEN, or BOHR)
-        """
-        machinings = []
-        i = start_idx
-
-        while i < len(lines):
-            line = lines[i].strip()
-
-            # Tool change - start of new operation context
-            if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
-                try:
-                    # Parse tool
-                    tool = MachiningTool.from_hop_line(line)
-                    i += 1
-
-                    # Parse work plane
-                    work_plane, i = HOPSJob._parse_work_plane(lines, i, unparsed_lines, warnings_list)
-
-                    # Only continue if we got a valid work plane
-                    if work_plane is not None:
-                        # Parse machining operation(s) with this tool/plane
-                        i = HOPSJob._parse_machining_operations(lines, i, tool, work_plane, machinings, unparsed_lines, warnings_list)
-                    else:
-                        warnings_list.append(f"Skipping operations for tool at line {i} due to missing work plane")
-
-                except Exception as e:
-                    warnings_list.append(f"Failed to parse operation at line {i + 1}: {e}")
-                    unparsed_lines.append((i, lines[i]))
-                    i += 1
-            else:
-                i += 1
-
-        return machinings
-
-    @staticmethod
-    def _parse_work_plane(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> Tuple[Union[WorkPlane, FreePlane], int]:
-        """Parse work plane definition.
-
-        Returns:
-        --------
-        Tuple[Union[WorkPlane, FreePlane], int]
-            Parsed work plane and index of next line
-        """
-        i = start_idx
-
-        # Skip comments and empty lines to find work plane
-        while i < len(lines):
-            line = lines[i].strip()
-
-            if not line or line.startswith(";"):
-                i += 1
-                continue
-
+        # chunk.lines contains only code lines (no comments)
+        if chunk.lines:
             try:
-                if line.startswith("EBENEF("):
-                    plane = FreePlane.from_hop_line(line)
-                    return plane, i + 1
-                elif line.startswith("EBENE"):
-                    plane = WorkPlane.from_hop_line(line)
-                    return plane, i + 1
-                else:
-                    warnings_list.append(f"Expected work plane at line {i + 1}, found: {line}")
-                    unparsed_lines.append((i, lines[i]))
-                    return None, i + 1
-            except Exception as e:
-                warnings_list.append(f"Failed to parse work plane at line {i + 1}: {e}")
-                unparsed_lines.append((i, lines[i]))
-                return None, i + 1
-
-        # Reached end without finding work plane
-        warnings_list.append(f"No work plane found after line {start_idx + 1}")
-        return None, i
+                finished_part = FinishedPart.from_hop_line(chunk.lines[0].strip())
+                return finished_part
+            except Exception:
+                return None
+        return None
 
     @staticmethod
-    def _parse_machining_operations(
-        lines: List[str],
-        start_idx: int,
-        tool: MachiningTool,
-        work_plane: Union[WorkPlane, FreePlane],
-        machinings: List[HOPSMachining],
-        unparsed_lines: List[Tuple[int, str]],
-        warnings_list: List[str],
-    ) -> int:
-        """Parse machining operations until next tool change.
+    def _parse_park_mode_chunk(chunk: HOPChunk) -> Optional[ParkMode]:
+        """Parse Park Mode chunk.
 
         Returns:
         --------
-        int
-            Index after parsing operations
+        Optional[ParkMode]
+            Parsed ParkMode or None if parsing failed
         """
-        i = start_idx
+        # chunk.lines contains only code lines (no comments)
+        if chunk.lines:
+            try:
+                park_mode = ParkMode.from_hop_line(chunk.lines[0].strip())
+                return park_mode
+            except Exception:
+                return None
+        return None
 
-        while i < len(lines):
-            line = lines[i].strip()
+    @staticmethod
+    def _parse_machining_chunk(chunk: HOPChunk) -> Optional[HOPSMachining]:
+        """Parse a machining chunk (tool + work plane + operations).
 
-            # Stop at next tool change
+        Returns:
+        --------
+        Optional[HOPSMachining]
+            Parsed HOPSMachining or None if parsing failed
+        """
+
+        # Find tool line (first non-comment line)
+        tool = None
+        work_plane = None
+
+        chunk_idx = 0
+
+        # Parse tool (WZF/WZS/WZB)
+        while chunk_idx < len(chunk.lines):
+            line = chunk.lines[chunk_idx].strip()
             if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
-                break
+                try:
+                    tool = MachiningTool.from_hop_line(line)
+                    chunk_idx += 1
+                    break
+                except Exception:
+                    return None
+            chunk_idx += 1
 
-            # Skip comments and empty lines
-            if not line or line.startswith(";"):
-                i += 1
+        if not tool:
+            return None
+
+        # Parse work plane (EBENE/EBENEF) - chunk.lines has no comments
+        while chunk_idx < len(chunk.lines):
+            line = chunk.lines[chunk_idx].strip()
+
+            if line.startswith("EBENEF("):
+                try:
+                    work_plane = FreePlane.from_hop_line(line)
+                    chunk_idx += 1
+                    break
+                except Exception:
+                    return None
+            elif line.startswith("EBENE"):
+                try:
+                    work_plane = WorkPlane.from_hop_line(line)
+                    chunk_idx += 1
+                    break
+                except Exception:
+                    return None
+            else:
+                # Skip non-work plane lines (like CALL feedrate)
+                chunk_idx += 1
+
+        if not work_plane:
+            return None
+
+        # Parse operation (SP+G01+EP, SAEGEN, or BOHR)
+        while chunk_idx < len(chunk.lines):
+            line = chunk.lines[chunk_idx].strip()
+
+            # Skip CALL feedrate commands
+            if line.startswith("CALL"):
+                chunk_idx += 1
                 continue
 
-            # Parse specific operation types
+            operation = None
             try:
                 if line.startswith("SP("):
-                    # Milling operation
-                    operation, i = HOPSJob._parse_milling_operation(lines, i, unparsed_lines, warnings_list)
-                    if operation:
-                        machining = HOPSMachining(tool, work_plane, operation)
-                        machinings.append(machining)
-
+                    operation = HOPSJob._parse_milling_from_chunk(chunk, chunk_idx)
                 elif line.startswith("SAEGEN("):
-                    # Sawing operation
                     operation = SawingOperation.from_hop_line(line)
-                    machining = HOPSMachining(tool, work_plane, operation)
-                    machinings.append(machining)
-                    i += 1
-
                 elif line.startswith("BOHR("):
-                    # Drilling operation
                     operation = DrillingOperation.from_hop_line(line)
-                    machining = HOPSMachining(tool, work_plane, operation)
-                    machinings.append(machining)
-                    i += 1
 
-                elif line.startswith("CALL") or line.startswith("EBENE"):
-                    # Skip feedrate calls and plane resets
-                    i += 1
+                if operation:
+                    return HOPSMachining(tool, work_plane, operation)
+            except Exception:
+                pass
 
-                else:
-                    # Unrecognized line
-                    unparsed_lines.append((i, lines[i]))
-                    i += 1
+            chunk_idx += 1
 
-            except Exception as e:
-                warnings_list.append(f"Failed to parse operation at line {i + 1}: {e}")
-                unparsed_lines.append((i, lines[i]))
-                i += 1
-
-        return i
+        return None
 
     @staticmethod
-    def _parse_milling_operation(lines: List[str], start_idx: int, unparsed_lines: List[Tuple[int, str]], warnings_list: List[str]) -> Tuple[Optional[MillingOperation], int]:
-        """Parse a milling operation (SP + G01 moves + EP).
+    def _parse_milling_from_chunk(chunk: HOPChunk, start_idx: int) -> Optional[MillingOperation]:
+        """Parse milling operation from chunk lines starting at start_idx.
 
         Returns:
         --------
-        Tuple[Optional[MillingOperation], int]
-            Parsed MillingOperation and index after EP
+        Optional[MillingOperation]
+            Parsed MillingOperation or None if parsing failed
         """
-        i = start_idx
+        chunk_idx = start_idx
 
         try:
             # Parse SP
-            start_point = StartPoint.from_hop_line(lines[i].strip())
-            i += 1
+            start_point = StartPoint.from_hop_line(chunk.lines[chunk_idx].strip())
+            chunk_idx += 1
 
-            # Parse G01 moves
+            # Parse G01 moves - chunk.lines has no comments
             moves = []
-            while i < len(lines):
-                line = lines[i].strip()
+            while chunk_idx < len(chunk.lines):
+                line = chunk.lines[chunk_idx].strip()
                 if line.startswith("G01("):
                     move = G01.from_hop_line(line)
                     moves.append(move)
-                    i += 1
+                    chunk_idx += 1
                 elif line.startswith("EP("):
                     break
                 elif line.startswith("CALL"):
-                    # Skip feedrate commands
-                    i += 1
-                elif not line or line.startswith(";"):
-                    # Skip empty lines and comments
-                    i += 1
+                    chunk_idx += 1
                 else:
-                    # Unexpected line
                     break
 
             # Parse EP
-            if i < len(lines) and lines[i].strip().startswith("EP("):
-                end_point = EndPoint.from_hop_line(lines[i].strip())
-                i += 1
+            if chunk_idx < len(chunk.lines) and chunk.lines[chunk_idx].strip().startswith("EP("):
+                end_point = EndPoint.from_hop_line(chunk.lines[chunk_idx].strip())
 
-                # Create milling operation
-                operation = MillingOperation(
+                return MillingOperation(
                     start_point=start_point,
                     moves=moves,
                     end_point=end_point,
                 )
-                return operation, i
             else:
-                warnings_list.append(f"Milling operation starting at line {start_idx + 1} has no EP")
-                return None, i
+                return None
 
-        except Exception as e:
-            warnings_list.append(f"Failed to parse milling operation at line {start_idx + 1}: {e}")
-            return None, start_idx + 1
+        except Exception:
+            return None
 
-    def __repr__(self) -> str:
-        """Return string representation."""
-        return f"HOPSJob(vars={self.vars}, machinings={len(self.machinings)})"
-
-    def __str__(self) -> str:
-        """Generate HOP file content from this job.
-
-        Returns:
-        --------
-        str
-            Complete HOP file content
-        """
+    def _to_hop_lines(self) -> str:
         lines = []
 
         # Header comments

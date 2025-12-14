@@ -170,11 +170,11 @@ class TestFinishedPart:
         """Test FinishedPart.__str__() includes comment."""
         fp = FinishedPart(dx=1000.0, dy=500.0, dz=50.0, comment="Test")
         output = str(fp)
-        assert "; Test" in output
+        assert "'Test'" in output
 
     def test_finished_part_from_hop_line_with_values(self):
         """Test FinishedPart.from_hop_line() with explicit values."""
-        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0,0,0,0)"
+        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0,,0,0,0)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.dx == pytest.approx(1000.0)
         assert fp.dy == pytest.approx(500.0)
@@ -190,7 +190,7 @@ class TestFinishedPart:
 
     def test_finished_part_from_hop_line_with_vars(self):
         """Test FinishedPart.from_hop_line() with VARS references."""
-        line = "FERTIGTEIL(VARS DX,VARS DY,VARS DZ,0,0,0,0,0,0,0,0)"
+        line = "FERTIGTEIL(VARS DX,VARS DY,VARS DZ,0,0,0,0,0,,0,0,0)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.dx is None
         assert fp.dy is None
@@ -198,13 +198,13 @@ class TestFinishedPart:
 
     def test_finished_part_from_hop_line_with_rotation(self):
         """Test FinishedPart.from_hop_line() with rotation flag."""
-        line = "FERTIGTEIL(1000.0,500.0,50.0,2,0,0,0,0,0,0,0)"
+        line = "FERTIGTEIL(1000.0,500.0,50.0,2,0,0,0,0,,0,0,0)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.rotation_flag == 2
 
     def test_finished_part_from_hop_line_with_offsets(self):
         """Test FinishedPart.from_hop_line() with offsets."""
-        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,10.5,20.5,5.0,0,0,0)"
+        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,10.5,20.5,5.0,,0,0,0)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.offset_x == pytest.approx(10.5)
         assert fp.offset_y == pytest.approx(20.5)
@@ -212,13 +212,13 @@ class TestFinishedPart:
 
     def test_finished_part_from_hop_line_with_comment(self):
         """Test FinishedPart.from_hop_line() with comment."""
-        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0; Test comment,0,0,0)"
+        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0,'Test comment',0,0,0)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.comment == "Test comment"
 
     def test_finished_part_from_hop_line_with_flags(self):
         """Test FinishedPart.from_hop_line() with field linking and laser flags."""
-        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0,1,1,3)"
+        line = "FERTIGTEIL(1000.0,500.0,50.0,0,0,0,0,0,,1,1,3)"
         fp = FinishedPart.from_hop_line(line)
         assert fp.field_linking is True
         assert fp.activates_laser is True
@@ -226,7 +226,7 @@ class TestFinishedPart:
 
     def test_finished_part_from_hop_line_with_spaces(self):
         """Test FinishedPart.from_hop_line() handles spaces."""
-        line = "FERTIGTEIL( 1000.0 , 500.0 , 50.0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 )"
+        line = "FERTIGTEIL( 1000.0 , 500.0 , 50.0 , 0 , 0 , 0 , 0 , 0 ,  , 0 , 0 , 0 )"
         fp = FinishedPart.from_hop_line(line)
         assert fp.dx == pytest.approx(1000.0)
         assert fp.dy == pytest.approx(500.0)

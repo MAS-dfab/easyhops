@@ -211,14 +211,15 @@ class FinishedPart:
         dx_str = f"{self.dx}" if self.dx is not None else "VARS DX"
         dy_str = f"{self.dy}" if self.dy is not None else "VARS DY"
         dz_str = f"{self.dz}" if self.dz is not None else "VARS DZ"
-        comment_str = f"; {self.comment}" if self.comment else ""
+        # Comment should be quoted if non-empty, or empty string
+        comment_str = f"'{self.comment}'" if self.comment else ""
         field_linking_str = "1" if self.field_linking else "0"
         activates_laser_str = "1" if self.activates_laser else "0"
 
         return (
             f"FERTIGTEIL({dx_str},{dy_str},{dz_str},"
             f"{self.rotation_flag},{self.empty_parameter},"
-            f"{self.offset_x},{self.offset_y},{self.offset_z}"
+            f"{self.offset_x},{self.offset_y},{self.offset_z},"
             f"{comment_str},{field_linking_str},{activates_laser_str},{self.stop_flag})\n"
         )
 
