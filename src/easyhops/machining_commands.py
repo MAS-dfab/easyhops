@@ -660,7 +660,7 @@ class EndPoint(MachiningCommand):
     def __str__(self):
         parent_str = super().__str__()
         lead_out_factor_str = self.lead_out_factor if self.lead_out_factor is not None else "_ANF"
-        ep_str = f"EP({self.lead_out_mode},{lead_out_factor_str},{self.reverse_direction})"
+        ep_str = f"EP({self.lead_out_mode},{lead_out_factor_str},{int(self.reverse_direction)})"
         return f"{parent_str}\n{ep_str}" if parent_str else ep_str
 
     @classmethod
@@ -1078,8 +1078,6 @@ class SawingOperation:
         match = re.match(pattern, line.strip())
         if match:
             params = [float(match.group(i)) for i in range(1, 18)]
-            # Note: Some parameters in the file format may not match the docstring 1:1
-            # This parser maintains compatibility with existing .hop files
             return cls(
                 sx=params[0],
                 sy=params[1],
@@ -1087,15 +1085,17 @@ class SawingOperation:
                 ex=params[3],
                 ey=params[4],
                 ez=params[5],
-                lead_in_out=params[6],  # lead_in in file
-                # params[7] is lead_out - not used in new API
-                # params[8] is parallel_offset - not used in new API
+                lead_in=params[6],
+                lead_out=params[7],
+                parallel_offset=params[8],
                 fit_in=bool(int(params[9])),
                 tilt_angle=params[10],
-                # params[11] is groove_position - maps to z_level
                 z_level=params[11],
                 process_mode=ProcessMode(int(params[12])),
-                # params[13-16] are additional saw parameters not in main API
+                precut_depth=params[13],
+                precut_offset=params[14],
+                easy_snap_xy_start=EasySnapXY(int(params[15])),
+                easy_snap_xy_end=EasySnapXY(int(params[16])),
             )
         raise ValueError(f"Invalid SAEGEN line: {line}")
 
@@ -1119,10 +1119,10 @@ class SawingOperation:
         return (
             f"SAEGEN({fmt(self.sx)},{fmt(self.sy)},{fmt(self.sz)},"
             f"{fmt(self.ex)},{fmt(self.ey)},{fmt(self.ez)},"
-            f"{fmt(self.lead_in_out)},{fmt(self.lead_in_out)},{fmt(0)},"  # lead_in, lead_out, parallel_offset
+            f"{fmt(self.lead_in_out)},{fmt(self.lead_in_out)},{fmt(0)},"
             f"{fmt(self.fit_in)},{fmt(self.tilt_angle)},"
-            f"{fmt(self.z_level)},{fmt(self.process_mode)},{fmt(0)},"  # z_level as groove_position, mode, precut_depth
-            f"{fmt(0)},{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)})"  # precut_offset, snap params
+            f"{fmt(self.z_level)},{fmt(self.process_mode)},{fmt(0)},"
+            f"{fmt(0)},{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)},0,0)"
         )
 
 
