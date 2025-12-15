@@ -1,0 +1,145 @@
+;BILD=S0_R01.wmf
+;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - 12/12/2025-17:03:05
+;WZGV=7135C_116
+;MASCHINE=HOLZHER
+;NCNAME=S0_R01
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 1106.322;*VAR* Piece Length
+   DY := 140;*VAR* Piece Height
+   DZ := 140;*VAR* Piece Thickness
+START
+; Piece Definition
+FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
+; Definition of Park Mode
+CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)
+; ---------------------------------
+; S0_87,P_Castor_D61_LongCut
+; ---------------------------------
+WZF(503,2000,2000,10000,_SD,_ANF,'1')
+; Work Plane Definition: Generic View
+EBENEF(1056.322,177.507,159.265,1.128,180,0,0)
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(0,0,0,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G01(0,0,-59.984,0,0,2)
+G01(0,5,0,0,0,2)
+G01(0,35.546,0,0,0,2)
+G01(1056.322,35.546,0,0,0,2)
+G01(1056.322,175.573,0,0,0,2)
+G01(-50,175.573,0,0,0,2)
+G01(-50,35.546,0,0,0,2)
+G01(0,35.546,0,0,0,2)
+G03M(12.5,48.046,0,0,48.046,0,0,2,0)
+G03M(0,60.546,0,0,48.046,0,0,2,0)
+G02M(-12.5,73.046,0,0,73.046,0,0,2,0)
+G02M(0,85.546,0,0,73.046,0,0,2,0)
+G01(1006.322,85.546,0,0,0,2)
+G01(1006.322,125.573,0,0,0,2)
+G01(0,125.573,0,0,0,2)
+G01(0,85.546,0,0,0,2)
+; ######## END MACH TYPE = 3
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(0,_ANF,0)
+; ---------------------------------
+; S0_87,C_Castor_D61_LongCut
+; ---------------------------------
+WZF(503,2000,2000,10000,_SD,_ANF,'1')
+; Work Plane Definition: Generic View
+EBENEF(-63.092,72.445,216.09,88.872,0,0,0)
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(0,-91.638,0,1,3,3.000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G02M(31.546,-123.184,0,0,-123.184,0,0,2,0)
+G03M(63.092,-154.73,0,63.092,-123.184,0,0,2,0)
+G01(1169.414,-154.73,0,0,0,2)
+CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
+G03M(1200.96,-123.184,0,1169.414,-123.184,0,0,2,0)
+; ######## END MACH TYPE = 2
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(3,3.000,0)
+G02M(1232.506,-91.638,0,1232.506,-123.184,0,0,2,0)
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(0,-91.638,-70.615,1,3,3.000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G02M(31.546,-123.184,0,0,-123.184,0,0,2,0)
+G03M(63.092,-154.73,0,63.092,-123.184,0,0,2,0)
+G01(1169.414,-154.73,0,0,0,2)
+CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
+G03M(1200.96,-123.184,0,1169.414,-123.184,0,0,2,0)
+; ######## END MACH TYPE = 2
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(3,3.000,0)
+G02M(1232.506,-91.638,0,1232.506,-123.184,0,0,2,0)
+; ---------------------------------
+; S0_87,P_Castor_D61
+; ---------------------------------
+WZF(503,2000,2000,10000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(333.707,-35.546,20,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G01(333.707,-35.546,-100,0,0,2)
+G01(333.707,-30.546,0,0,0,2)
+G01(333.707,0,0,0,0,2)
+G01(382.615,0,0,0,0,2)
+G01(382.615,140,0,0,0,2)
+G01(333.707,140,0,0,0,2)
+G01(333.707,0,0,0,0,2)
+; ######## END MACH TYPE = 3
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(0,_ANF,0)
+; ---------------------------------
+; S0_87,P_Castor_D61(1)
+; ---------------------------------
+WZF(503,2000,2000,10000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(833.707,-35.546,20,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G01(833.707,-35.546,-100,0,0,2)
+G01(833.707,-30.546,0,0,0,2)
+G01(833.707,0,0,0,0,2)
+G01(882.615,0,0,0,0,2)
+G01(882.615,140,0,0,0,2)
+G01(833.707,140,0,0,0,2)
+G01(833.707,0,0,0,0,2)
+; ######## END MACH TYPE = 3
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(0,_ANF,0)
+; ---------------------------------
+; S0_87,SaegeD350
+; ---------------------------------
+; Tool Selection
+WZS(201,10000,7000,20000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par7): 0 = Center - 1 = SX - 2 = DX
+SAEGEN(78.317,140,-113.787,78.317,0,-113.787,0,0,0,1,-7.572,0,0,0,2,0,0)
+; ######## END MACH TYPE = 1
+; ---------------------------------
+; S0_87,SaegeD350(1)
+; ---------------------------------
+; Tool Selection
+WZS(201,10000,7000,20000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par7): 0 = Center - 1 = SX - 2 = DX
+SAEGEN(1025.56,-0.4,-113.465,1062.466,150.709,-113.465,0,0,0,1,-18.492,0,0,0,2,0,0)
+; ######## END MACH TYPE = 1
+EBENE0()

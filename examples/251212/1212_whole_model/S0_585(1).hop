@@ -1,0 +1,44 @@
+;BILD=S0_585(1).wmf
+;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - 15/12/2025-11:57:55
+;WZGV=7135C_116
+;MASCHINE=HOLZHER
+;NCNAME=S0_585(1)
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 1352.233;*VAR* Piece Length
+   DY := 140;*VAR* Piece Height
+   DZ := 140;*VAR* Piece Thickness
+START
+; Piece Definition
+FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
+; Definition of Park Mode
+CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)
+; ---------------------------------
+; S0_585(1),SaegeD350
+; ---------------------------------
+; Tool Selection
+WZS(201,10000,7000,20000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par7): 0 = Center - 1 = SX - 2 = DX
+SAEGEN(48.251,0,-114.551,48.251,140,-114.551,0,0,0,0,-18.997,0,0,0,2,0,0)
+; ######## END MACH TYPE = 1
+; ---------------------------------
+; S0_585(1),SaegeD350(1)
+; ---------------------------------
+; Tool Selection
+WZS(201,10000,7000,20000,_SD,_ANF,'1')
+; Work Plane Definition: Top View
+EBENE0()
+; Compensation (Par7): 0 = Center - 1 = SX - 2 = DX
+SAEGEN(1306.974,140,-114.655,1306.974,0,-114.655,0,0,0,0,-22.268,0,0,0,2,0,0)
+; ######## END MACH TYPE = 1
+EBENE0()

@@ -1,5 +1,3 @@
-*.hop
-
 # Python cache
 __pycache__/
 *.py[cod]
