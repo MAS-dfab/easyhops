@@ -3,6 +3,7 @@ from abc import ABC
 from enum import IntEnum
 from typing import List
 from typing import Optional
+from typing import Union
 
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
@@ -407,6 +408,222 @@ class G01(MachiningCommand):
         raise ValueError(f"Invalid G01 line: {line}")
 
 
+class G02M(MachiningCommand):
+    """HOPS G02M clockwise arc with center point command.
+
+    Represents a clockwise arc movement (G2) with explicit center point specification.
+    The 'M' suffix indicates the arc is defined using a center point rather than radius.
+
+    Parameters:
+    -----------
+    x : float
+        X-coordinate of arc end point (absolute)
+    y : float
+        Y-coordinate of arc end point (absolute)
+    z : float
+        Z-coordinate/milling depth at end point
+    mx : float
+        X-coordinate of arc center point
+    my : float
+        Y-coordinate of arc center point
+    corner_radius : float
+        Corner radius in mm for transition to next element (0 = sharp corner)
+    easy_snap_xy : EasySnapXY
+        Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
+    easy_snap_z : EasySnapZ
+        Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
+    easy_snap_center : int
+        Easy snap mode for center point X/Y (0 = disabled)
+    feedrate : Optional[float]
+        Feedrate for the movement in mm/min (overrides tool default)
+
+    Example:
+    ---------
+    G02M(89.001,22.91,0,96.638,22.91,0,0,2,0)  # Clockwise arc to (89.001,22.91) with center at (96.638,22.91)
+    """
+
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        mx: float,
+        my: float,
+        corner_radius: Optional[float] = 0,
+        easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+        easy_snap_center: Optional[int] = 0,
+        feedrate: Optional[float] = None,
+    ):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.mx = mx
+        self.my = my
+        self.corner_radius = corner_radius
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
+        self.easy_snap_center = easy_snap_center
+        super().__init__(feedrate=feedrate)
+
+    def __str__(self):
+        parent_str = super().__str__()
+        g02m_str = f"G02M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
+        return f"{parent_str}\n{g02m_str}" if parent_str else g02m_str
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "G02M":
+        """Parse G02M command from HOPS line.
+
+        Parameters:
+        -----------
+        line : str
+            HOPS G02M(...) command line
+
+        Returns:
+        -----------
+        :class:`G02M`
+            Parsed G02M instance
+        """
+        # Match 9 parameters, allowing optional whitespace after commas
+        pattern = (
+            r"G02M\("
+            r"([-+]?\d+\.?\d*),\s*"  # x
+            r"([-+]?\d+\.?\d*),\s*"  # y
+            r"([-+]?\d+\.?\d*),\s*"  # z
+            r"([-+]?\d+\.?\d*),\s*"  # mx
+            r"([-+]?\d+\.?\d*),\s*"  # my
+            r"([-+]?\d+\.?\d*),\s*"  # corner_radius
+            r"([-+]?\d+),\s*"  # easy_snap_xy
+            r"([-+]?\d+),\s*"  # easy_snap_z
+            r"([-+]?\d+)"  # easy_snap_center
+            r"\)"
+        )
+
+        match = re.match(pattern, line.strip())
+        if match:
+            return cls(
+                x=float(match.group(1)),
+                y=float(match.group(2)),
+                z=float(match.group(3)),
+                mx=float(match.group(4)),
+                my=float(match.group(5)),
+                corner_radius=float(match.group(6)),
+                easy_snap_xy=EasySnapXY(int(match.group(7))),
+                easy_snap_z=EasySnapZ(int(match.group(8))),
+                easy_snap_center=int(match.group(9)),
+            )
+        raise ValueError(f"Invalid G02M line: {line}")
+
+
+class G03M(MachiningCommand):
+    """HOPS G03M counter-clockwise arc with center point command.
+
+    Represents a counter-clockwise arc movement (G3) with explicit center point specification.
+    The 'M' suffix indicates the arc is defined using a center point rather than radius.
+
+    Parameters:
+    -----------
+    x : float
+        X-coordinate of arc end point (absolute)
+    y : float
+        Y-coordinate of arc end point (absolute)
+    z : float
+        Z-coordinate/milling depth at end point
+    mx : float
+        X-coordinate of arc center point
+    my : float
+        Y-coordinate of arc center point
+    corner_radius : float
+        Corner radius in mm for transition to next element (0 = sharp corner)
+    easy_snap_xy : EasySnapXY
+        Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
+    easy_snap_z : EasySnapZ
+        Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
+    easy_snap_center : int
+        Easy snap mode for center point X/Y (0 = disabled)
+    feedrate : Optional[float]
+        Feedrate for the movement in mm/min (overrides tool default)
+
+    Example:
+    ---------
+    G03M(104.274,7.637,0,96.638,7.637,0,0,2,0)  # Counter-clockwise arc to (104.274,7.637) with center at (96.638,7.637)
+    """
+
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        mx: float,
+        my: float,
+        corner_radius: Optional[float] = 0,
+        easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+        easy_snap_center: Optional[int] = 0,
+        feedrate: Optional[float] = None,
+    ):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.mx = mx
+        self.my = my
+        self.corner_radius = corner_radius
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
+        self.easy_snap_center = easy_snap_center
+        super().__init__(feedrate=feedrate)
+
+    def __str__(self):
+        parent_str = super().__str__()
+        g03m_str = f"G03M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
+        return f"{parent_str}\n{g03m_str}" if parent_str else g03m_str
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "G03M":
+        """Parse G03M command from HOPS line.
+
+        Parameters:
+        -----------
+        line : str
+            HOPS G03M(...) command line
+
+        Returns:
+        -----------
+        :class:`G03M`
+            Parsed G03M instance
+        """
+        # Match 9 parameters, allowing optional whitespace after commas
+        pattern = (
+            r"G03M\("
+            r"([-+]?\d+\.?\d*),\s*"  # x
+            r"([-+]?\d+\.?\d*),\s*"  # y
+            r"([-+]?\d+\.?\d*),\s*"  # z
+            r"([-+]?\d+\.?\d*),\s*"  # mx
+            r"([-+]?\d+\.?\d*),\s*"  # my
+            r"([-+]?\d+\.?\d*),\s*"  # corner_radius
+            r"([-+]?\d+),\s*"  # easy_snap_xy
+            r"([-+]?\d+),\s*"  # easy_snap_z
+            r"([-+]?\d+)"  # easy_snap_center
+            r"\)"
+        )
+
+        match = re.match(pattern, line.strip())
+        if match:
+            return cls(
+                x=float(match.group(1)),
+                y=float(match.group(2)),
+                z=float(match.group(3)),
+                mx=float(match.group(4)),
+                my=float(match.group(5)),
+                corner_radius=float(match.group(6)),
+                easy_snap_xy=EasySnapXY(int(match.group(7))),
+                easy_snap_z=EasySnapZ(int(match.group(8))),
+                easy_snap_center=int(match.group(9)),
+            )
+        raise ValueError(f"Invalid G03M line: {line}")
+
+
 class EndPoint(MachiningCommand):
     """HOPS end point (EP) command definition.
 
@@ -484,16 +701,17 @@ class EndPoint(MachiningCommand):
 
 
 class MillingOperation:
-    """Represents a milling path sequence (SP + G01 moves + EP).
+    """Represents a milling path sequence (SP + moves + EP).
 
     MillingOperation encapsulates a complete milling operation including the start point, moves, and end point.
+    Moves can be linear (G01) or arc movements (G02M, G03M).
 
     Parameters:
     -----------
     start_point : :class:`StartPoint`
         StartPoint instance with milling parameters
-    moves : List[:class:`G01`]
-        List of G01 instances representing linear interpolation movements
+    moves : List[Union[:class:`G01`, :class:`G02M`, :class:`G03M`]]
+        List of move instances representing linear interpolation or arc movements
     end_point : :class:`EndPoint`
         EndPoint instance with lead out parameters
 
@@ -502,12 +720,13 @@ class MillingOperation:
     MillingOperation(
         SP(300,-301.264,-27.229,1,3,3.000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
         [G01(500.123,-100.456,-25.000,0,0,2),
-        G01(800.456,-200.789,-25.000,0,0,2)],
+        G02M(89.001,22.91,0,96.638,22.91,0,0,2,0),
+        G03M(104.274,7.637,0,96.638,7.637,0,0,2,0)],
         EP(3,3.000,0)
     )
     """
 
-    def __init__(self, start_point: StartPoint, moves: List[G01], end_point: EndPoint):
+    def __init__(self, start_point: StartPoint, moves: List[Union[G01, G02M, G03M]], end_point: EndPoint):
         self.start_point = start_point
         self.moves = moves
         self.end_point = end_point

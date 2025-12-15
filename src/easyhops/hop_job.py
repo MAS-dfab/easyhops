@@ -16,6 +16,8 @@ from .hop_core import FinishedPart
 from .hop_core import ParkMode
 from .hop_core import VarsDefinition
 from .machining_commands import G01
+from .machining_commands import G02M
+from .machining_commands import G03M
 from .machining_commands import DrillingOperation
 from .machining_commands import EndPoint
 from .machining_commands import MillingOperation
@@ -98,6 +100,7 @@ class HOPSMachining:
         tool: MachiningTool,
         work_plane: Union[WorkPlane, FreePlane],
         operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]],
+        comments: Optional[List[str]] = None,
     ):
         self.tool = tool
         self.work_plane = work_plane
@@ -106,6 +109,7 @@ class HOPSMachining:
             self.operations = operations
         else:
             self.operations = [operations]
+        self.comments = comments or []
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -115,9 +119,13 @@ class HOPSMachining:
     def __str__(self) -> str:
         """Generate HOPS commands for this machining.
 
-        Returns tool, work plane, and all operations on separate lines.
+        Returns comments, tool, work plane, and all operations on separate lines.
         """
-        lines = [str(self.tool), str(self.work_plane)]
+        lines = []
+        # Add comments first
+        if self.comments:
+            lines.extend(self.comments)
+        lines.extend([str(self.tool), str(self.work_plane)])
         for operation in self.operations:
             lines.append(str(operation))
         return "\n".join(lines)
@@ -338,11 +346,26 @@ class HOPSJob:
         while idx < len(lines):
             line = lines[idx].strip()
 
-            # Start of machining block
+            # Start of machining block - collect preceding comments
             if line.startswith("WZF(") or line.startswith("WZS(") or line.startswith("WZB("):
+                # Look back to collect comments immediately before this tool definition
+                comment_start = idx - 1
+                mach_comments = []
+
+                # Collect comments going backwards until we hit non-comment
+                while comment_start >= start_idx:
+                    prev_line = lines[comment_start].strip()
+                    if prev_line.startswith(";"):
+                        mach_comments.insert(0, lines[comment_start])
+                        comment_start -= 1
+                    elif not prev_line:  # Empty line - keep going back
+                        comment_start -= 1
+                    else:
+                        # Hit non-comment code, stop
+                        break
+
                 mach_start = idx
                 mach_code = []
-                mach_comments = []
 
                 # Collect everything until next tool change
                 while idx < len(lines):
@@ -353,10 +376,8 @@ class HOPSJob:
                     if idx > mach_start and (stripped.startswith("WZF(") or stripped.startswith("WZS(") or stripped.startswith("WZB(")):
                         break
 
-                    # Separate comments from code
-                    if stripped.startswith(";"):
-                        mach_comments.append(line)
-                    elif stripped:  # Non-empty, non-comment line
+                    # Only collect non-comment, non-empty lines for code
+                    if not stripped.startswith(";") and stripped:
                         mach_code.append(line)
 
                     idx += 1
@@ -677,7 +698,7 @@ class HOPSJob:
 
         # Return machining with all collected operations
         if operations:
-            return HOPSMachining(tool, work_plane, operations), errors
+            return HOPSMachining(tool, work_plane, operations, comments=chunk.comments), errors
 
         return None, errors
 
@@ -703,6 +724,14 @@ class HOPSJob:
                 line = chunk.lines[chunk_idx].strip()
                 if line.startswith("G01("):
                     move = G01.from_hop_line(line)
+                    moves.append(move)
+                    chunk_idx += 1
+                elif line.startswith("G02M("):
+                    move = G02M.from_hop_line(line)
+                    moves.append(move)
+                    chunk_idx += 1
+                elif line.startswith("G03M("):
+                    move = G03M.from_hop_line(line)
                     moves.append(move)
                     chunk_idx += 1
                 elif line.startswith("EP("):
