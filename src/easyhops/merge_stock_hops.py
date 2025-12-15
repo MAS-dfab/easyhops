@@ -563,8 +563,8 @@ class StockHopsMerger:
 
         # Create stock job components
         vars_def = VarsDefinition(dx=stock_length, dy=stock_width, dz=stock_height)
-        finished_part = FinishedPart(dx=stock_length, dy=stock_width, dz=stock_height, rotation_flag=0, offset_x=0, offset_y=0, offset_z=0, comment="MERGED STOCK")
-        park_mode = ParkMode(mode=11, pos_x=0, pos_y=0)
+        finished_part = FinishedPart(comment="MERGED STOCK")
+        park_mode = ParkMode(mode=4, pos_x=0, pos_y=0)
 
         # Header comments
         header = [
@@ -785,10 +785,8 @@ class StockHopsMerger:
 
             # Create merged job
             vars_def = VarsDefinition(dx=stock_length, dy=stock_width, dz=stock_height)
-            finished_part = FinishedPart(
-                dx=stock_length, dy=stock_width, dz=stock_height, rotation_flag=0, offset_x=0, offset_y=0, offset_z=0, comment=f"STOCK {stock_idx}{flip_suffix}"
-            )
-            park_mode = ParkMode(mode=11, pos_x=0, pos_y=0)
+            finished_part = FinishedPart(comment=f"STOCK {stock_idx}{flip_suffix}")
+            park_mode = ParkMode(mode=4, pos_x=0, pos_y=0)
             machinings = [om.machining for om in all_offset_machinings]
 
             merged_job = HOPSJob(vars=vars_def, finished_part=finished_part, park_mode=park_mode, machinings=machinings, header=header)

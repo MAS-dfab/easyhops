@@ -208,9 +208,9 @@ class FinishedPart:
         self.stop_flag = stop_flag
 
     def __str__(self):
-        dx_str = f"{self.dx}" if self.dx is not None else "VARS DX"
-        dy_str = f"{self.dy}" if self.dy is not None else "VARS DY"
-        dz_str = f"{self.dz}" if self.dz is not None else "VARS DZ"
+        dx_str = f"{self.dx}" if self.dx is not None else "DX"
+        dy_str = f"{self.dy}" if self.dy is not None else "DY"
+        dz_str = f"{self.dz}" if self.dz is not None else "DZ"
         # Comment should be quoted if non-empty, or empty string
         comment_str = f"'{self.comment}'" if self.comment else ""
         field_linking_str = "1" if self.field_linking else "0"
