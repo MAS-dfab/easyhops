@@ -642,35 +642,48 @@ class StockHopsMerger:
         return BeamFileInfo(filepath=filename, filename=base_name, stock_idx=stock_idx, stock_id=stock_id, beam_key=beam_key, flip=flip)
 
     @staticmethod
-    def group_files_by_stock(hop_directory: str) -> Dict[Tuple[int, int], List[BeamFileInfo]]:
-        """Group HOP files by (stock_idx, flip).
+    def group_files_by_stock(hop_directory: str, nesting_data: dict) -> Dict[Tuple[int, int], List[BeamFileInfo]]:
+        """Group HOP files by the stock they belong to, based on nesting data.
 
         Args:
             hop_directory: Directory containing .hop files
+            nesting_data: The loaded nesting JSON data.
 
         Returns:
             Dictionary mapping (stock_idx, flip) -> list of BeamFileInfo objects
         """
         all_files = glob.glob(os.path.join(hop_directory, "*.hop"))
-        groups = defaultdict(list)
+        stocks = nesting_data["data"]["stocks"]
 
+        # 1. Create a map from beam_key to the index of the stock it belongs to.
+        beam_to_stock_idx_map = {elem["key"]: stock_idx for stock_idx, stock in enumerate(stocks) for elem in stock["data"]["element_data"].values()}
+
+        # 2. Group files by (stock_idx, flip)
+        groups = defaultdict(list)
         for filepath in all_files:
             info = StockHopsMerger.parse_filename(filepath)
             if info:
-                key = (info.stock_idx, info.flip)
-                groups[key].append(info)
+                stock_idx = beam_to_stock_idx_map.get(info.beam_key)
+                if stock_idx is not None:
+                    # We update the stock_idx in the info object to the correct one from nesting.
+                    info.stock_idx = stock_idx
+                    key = (stock_idx, info.flip)
+                    groups[key].append(info)
+                else:
+                    print(f"  ℹ Info: Beam {info.beam_key} from file {info.filename} not found in any stock in the nesting data.")
 
         return dict(groups)
 
     @staticmethod
     def merge_by_filename_pattern(nesting_json_path: str, hop_directory: str, output_directory: Optional[str] = None):
-        """Merge HOP files based on filename pattern (S<idx>_R<id>_<beam>(<flip>).hop).
+        """Merge HOP files based on their actual stock membership from nesting data.
 
         This method:
-        1. Parses all filenames to extract stock index, stock ID, beam key, and flip
-        2. Groups files by (stock_idx, flip)
-        3. For each group, merges beams into a stock HOP file
-        4. Outputs files named: S<idx>_R<id>.hop and S<idx>_R<id>(1).hop
+        1. Ignores the 'S' number in filenames for grouping.
+        2. Reads all .hop files and determines which stock each beam belongs to from the nesting JSON.
+        3. Groups files by their true (stock_idx, flip) combination.
+        4. For each group, merges beams into a stock HOP file.
+        5. Outputs files named: S<stock_idx>_R<stock_id>.hop and S<stock_idx>_R<stock_id>(1).hop
 
         Args:
             nesting_json_path: Path to nesting JSON file
@@ -685,10 +698,10 @@ class StockHopsMerger:
             nesting_data = json.load(f)
         stocks = nesting_data["data"]["stocks"]
 
-        # Group files
-        file_groups = StockHopsMerger.group_files_by_stock(hop_directory)
+        # Group files based on nesting data, not filename 'S' number
+        file_groups = StockHopsMerger.group_files_by_stock(hop_directory, nesting_data)
 
-        print(f"\n📂 Found {len(file_groups)} stock groups to merge:")
+        print(f"\n📂 Found {len(file_groups)} stock groups to merge (based on nesting data):")
         for (stock_idx, flip), files in sorted(file_groups.items()):
             flip_str = f"(1)" if flip == 1 else ""
             beam_keys = sorted([f.beam_key for f in files])
@@ -702,18 +715,15 @@ class StockHopsMerger:
 
         # Process each group
         for (stock_idx, flip), beam_files in sorted(file_groups.items()):
-            # Get stock data
-            if stock_idx >= len(stocks):
-                print(f"\n⚠ Warning: Stock index {stock_idx} not found in nesting data (only {len(stocks)} stocks available)")
-                continue
-
+            # Get stock data directly using the correct stock_idx
             stock_data = stocks[stock_idx]["data"]
             stock_length = stock_data["length"]
             stock_width, stock_height = stock_data["cross_section"]
 
-            # Extract stock ID from first file
+            # Extract stock ID from first file, ensuring it's consistent
             stock_id = beam_files[0].stock_id
             flip_suffix = "(1)" if flip == 1 else ""
+            # Use the correct stock_idx for the output filename
             output_filename = f"S{stock_idx}_R{stock_id}{flip_suffix}.hop" if stock_id else f"S{stock_idx}{flip_suffix}.hop"
             output_path = os.path.join(output_directory, output_filename)
 
@@ -729,16 +739,15 @@ class StockHopsMerger:
             for beam_file in beam_files:
                 beam_key = beam_file.beam_key
 
-                # Find beam in nesting data
+                # Find beam in nesting data for the current stock
                 beam_offset = None
-                beam_length = None
                 for element_data in stock_data["element_data"].values():
                     if element_data["key"] == beam_key:
                         beam_offset = element_data["frame"]["data"]["point"][0]
-                        beam_length = element_data["length"]
                         break
 
                 if beam_offset is None:
+                    # This check is now redundant if grouping is correct, but good for safety
                     print(f"  ⚠ Warning: Beam {beam_key} not found in stock {stock_idx} nesting data, skipping")
                     continue
 
