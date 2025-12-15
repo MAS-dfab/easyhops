@@ -1085,17 +1085,15 @@ class SawingOperation:
                 ex=params[3],
                 ey=params[4],
                 ez=params[5],
-                lead_in=params[6],
-                lead_out=params[7],
-                parallel_offset=params[8],
-                fit_in=bool(int(params[9])),
+                radius_compensation=CompensationMode(int(params[6])),
+                fit_in=bool(int(params[7])),
+                lead_in_out=params[8],
+                process_mode=ProcessMode(int(params[9])),
                 tilt_angle=params[10],
                 z_level=params[11],
-                process_mode=ProcessMode(int(params[12])),
-                precut_depth=params[13],
-                precut_offset=params[14],
-                easy_snap_xy_start=EasySnapXY(int(params[15])),
-                easy_snap_xy_end=EasySnapXY(int(params[16])),
+                easy_snap_xy_start=EasySnapXY(int(params[12])),
+                easy_snap_xy_end=EasySnapXY(int(params[13])),
+                easy_snap_z=EasySnapZ(int(params[14])),
             )
         raise ValueError(f"Invalid SAEGEN line: {line}")
 
@@ -1119,10 +1117,10 @@ class SawingOperation:
         return (
             f"SAEGEN({fmt(self.sx)},{fmt(self.sy)},{fmt(self.sz)},"
             f"{fmt(self.ex)},{fmt(self.ey)},{fmt(self.ez)},"
-            f"{fmt(self.lead_in_out)},{fmt(self.lead_in_out)},{fmt(0)},"
-            f"{fmt(self.fit_in)},{fmt(self.tilt_angle)},"
-            f"{fmt(self.z_level)},{fmt(self.process_mode)},{fmt(0)},"
-            f"{fmt(0)},{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)},0,0)"
+            f"{fmt(self.radius_compensation)},{fmt(self.fit_in)},{fmt(self.lead_in_out)},"
+            f"{fmt(self.process_mode)},{fmt(self.tilt_angle)},{fmt(self.z_level)},"
+            f"{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)},{fmt(self.easy_snap_z)},"
+            f"{fmt(0)},{fmt(0)}"
         )
 
 
