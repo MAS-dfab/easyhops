@@ -1,0 +1,60 @@
+"""Example: Merge multiple HOP files into a stock-level HOP file.
+
+This script merges individual beam HOP files into a single stock-level HOP file
+based on nesting data. Operations are grouped by tool type (not by piece) for
+efficient machining across the entire stock.
+
+Usage:
+    python merge_stock_example.py <nesting_json> <hop_directory>
+
+The merged HOP file will be created in the same directory as the nesting JSON,
+named "merged_stock.hop".
+"""
+
+import os
+import sys
+
+# Add src to path so we can import easyhops
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from easyhops.merge_stock_hops import StockHopsMerger
+
+# Define your paths here
+NESTING_JSON = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251202_model\251202_model_nesting.json"
+HOP_DIRECTORY = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251202_model\251202_model"
+
+
+def main():
+    """Merge HOP files and create merged stock HOP file."""
+
+    nesting_json = NESTING_JSON
+    hop_dir = HOP_DIRECTORY
+
+    # Output file in same directory as nesting JSON
+    output = os.path.join(os.path.dirname(nesting_json), "merged_stock.hop")
+
+    # Verify files exist
+    if not os.path.exists(nesting_json):
+        print(f"Error: Nesting JSON not found: {nesting_json}")
+        return
+
+    if not os.path.exists(hop_dir):
+        print(f"Error: HOP directory not found: {hop_dir}")
+        return
+
+    try:
+        # Create merger and perform merge
+        merger = StockHopsMerger(nesting_json_path=nesting_json, hop_directory=hop_dir)
+        merger.merge(output)
+
+        print(f"Merged HOP file created: {output}")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
