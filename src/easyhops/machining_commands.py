@@ -1120,7 +1120,7 @@ class SawingOperation:
             f"{fmt(self.radius_compensation)},{fmt(self.fit_in)},{fmt(self.lead_in_out)},"
             f"{fmt(self.process_mode)},{fmt(self.tilt_angle)},{fmt(self.z_level)},"
             f"{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)},{fmt(self.easy_snap_z)},"
-            f"{fmt(0)},{fmt(0)}"
+            f"{fmt(0)},{fmt(0)})"
         )
 
 
