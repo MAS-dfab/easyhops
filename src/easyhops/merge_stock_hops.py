@@ -761,8 +761,19 @@ class StockHopsMerger:
                 print(f"  ⚠ No machinings to merge for stock {stock_idx}{flip_suffix}")
                 continue
 
+            # Create a map from beam_key to its x_offset from the nesting data
+            beam_x_offset_map = {element_data["key"]: element_data["frame"]["data"]["point"][0] for element_data in stock_data["element_data"].values()}
+
             # Sort by tool type then position
-            all_offset_machinings.sort(key=lambda om: (om.machining.tool.tool_type.value, om.machining.tool.position, om.min_x))
+            # For milling and drilling, we preserve the beam order based on their X-position in the nesting data.
+            # For sawing, we sort by X-position (min_x) to optimize cuts.
+            all_offset_machinings.sort(
+                key=lambda om: (
+                    om.machining.tool.tool_type.value,
+                    om.machining.tool.position,
+                    beam_x_offset_map.get(om.beam_key) if isinstance(om.machining.operations[0], (MillingOperation, DrillingOperation)) else om.min_x,
+                )
+            )
 
             # Create header
             header = [
