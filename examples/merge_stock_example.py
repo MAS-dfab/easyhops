@@ -29,6 +29,8 @@ def main():
 
     nesting_json = NESTING_JSON
     hop_dir = HOP_DIRECTORY
+    output_dir = os.path.join(hop_dir, "merged")
+    os.makedirs(output_dir, exist_ok=True)
 
     # Verify files exist
     if not os.path.exists(nesting_json):
@@ -41,7 +43,7 @@ def main():
 
     try:
         # Use new filename-based merging (handles S<idx>_R<id>_<beam>(<flip>).hop format)
-        StockHopsMerger.merge_by_filename_pattern(nesting_json, hop_dir)
+        StockHopsMerger.merge_by_filename_pattern(nesting_json, hop_dir, output_dir)
 
     except Exception as e:
         print(f"Error: {e}")
