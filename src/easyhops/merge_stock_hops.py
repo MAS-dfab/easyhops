@@ -4,14 +4,24 @@ Stock-Level HOPS Merger for Nested Beams
 This module provides functionality for merging multiple .hop files (representing individual beams)
 into a single .hop file for a timber stock, based on nesting information from a JSON file.
 
+Filename Format:
+    S<stock_idx>_R<stock_id>_<beam_key>(<flip>).hop
+    - stock_idx: 0-based stock index in nesting JSON
+    - stock_id: Stock identifier (e.g., "01", "02")
+    - beam_key: Beam identifier number
+    - flip: Optional (1) suffix indicating stock flip/rotation
+
 The merger handles:
+- Parsing filename to extract stock index, stock ID, beam key, and flip indicator
+- Grouping files by stock index and flip
 - Reading nesting data to determine beam positions within stock
 - Offsetting X-coordinates of machining operations based on nesting positions
 - Grouping and sorting operations by tool type (not by piece)
-- Generating a merged HOPS file for the entire stock
+- Preserving comment headers with each machining block
+- Generating merged HOPS files: S<idx>_R<id>.hop and S<idx>_R<id>(1).hop
 
 Classes:
-    StockHopsMerger: Main class for merging multiple beams into a stock
+    StockHopsMerger: Main class for merging multiple beams into stocks
 
 Usage Example:
     ```python
@@ -20,8 +30,8 @@ Usage Example:
     # Initialize merger with nesting JSON and hop files directory
     merger = StockHopsMerger(nesting_json_path="path/to/nesting.json", hop_directory="path/to/hop/files/")
 
-    # Merge and write output
-    merger.merge("output_merged.hop")
+    # Merge and write outputs (creates multiple stock files)
+    merger.merge_all()
     ```
 
 Coordinate System Notes:
@@ -29,15 +39,18 @@ Coordinate System Notes:
     - EBENE0(): Standard top view, subsequent operation coordinates are offset
     - SAEGEN(x1, y1, z1, x2, y2, z2, ...): Both x1 and x2 are offset
     - SP/G01/EP: X-coordinates are offset when following EBENE or EBENEF
-    - Operations are grouped by tool+workplane, maintaining the operations list structure
+    - Comments from original files are preserved in merged output
 """
 
 import glob
 import json
 import os
 import re
+from collections import defaultdict
 from dataclasses import dataclass
+from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from .hop_core import FinishedPart
@@ -46,10 +59,33 @@ from .hop_core import VarsDefinition
 from .hop_job import HOPSJob
 from .hop_job import HOPSMachining
 from .machining_commands import G01
+from .machining_commands import G02M
+from .machining_commands import G03M
 from .machining_commands import DrillingOperation
 from .machining_commands import MillingOperation
 from .machining_commands import SawingOperation
 from .work_planes import FreePlane
+
+
+@dataclass
+class BeamFileInfo:
+    """Information extracted from beam HOP filename.
+
+    Attributes:
+        filepath: Full path to the .hop file
+        filename: Just the filename
+        stock_idx: Stock index (0-based)
+        stock_id: Stock identifier string (e.g., "01", "02")
+        beam_key: Beam identifier number
+        flip: Flip indicator (0 for normal, 1 for flipped)
+    """
+
+    filepath: str
+    filename: str
+    stock_idx: int
+    stock_id: str
+    beam_key: int
+    flip: int
 
 
 @dataclass
@@ -243,7 +279,8 @@ class StockHopsMerger:
         if len(self.hop_jobs) != len(available_beam_keys):
             raise ValueError(f"Incomplete match: Found {len(self.hop_jobs)} matching .hop files but {len(available_beam_keys)} beams in nesting")
 
-    def _offset_free_plane(self, plane: FreePlane, x_offset: float) -> FreePlane:
+    @staticmethod
+    def _offset_free_plane(plane: FreePlane, x_offset: float) -> FreePlane:
         """Apply X-offset to a FreePlane (EBENEF).
 
         Args:
@@ -263,7 +300,8 @@ class StockHopsMerger:
             easy_snap_z=plane.easy_snap_z,
         )
 
-    def _offset_milling_operation(self, operation: MillingOperation, x_offset: float) -> MillingOperation:
+    @staticmethod
+    def _offset_milling_operation(operation: MillingOperation, x_offset: float) -> MillingOperation:
         """Apply X-offset to a MillingOperation (SP + G01s + EP).
 
         Args:
@@ -303,26 +341,59 @@ class StockHopsMerger:
             feedrate=operation.start_point.feedrate,
         )
 
-        # Offset all G01 moves
-        new_moves = [
-            G01(
-                x=move.x + x_offset,
-                y=move.y,
-                z=move.z,
-                corner_radius=move.corner_radius,
-                easy_snap_xy=move.easy_snap_xy,
-                easy_snap_z=move.easy_snap_z,
-                feedrate=move.feedrate,
-            )
-            for move in operation.moves
-        ]
+        # Offset all moves (G01, G02M, G03M)
+        new_moves = []
+        for move in operation.moves:
+            if isinstance(move, G01):
+                new_moves.append(
+                    G01(
+                        x=move.x + x_offset,
+                        y=move.y,
+                        z=move.z,
+                        corner_radius=move.corner_radius,
+                        easy_snap_xy=move.easy_snap_xy,
+                        easy_snap_z=move.easy_snap_z,
+                        feedrate=move.feedrate,
+                    )
+                )
+            elif isinstance(move, G02M):
+                new_moves.append(
+                    G02M(
+                        x=move.x + x_offset,
+                        y=move.y,
+                        z=move.z,
+                        mx=move.mx + x_offset,
+                        my=move.my,
+                        corner_radius=move.corner_radius,
+                        easy_snap_xy=move.easy_snap_xy,
+                        easy_snap_z=move.easy_snap_z,
+                        easy_snap_center=move.easy_snap_center,
+                        feedrate=move.feedrate,
+                    )
+                )
+            elif isinstance(move, G03M):
+                new_moves.append(
+                    G03M(
+                        x=move.x + x_offset,
+                        y=move.y,
+                        z=move.z,
+                        mx=move.mx + x_offset,
+                        my=move.my,
+                        corner_radius=move.corner_radius,
+                        easy_snap_xy=move.easy_snap_xy,
+                        easy_snap_z=move.easy_snap_z,
+                        easy_snap_center=move.easy_snap_center,
+                        feedrate=move.feedrate,
+                    )
+                )
 
         # End point doesn't have coordinates, just copy
         new_ep = operation.end_point
 
         return MillingOperation(start_point=new_sp, moves=new_moves, end_point=new_ep)
 
-    def _offset_sawing_operation(self, operation: SawingOperation, x_offset: float) -> SawingOperation:
+    @staticmethod
+    def _offset_sawing_operation(operation: SawingOperation, x_offset: float) -> SawingOperation:
         """Apply X-offset to a SawingOperation (SAEGEN).
 
         Args:
@@ -350,7 +421,8 @@ class StockHopsMerger:
             easy_snap_z=operation.easy_snap_z,
         )
 
-    def _offset_drilling_operation(self, operation: DrillingOperation, x_offset: float) -> DrillingOperation:
+    @staticmethod
+    def _offset_drilling_operation(operation: DrillingOperation, x_offset: float) -> DrillingOperation:
         """Apply X-offset to a DrillingOperation (BOHR).
 
         Args:
@@ -373,7 +445,8 @@ class StockHopsMerger:
             easy_snap_z=operation.easy_snap_z,
         )
 
-    def _offset_machining(self, machining: HOPSMachining, x_offset: float, beam_key: int) -> OffsetMachining:
+    @staticmethod
+    def _offset_machining(machining: HOPSMachining, x_offset: float, beam_key: int) -> OffsetMachining:
         """Apply X-offset to a complete HOPSMachining (tool + workplane + operations).
 
         Args:
@@ -386,7 +459,7 @@ class StockHopsMerger:
         """
         # Offset workplane if it's a FreePlane
         if isinstance(machining.work_plane, FreePlane):
-            new_work_plane = self._offset_free_plane(machining.work_plane, x_offset)
+            new_work_plane = StockHopsMerger._offset_free_plane(machining.work_plane, x_offset)
         else:
             # Standard WorkPlane (EBENE0-4) doesn't need offsetting
             new_work_plane = machining.work_plane
@@ -395,17 +468,17 @@ class StockHopsMerger:
         new_operations = []
         for operation in machining.operations:
             if isinstance(operation, MillingOperation):
-                new_operations.append(self._offset_milling_operation(operation, x_offset))
+                new_operations.append(StockHopsMerger._offset_milling_operation(operation, x_offset))
             elif isinstance(operation, SawingOperation):
-                new_operations.append(self._offset_sawing_operation(operation, x_offset))
+                new_operations.append(StockHopsMerger._offset_sawing_operation(operation, x_offset))
             elif isinstance(operation, DrillingOperation):
-                new_operations.append(self._offset_drilling_operation(operation, x_offset))
+                new_operations.append(StockHopsMerger._offset_drilling_operation(operation, x_offset))
             else:
                 # Unknown operation type, keep original
                 new_operations.append(operation)
 
-        # Create new machining with offset coordinates
-        new_machining = HOPSMachining(tool=machining.tool, work_plane=new_work_plane, operations=new_operations)
+        # Create new machining with offset coordinates, preserving comments
+        new_machining = HOPSMachining(tool=machining.tool, work_plane=new_work_plane, operations=new_operations, comments=machining.comments)
 
         # Calculate min_x for sorting (from first operation's first coordinate)
         min_x = x_offset  # Default to offset if no operations
@@ -455,7 +528,7 @@ class StockHopsMerger:
 
         for hop_job, x_offset, beam_key in self.hop_jobs:
             for machining in hop_job.machinings:
-                offset_machining = self._offset_machining(machining, x_offset, beam_key)
+                offset_machining = StockHopsMerger._offset_machining(machining, x_offset, beam_key)
                 all_offset_machinings.append(offset_machining)
                 total_operations += len(machining.operations)
 
@@ -504,13 +577,13 @@ class StockHopsMerger:
             ";",
             ";Merged beam files:",
         ]
-        
+
         # Add each merged beam info
         for hop_job, x_offset, beam_key in self.hop_jobs:
             beam_info = self.stock_info["elements"][beam_key]
             beam_filename = f"R_00_{beam_key}.hop"
             header.append(f";  - {beam_filename} (Beam {beam_key}): offset={x_offset:.2f}mm, length={beam_info['length']:.2f}mm")
-        
+
         header.append(";")
         header.append(";MASCHINE=HOLZHER")
 
@@ -534,3 +607,208 @@ class StockHopsMerger:
 
         for tool_name, count in sorted(tool_counts.items()):
             print(f"  {tool_name}: {count} machining blocks")
+
+    @staticmethod
+    def parse_filename(filename: str) -> Optional[BeamFileInfo]:
+        """Parse filename in format: S<stock_idx>_R<stock_id>_<beam_key>(<flip>).hop
+
+        Args:
+            filename: Filename to parse (with or without path)
+
+        Returns:
+            BeamFileInfo object or None if filename doesn't match pattern
+
+        Examples:
+            S0_R01_117.hop -> stock_idx=0, stock_id="01", beam_key=117, flip=0
+            S0_R01_117(1).hop -> stock_idx=0, stock_id="01", beam_key=117, flip=1
+            S1_44.hop -> stock_idx=1, stock_id="", beam_key=44, flip=0
+            S1_44(1).hop -> stock_idx=1, stock_id="", beam_key=44, flip=1
+        """
+        base_name = os.path.basename(filename)
+
+        # Pattern: S<stock_idx>_R<stock_id>_<beam_key>(<flip>).hop
+        # or: S<stock_idx>_<beam_key>(<flip>).hop (without R part)
+        pattern = r"S(\d+)_(?:R(\w+)_)?(\d+)(?:\((\d+)\))?\.hop"
+        match = re.match(pattern, base_name)
+
+        if not match:
+            return None
+
+        stock_idx = int(match.group(1))
+        stock_id = match.group(2) or ""  # May be None if no R part
+        beam_key = int(match.group(3))
+        flip = int(match.group(4)) if match.group(4) else 0
+
+        return BeamFileInfo(filepath=filename, filename=base_name, stock_idx=stock_idx, stock_id=stock_id, beam_key=beam_key, flip=flip)
+
+    @staticmethod
+    def group_files_by_stock(hop_directory: str) -> Dict[Tuple[int, int], List[BeamFileInfo]]:
+        """Group HOP files by (stock_idx, flip).
+
+        Args:
+            hop_directory: Directory containing .hop files
+
+        Returns:
+            Dictionary mapping (stock_idx, flip) -> list of BeamFileInfo objects
+        """
+        all_files = glob.glob(os.path.join(hop_directory, "*.hop"))
+        groups = defaultdict(list)
+
+        for filepath in all_files:
+            info = StockHopsMerger.parse_filename(filepath)
+            if info:
+                key = (info.stock_idx, info.flip)
+                groups[key].append(info)
+
+        return dict(groups)
+
+    @staticmethod
+    def merge_by_filename_pattern(nesting_json_path: str, hop_directory: str, output_directory: Optional[str] = None):
+        """Merge HOP files based on filename pattern (S<idx>_R<id>_<beam>(<flip>).hop).
+
+        This method:
+        1. Parses all filenames to extract stock index, stock ID, beam key, and flip
+        2. Groups files by (stock_idx, flip)
+        3. For each group, merges beams into a stock HOP file
+        4. Outputs files named: S<idx>_R<id>.hop and S<idx>_R<id>(1).hop
+
+        Args:
+            nesting_json_path: Path to nesting JSON file
+            hop_directory: Directory containing input .hop files
+            output_directory: Output directory (defaults to same as hop_directory)
+        """
+        if output_directory is None:
+            output_directory = hop_directory
+
+        # Load nesting data
+        with open(nesting_json_path, "r", encoding="utf-8") as f:
+            nesting_data = json.load(f)
+        stocks = nesting_data["data"]["stocks"]
+
+        # Group files
+        file_groups = StockHopsMerger.group_files_by_stock(hop_directory)
+
+        print(f"\n📂 Found {len(file_groups)} stock groups to merge:")
+        for (stock_idx, flip), files in sorted(file_groups.items()):
+            flip_str = f"(1)" if flip == 1 else ""
+            beam_keys = sorted([f.beam_key for f in files])
+            print(f"  Stock {stock_idx}{flip_str}: {len(files)} beams - keys: {beam_keys}")
+
+        # Print nesting data beam keys for debugging
+        print(f"\n📊 Nesting data contains {len(stocks)} stocks:")
+        for idx, stock in enumerate(stocks[:5]):  # Show first 5
+            beam_keys = sorted([elem["key"] for elem in stock["data"]["element_data"].values()])
+            print(f"  Stock {idx}: {len(beam_keys)} beams - keys: {beam_keys}")
+
+        # Process each group
+        for (stock_idx, flip), beam_files in sorted(file_groups.items()):
+            # Get stock data
+            if stock_idx >= len(stocks):
+                print(f"\n⚠ Warning: Stock index {stock_idx} not found in nesting data (only {len(stocks)} stocks available)")
+                continue
+
+            stock_data = stocks[stock_idx]["data"]
+            stock_length = stock_data["length"]
+            stock_width, stock_height = stock_data["cross_section"]
+
+            # Extract stock ID from first file
+            stock_id = beam_files[0].stock_id
+            flip_suffix = "(1)" if flip == 1 else ""
+            output_filename = f"S{stock_idx}_R{stock_id}{flip_suffix}.hop" if stock_id else f"S{stock_idx}{flip_suffix}.hop"
+            output_path = os.path.join(output_directory, output_filename)
+
+            print(f"\n{'=' * 70}")
+            print(f"Processing Stock {stock_idx}{flip_suffix} (R{stock_id})")
+            print(f"{'=' * 70}")
+            print(f"Stock dimensions: {stock_length:.1f} x {stock_width:.1f} x {stock_height:.1f} mm")
+            print(f"Beams to merge: {len(beam_files)}")
+
+            # Load and offset each beam's machinings
+            all_offset_machinings = []
+
+            for beam_file in beam_files:
+                beam_key = beam_file.beam_key
+
+                # Find beam in nesting data
+                beam_offset = None
+                beam_length = None
+                for element_data in stock_data["element_data"].values():
+                    if element_data["key"] == beam_key:
+                        beam_offset = element_data["frame"]["data"]["point"][0]
+                        beam_length = element_data["length"]
+                        break
+
+                if beam_offset is None:
+                    print(f"  ⚠ Warning: Beam {beam_key} not found in stock {stock_idx} nesting data, skipping")
+                    continue
+
+                # Load HOP file
+                try:
+                    hop_job = HOPSJob.from_hop_file(beam_file.filepath)
+                    print(f"  ✓ Loaded {beam_file.filename}: Beam {beam_key} at offset {beam_offset:.2f}mm ({len(hop_job.machinings)} machining blocks)")
+
+                    # Offset all machinings
+                    for machining in hop_job.machinings:
+                        # Use static method to offset
+                        offset_machining = StockHopsMerger._offset_machining(machining, beam_offset, beam_key)
+                        all_offset_machinings.append(offset_machining)
+
+                except Exception as e:
+                    print(f"  ✗ Error loading {beam_file.filename}: {e}")
+                    continue
+
+            if not all_offset_machinings:
+                print(f"  ⚠ No machinings to merge for stock {stock_idx}{flip_suffix}")
+                continue
+
+            # Sort by tool type then position
+            all_offset_machinings.sort(key=lambda om: (om.machining.tool.tool_type.value, om.machining.tool.position, om.min_x))
+
+            # Create header
+            header = [
+                ";MERGED STOCK FILE",
+                ";Generated by merge_stock_hops.py",
+                ";",
+                f";Stock {stock_idx}{flip_suffix} (R{stock_id})" if stock_id else f";Stock {stock_idx}{flip_suffix}",
+                f";Dimensions: {stock_length:.1f} x {stock_width:.1f} x {stock_height:.1f} mm",
+                f";Beams merged: {len(beam_files)}",
+                f";Total machining blocks: {len(all_offset_machinings)}",
+                ";",
+                ";Merged beam files:",
+            ]
+
+            for beam_file in sorted(beam_files, key=lambda bf: bf.beam_key):
+                header.append(f";  - {beam_file.filename}")
+
+            header.append(";")
+            header.append(";MASCHINE=HOLZHER")
+
+            # Create merged job
+            vars_def = VarsDefinition(dx=stock_length, dy=stock_width, dz=stock_height)
+            finished_part = FinishedPart(
+                dx=stock_length, dy=stock_width, dz=stock_height, rotation_flag=0, offset_x=0, offset_y=0, offset_z=0, comment=f"STOCK {stock_idx}{flip_suffix}"
+            )
+            park_mode = ParkMode(mode=11, pos_x=0, pos_y=0)
+            machinings = [om.machining for om in all_offset_machinings]
+
+            merged_job = HOPSJob(vars=vars_def, finished_part=finished_part, park_mode=park_mode, machinings=machinings, header=header)
+
+            # Write output
+            merged_job.to_hop_file(output_path)
+            print(f"  ✅ Merged file written: {output_path}")
+
+            # Print summary
+            from collections import defaultdict as dd
+
+            tool_counts = dd(int)
+            for om in all_offset_machinings:
+                tool_key = f"{om.machining.tool.tool_type.name} (pos {om.machining.tool.position})"
+                tool_counts[tool_key] += 1
+
+            print(f"\n  📋 Machining summary by tool:")
+            for tool_name, count in sorted(tool_counts.items()):
+                print(f"    {tool_name}: {count} blocks")
+
+        print(f"\n{'=' * 70}")
+        print(f"✅ All stocks merged successfully!")
+        print(f"{'=' * 70}")

@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from easyhops.merge_stock_hops import StockHopsMerger
 
 # Define your paths here
-NESTING_JSON = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251202_model\251202_model_nesting.json"
-HOP_DIRECTORY = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251202_model\251202_model"
+NESTING_JSON = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251212\1212_whole_model_nesting.json"
+HOP_DIRECTORY = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251212\1212_whole_model"
 
 
 def main():
@@ -29,9 +29,6 @@ def main():
 
     nesting_json = NESTING_JSON
     hop_dir = HOP_DIRECTORY
-
-    # Output file in same directory as nesting JSON
-    output = os.path.join(os.path.dirname(nesting_json), "merged_stock.hop")
 
     # Verify files exist
     if not os.path.exists(nesting_json):
@@ -43,11 +40,8 @@ def main():
         return
 
     try:
-        # Create merger and perform merge
-        merger = StockHopsMerger(nesting_json_path=nesting_json, hop_directory=hop_dir)
-        merger.merge(output)
-
-        print(f"Merged HOP file created: {output}")
+        # Use new filename-based merging (handles S<idx>_R<id>_<beam>(<flip>).hop format)
+        StockHopsMerger.merge_by_filename_pattern(nesting_json, hop_dir)
 
     except Exception as e:
         print(f"Error: {e}")
