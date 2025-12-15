@@ -421,13 +421,13 @@ class HOPSJob:
         return header_chunk, vars_chunk, finished_part_chunk, park_mode_chunk, machining_chunks
 
     @classmethod
-    def from_hop_file(cls, filepath: str, strict: bool = False) -> "HOPSJob":
-        """Parse a HOP file and create a HOPSJob.
+    def from_hop_string(cls, hop_content: str, strict: bool = False) -> "HOPSJob":
+        """Parse a HOP string and create a HOPSJob.
 
         Parameters:
         -----------
-        filepath : str
-            Path to the HOP file to parse
+        hop_content : str
+            Content of the HOP file as a string
         strict : bool, optional
             If True, raises UnparsedLineError for any unparseable lines.
             If False (default), collects unparsed lines as warnings.
@@ -444,19 +444,17 @@ class HOPSJob:
 
         Example:
         --------
-        >>> job = HOPSJob.from_hop_file("part.hop")
+        >>> job = HOPSJob.from_hop_string(hop_content)
         >>> print(f"Found {len(job.machinings)} operations")
 
         >>> # Strict mode - raises on any parsing error
         >>> try:
-        ...     job = HOPSJob.from_hop_file("part.hop", strict=True)
+        ...     job = HOPSJob.from_hop_string(hop_content, strict=True)
         ... except UnparsedLineError as e:
         ...     print(f"Parse error at line {e.line_number}: {e.context}")
         """
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
-
         # PHASE 1: Split file into chunks
+        lines = hop_content.splitlines(True)  # Split string into a list of lines
         header_chunk, vars_chunk, fp_chunk, pm_chunk, mach_chunks = cls._split_lines(lines)
 
         # PHASE 2: Parse each chunk independently
@@ -505,6 +503,44 @@ class HOPSJob:
         )
 
         return job
+
+    @classmethod
+    def from_hop_file(cls, filepath: str, strict: bool = False) -> "HOPSJob":
+        """Parse a HOP file and create a HOPSJob.
+
+        Parameters:
+        -----------
+        filepath : str
+            Path to the HOP file to parse
+        strict : bool, optional
+            If True, raises UnparsedLineError for any unparseable lines.
+            If False (default), collects unparsed lines as warnings.
+
+        Returns:
+        --------
+        HOPSJob
+            Parsed HOPSJob object with all machinings
+
+        Raises:
+        -------
+        HOPParsingError
+            If strict=True and parsing encounters errors
+
+        Example:
+        --------
+        >>> job = HOPSJob.from_hop_file("part.hop")
+        >>> print(f"Found {len(job.machinings)} operations")
+
+        >>> # Strict mode - raises on any parsing error
+        >>> try:
+        ...     job = HOPSJob.from_hop_file("part.hop", strict=True)
+        ... except UnparsedLineError as e:
+        ...     print(f"Parse error at line {e.line_number}: {e.context}")
+        """
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+
+        return cls.from_hop_string("".join(lines), strict=strict)
 
     @staticmethod
     def _parse_vars_chunk(chunk: HOPChunk) -> Optional[VarsDefinition]:
