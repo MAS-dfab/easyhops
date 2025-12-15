@@ -1,7 +1,9 @@
 """Tests for G02M and G03M arc commands."""
 
 import pytest
-from easyhops.machining_commands import G02M, G03M, EasySnapXY, EasySnapZ
+from easyhops.machining_commands import G01, G02M, G03M, EasySnapXY, EasySnapZ
+from easyhops.hop_job import HOPSJob
+from easyhops.machining_commands import MillingOperation, StartPoint, EndPoint
 
 
 def test_g02m_parsing():
@@ -48,24 +50,23 @@ def test_g03m_string_output():
 
 def test_milling_operation_with_arc_commands_parsing():
     """Test parsing a complete milling operation with G01, G02M, and G03M commands."""
-    from easyhops.hop_job import HOPSJob
 
     hop_content = """VARS
-   DX := 100;
-   DY := 100;
-   DZ := 100;
-START
-FERTIGTEIL(100,100,100,0,0,0,0,0,'',0,0,0)
-CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)
-WZF(503,2000,2000,10000,_SD,_ANF,'1')
-EBENE0()
-SP(0,0,0,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-G01(10,0,0,0,0,2)
-G03M(15,5,0,10,5,0,0,2,0)
-G02M(20,0,0,15,0,0,0,2,0)
-G01(30,0,0,0,0,2)
-EP(0,_ANF,0)
-"""
+    DX := 100;
+    DY := 100;
+    DZ := 100;
+    START
+    FERTIGTEIL(100,100,100,0,0,0,0,0,'',0,0,0)
+    CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)
+    WZF(503,2000,2000,10000,_SD,_ANF,'1')
+    EBENE0()
+    SP(0,0,0,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+    G01(10,0,0,0,0,2)
+    G03M(15,5,0,10,5,0,0,2,0)
+    G02M(20,0,0,15,0,0,0,2,0)
+    G01(30,0,0,0,0,2)
+    EP(0,_ANF,0)
+    """
 
     job = HOPSJob.from_hop_string(hop_content)
     assert len(job.machinings) == 1
@@ -73,8 +74,6 @@ EP(0,_ANF,0)
 
     operation = job.machinings[0].operations[0]
     assert len(operation.moves) == 4
-
-    from easyhops.machining_commands import G01
 
     assert isinstance(operation.moves[0], G01)
     assert isinstance(operation.moves[1], G03M)
@@ -84,7 +83,6 @@ EP(0,_ANF,0)
 
 def test_milling_operation_with_arc_commands_string_output():
     """Test string output of milling operation with mixed move types."""
-    from easyhops.machining_commands import MillingOperation, StartPoint, EndPoint, G01
 
     sp = StartPoint(0, 0, 0, 0, 0, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     moves = [

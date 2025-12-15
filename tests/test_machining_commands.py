@@ -221,7 +221,7 @@ class TestSawingOperation:
 
     def test_sawing_from_hop_line(self):
         """Test SawingOperation.from_hop_line() parsing."""
-        line = "SAEGEN(852.354,-0.428,-70.735, 849.565,139.941,-70.735, 0,0,0, 1,-7.57, 0,0,0, 2,0,0)"
+        line = "SAEGEN(852.354,-0.428,-70.735,849.565,139.941,-70.735,0,1,0,0,-7.57,0,0,0,2,0,0)"
         saw = SawingOperation.from_hop_line(line)
 
         assert saw.sx == pytest.approx(852.354)
