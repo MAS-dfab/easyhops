@@ -4,11 +4,14 @@
 
 The tool library system provides **dynamic tool loading from .too files** for CNC machining operations. Tools use HOPS macro variables by default, allowing the CNC machine to use its configured default values. Parameters can be overridden as needed.
 
+This module also includes **FeedrateOverride** for dynamically changing feedrates during machining operations.
+
 ## Architecture
 
-- **`tool_library.py`**: Core implementation with `MachiningTool`, predefined tool subclasses (`BirdsmouthW41`, `SaegeD350`, `CastorD61`), `ToolLibrary`, and `HopsSystemVars`
+- **`tool_library.py`**: Core implementation with `MachiningTool`, `FeedrateOverride`, predefined tool subclasses (`BirdsmouthW41`, `SaegeD350`, `CastorD61`), `ToolLibrary`, and `HopsSystemVars`
 - **Predefined tools**: Subclasses with fixed positions and tool types
 - **Dynamic loading**: Parse all tools from .too files
+- **Feedrate control**: Runtime feedrate override commands
 
 ## Usage Patterns
 
@@ -269,3 +272,63 @@ print(str(saw))  # WZS(201,_VE,10000,7000,_SD,_ANF,'1')
 - **Default path**: `data/7235C_219.too` (relative to module)
 - **Custom paths**: Pass path to `ToolLibrary(path)` constructor
 - **Parsed sections**: Only `ToolDataN` sections (not CuttingEdge sections)
+
+## FeedrateOverride
+
+`FeedrateOverride` represents runtime feedrate changes using the `CALL _Tvorschub_v5` command. These commands can appear before any machining command to dynamically adjust the feedrate.
+
+### Usage
+
+```python
+from easyhops.tool_library import FeedrateOverride
+
+# Create feedrate override
+override = FeedrateOverride(feedrate=4000.0)
+print(str(override))  # CALL _Tvorschub_v5(VAL VORSCHUB:=4000.0)
+
+# Parse from HOP line
+override = FeedrateOverride.from_hop_line("CALL _Tvorschub_v5(VAL VORSCHUB:=3000)")
+print(override.feedrate)  # 3000.0
+```
+
+### Integration with HOPSMachining
+
+Feedrate overrides are tracked within `HOPSMachining` and preserved at their exact positions:
+
+```python
+# Access feedrate overrides in a machining operation
+job = HOPSJob.from_hop_file("part.hop")
+machining = job.machinings[0]
+
+for (op_idx, cmd_idx), override in machining.feedrate_overrides:
+    if cmd_idx is None:
+        print(f"Feedrate {override.feedrate} before operation {op_idx}")
+    else:
+        print(f"Feedrate {override.feedrate} at op {op_idx}, command {cmd_idx}")
+```
+
+### Position Tracking
+
+- **For sawing/drilling**: `(operation_idx, None)` - override before the entire operation
+- **For milling**: `(operation_idx, command_idx)` - override before specific command:
+  - `command_idx=0`: Before SP (StartPoint)
+  - `command_idx=1..N`: Before Nth move (G01/G02M/G03M)
+  - `command_idx=N+1`: Before EP (EndPoint)
+
+### Round-trip Preservation
+
+Feedrate overrides are fully preserved through parse → write → parse cycles:
+
+```python
+# Parse
+job = HOPSJob.from_hop_file("input.hop")
+
+# Write
+output = job._to_hop_lines()
+with open("output.hop", "w") as f:
+    f.write(output)
+
+# Re-parse - all feedrate overrides preserved at exact positions
+job2 = HOPSJob.from_hop_file("output.hop")
+```
+

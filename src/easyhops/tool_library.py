@@ -65,6 +65,37 @@ class ToolCallType(StrEnum):
     DRILLER = "WZB"  # TOOLD
 
 
+class FeedrateOverride:
+    """Represents a standalone feedrate override command.
+
+    Should be called before a machining command to set a specific feedrate that would override
+    the tool's default feedrate for the subsequent operation.
+
+    Parameters:
+    -----------
+    feedrate : float
+        Feedrate in mm/min
+
+    Example:
+        >>> override = FeedrateOverride(3500)
+        >>> str(override)
+        'CALL _Tvorschub_v5(VAL VORSCHUB:=3500)'
+    """
+
+    def __init__(self, feedrate: float):
+        self.feedrate = feedrate
+
+    def __str__(self):
+        return f"CALL _Tvorschub_v5(VAL VORSCHUB:={self.feedrate})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "FeedrateOverride":
+        match = re.match(r"CALL _Tvorschub_v5\(VAL VORSCHUB:=(\d+\.?\d*)\)", line.strip())
+        if match:
+            return cls(float(match.group(1)))
+        raise ValueError(f"Invalid feedrate override line: {line}")
+
+
 class MachiningTool:
     """HOPS tool instance with parameters for generating machining commands.
 

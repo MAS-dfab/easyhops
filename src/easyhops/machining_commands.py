@@ -74,28 +74,7 @@ class ProcessMode(IntEnum):
     AGAINST_ROTATION_MIRROR = 4
 
 
-class MachiningCommand(ABC):
-    """Abstract base class for machining commands.
-
-    This class serves as a template for specific machining command implementations.
-
-    Parameters:
-    -----------
-    feedrate : Optional[float]
-        The feedrate for the machining command in mm/min, meant to override the default feedrate of the tool.
-    """
-
-    def __init__(self, feedrate: Optional[float] = None):
-        self.feedrate = feedrate
-
-    def __str__(self) -> str:
-        """Return feedrate command line if feedrate is set."""
-        if self.feedrate is not None:
-            return f"CALL _Tvorschub_v5(VAL VORSCHUB:={self.feedrate})"
-        return ""
-
-
-class StartPoint(MachiningCommand):
+class StartPoint:
     """HOPS start point (SP) command definition.
 
     Represents a milling starting point with all associated parameters.
@@ -136,7 +115,6 @@ class StartPoint(MachiningCommand):
         Enable smooth Z-axis lead in to starting point
     activate_laser : bool
         If True, milling path is also used as laser path
-
     start_correction_above : bool
         If True, radius compensation removed above milling depth (default)
     tilt_angle : Optional[float]
@@ -148,8 +126,6 @@ class StartPoint(MachiningCommand):
         If True, lead in/out movements occur on tilted plane
     axial_distance : float
         Retraction distance for axial lead in/out (divided by milling_steps)
-    feedrate : Optional[float]
-        Feedrate for the milling operation in mm/min (overrides tool default)
 
     Example:
     ---------
@@ -181,7 +157,6 @@ class StartPoint(MachiningCommand):
         axial_lead_in_out: Optional[bool] = False,
         axial_distance: Optional[float] = 0.0,
         param_23: Optional[float] = 0.0,  # TODO: figure out what this is
-        feedrate: Optional[float] = None,
     ):
         self.x = x
         self.y = y
@@ -206,7 +181,6 @@ class StartPoint(MachiningCommand):
         self.axial_lead_in_out = axial_lead_in_out
         self.axial_distance = axial_distance
         self.param_23 = param_23
-        super().__init__(feedrate=feedrate)
 
     def __str__(self):
         lead_in_factor_str = self.lead_in_factor if self.lead_in_factor is not None else "_ANF"
@@ -235,9 +209,7 @@ class StartPoint(MachiningCommand):
             self.axial_distance,
             self.param_23,
         ]
-        parent_str = super().__str__()
-        sp_str = f"SP({','.join(map(str, params))})"
-        return f"{parent_str}\n{sp_str}" if parent_str else sp_str
+        return f"SP({','.join(map(str, params))})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "StartPoint":
@@ -313,7 +285,7 @@ class StartPoint(MachiningCommand):
         raise ValueError(f"Invalid SP line: {line}")
 
 
-class G01(MachiningCommand):
+class G01:
     """HOPS G01 linear interpolation movement command.
 
     Represents a single G01 movement with all associated parameters.
@@ -335,8 +307,6 @@ class G01(MachiningCommand):
         Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
     easy_snap_z : EasySnapZ
         Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
-    feedrate : Optional[float]
-        Feedrate for the movement in mm/min (overrides tool default)
 
     Example:
     ---------
@@ -354,7 +324,6 @@ class G01(MachiningCommand):
         corner_radius: Optional[float] = 0,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
-        feedrate: Optional[float] = None,
     ):
         self.x = x
         self.y = y
@@ -362,12 +331,9 @@ class G01(MachiningCommand):
         self.corner_radius = corner_radius
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
-        super().__init__(feedrate=feedrate)
 
     def __str__(self):
-        parent_str = super().__str__()
-        g01_str = f"G01({self.x},{self.y},{self.z},{self.corner_radius},{self.easy_snap_xy},{int(self.easy_snap_z)})"
-        return f"{parent_str}\n{g01_str}" if parent_str else g01_str
+        return f"G01({self.x},{self.y},{self.z},{self.corner_radius},{self.easy_snap_xy},{int(self.easy_snap_z)})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "G01":
@@ -408,7 +374,7 @@ class G01(MachiningCommand):
         raise ValueError(f"Invalid G01 line: {line}")
 
 
-class G02M(MachiningCommand):
+class G02M:
     """HOPS G02M clockwise arc with center point command.
 
     Represents a clockwise arc movement (G2) with explicit center point specification.
@@ -434,8 +400,6 @@ class G02M(MachiningCommand):
         Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
     easy_snap_center : int
         Easy snap mode for center point X/Y (0 = disabled)
-    feedrate : Optional[float]
-        Feedrate for the movement in mm/min (overrides tool default)
 
     Example:
     ---------
@@ -453,7 +417,6 @@ class G02M(MachiningCommand):
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         easy_snap_center: Optional[int] = 0,
-        feedrate: Optional[float] = None,
     ):
         self.x = x
         self.y = y
@@ -464,12 +427,9 @@ class G02M(MachiningCommand):
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
         self.easy_snap_center = easy_snap_center
-        super().__init__(feedrate=feedrate)
 
     def __str__(self):
-        parent_str = super().__str__()
-        g02m_str = f"G02M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
-        return f"{parent_str}\n{g02m_str}" if parent_str else g02m_str
+        return f"G02M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "G02M":
@@ -516,7 +476,7 @@ class G02M(MachiningCommand):
         raise ValueError(f"Invalid G02M line: {line}")
 
 
-class G03M(MachiningCommand):
+class G03M:
     """HOPS G03M counter-clockwise arc with center point command.
 
     Represents a counter-clockwise arc movement (G3) with explicit center point specification.
@@ -542,8 +502,6 @@ class G03M(MachiningCommand):
         Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
     easy_snap_center : int
         Easy snap mode for center point X/Y (0 = disabled)
-    feedrate : Optional[float]
-        Feedrate for the movement in mm/min (overrides tool default)
 
     Example:
     ---------
@@ -561,7 +519,6 @@ class G03M(MachiningCommand):
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         easy_snap_center: Optional[int] = 0,
-        feedrate: Optional[float] = None,
     ):
         self.x = x
         self.y = y
@@ -572,12 +529,9 @@ class G03M(MachiningCommand):
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
         self.easy_snap_center = easy_snap_center
-        super().__init__(feedrate=feedrate)
 
     def __str__(self):
-        parent_str = super().__str__()
-        g03m_str = f"G03M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
-        return f"{parent_str}\n{g03m_str}" if parent_str else g03m_str
+        return f"G03M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "G03M":
@@ -624,7 +578,7 @@ class G03M(MachiningCommand):
         raise ValueError(f"Invalid G03M line: {line}")
 
 
-class EndPoint(MachiningCommand):
+class EndPoint:
     """HOPS end point (EP) command definition.
 
     Represents the end of a milling path with associated parameters.
@@ -637,8 +591,6 @@ class EndPoint(MachiningCommand):
         Lead out factor. If None, defaults to _ANF variable from tool manager
     reverse_direction : bool
         If True, reverses the machining direction at the end point
-    feedrate : Optional[float]
-        Feedrate for the end point movement in mm/min (overrides tool default)
 
     Example:
     -----------
@@ -650,18 +602,14 @@ class EndPoint(MachiningCommand):
         lead_out_mode: Optional[LeadInOutMode] = LeadInOutMode.NONE,
         lead_out_factor: Optional[float] = None,
         reverse_direction: bool = False,
-        feedrate: Optional[float] = None,
     ):
         self.lead_out_mode = lead_out_mode
         self.lead_out_factor = lead_out_factor
         self.reverse_direction = reverse_direction
-        super().__init__(feedrate=feedrate)
 
     def __str__(self):
-        parent_str = super().__str__()
         lead_out_factor_str = self.lead_out_factor if self.lead_out_factor is not None else "_ANF"
-        ep_str = f"EP({self.lead_out_mode},{lead_out_factor_str},{int(self.reverse_direction)})"
-        return f"{parent_str}\n{ep_str}" if parent_str else ep_str
+        return f"EP({self.lead_out_mode},{lead_out_factor_str},{int(self.reverse_direction)})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "EndPoint":

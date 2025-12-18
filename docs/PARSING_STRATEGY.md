@@ -26,10 +26,12 @@ CALL Park_V7 (...)
 
 WZF(...)          ; Tool definition (Router)
 EBENE0()          ; Work plane
-CALL _Tvorschub_v5(...)  ; Optional feedrate
+CALL _Tvorschub_v5(...)  ; Feedrate override before SP
 SP(...)           ; Milling: Start Point
 G01(...)          ; Milling: Linear moves
+CALL _Tvorschub_v5(...)  ; Feedrate override before next move
 G01(...)
+CALL _Tvorschub_v5(...)  ; Feedrate override before EP
 EP(...)           ; Milling: End Point
 
 ; Multiple operations can share same tool+workplane
@@ -61,10 +63,13 @@ HOPSJob
 HOPSMachining (wrapper)
 ├── tool: MachiningTool                  # WZF/WZS/WZB
 ├── work_plane: WorkPlane | FreePlane    # EBENE or EBENEF
-└── operations: List[Operation]          # One or more operations
-    ├── MillingOperation                 # SP+G01+EP
-    ├── SawingOperation                  # SAEGEN
-    └── DrillingOperation                # BOHR
+├── operations: List[Operation]          # One or more operations
+│   ├── MillingOperation                 # SP+G01+EP
+│   ├── SawingOperation                  # SAEGEN
+│   └── DrillingOperation                # BOHR
+└── feedrate_overrides: List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]
+    # Feedrate override positions: ((op_idx, cmd_idx), override)
+    # cmd_idx is None for sawing/drilling, or command index within milling
 
 HOPChunk (internal - used during parsing)
 ├── lines: List[str]                     # Code lines (no comments)
@@ -485,10 +490,11 @@ def _parse_machining_chunk(chunk: HOPChunk, strict: bool = False) -> Tuple[Optio
                     context="Expected work plane definition (EBENE/EBENEF), got unknown command"
                 ))
                 return None, errors
-            # Skip non-work plane lines (like CALL feedrate)
+            # Skip non-work plane lines
             chunk_idx += 1
         else:
-            # Skip CALL or empty lines
+            # Skip CALL commands (including feedrate overrides) or empty lines
+            # Feedrate overrides will be handled when parsing operations
             chunk_idx += 1
     
     if not work_plane:
@@ -502,11 +508,21 @@ def _parse_machining_chunk(chunk: HOPChunk, strict: bool = False) -> Tuple[Optio
     
     # 3. Parse ALL operations in this chunk (SP+G01+EP, SAEGEN, or BOHR)
     # KEY: A chunk may have multiple operations with same tool+workplane
+    # Feedrate overrides (CALL _Tvorschub_v5) are tracked and associated with operations
     while chunk_idx < len(chunk.lines):
         line = chunk.lines[chunk_idx].strip()
         
-        # Skip CALL feedrate commands
-        if line.startswith("CALL"):
+        # Handle CALL _Tvorschub_v5 feedrate overrides
+        # For sawing/drilling: stored as (op_idx, None)
+        # For milling: parsed within _parse_milling_from_chunk as (op_idx, cmd_idx)
+        if line.startswith("CALL _Tvorschub_v5("):
+            # Lookahead to determine if this precedes milling or sawing/drilling
+            # If before SP, let _parse_milling_from_chunk handle it
+            # If before SAEGEN/BOHR, store as operation-level override
+            chunk_idx += 1
+            continue
+        elif line.startswith("CALL"):
+            # Other CALL commands, skip
             chunk_idx += 1
             continue
         
@@ -857,15 +873,34 @@ These comments are separated during chunking but not preserved in the object mod
 
 **Potential Solution**: Add `comments: List[str]` to `HOPSMachining` to store associated comments.
 
-### 3. CALL Command Preservation
+### 3. Feedrate Override Tracking
 
-**Status**: PARTIALLY IMPLEMENTED
+**Status**: ✓ IMPLEMENTED
 
-**Current Behavior**: `CALL _Tvorschub_v5` feedrate commands are skipped during parsing but not preserved.
+**Current Behavior**: `CALL _Tvorschub_v5(VAL VORSCHUB:=value)` feedrate override commands are fully tracked and preserved at their exact positions.
 
-**Impact**: Written files don't include intermediate CALL statements.
+**Implementation**: Feedrate overrides are stored in `HOPSMachining.feedrate_overrides` as `List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]`:
+- For sawing/drilling: `((operation_idx, None), override)` - override before the operation
+- For milling: `((operation_idx, command_idx), override)` - override before specific command
+  - `command_idx=0`: before SP (StartPoint)
+  - `command_idx=1..N`: before Nth move (G01/G02M/G03M)
+  - `command_idx=N+1`: before EP (EndPoint)
 
-**Potential Solution**: Store CALL commands in operation metadata or as separate operation type.
+**Round-trip**: Feedrate overrides are fully preserved through parse → write → parse cycles at their exact positions.
+
+**Example**:
+```python
+# Parse file with feedrate overrides
+job = HOPSJob.from_hop_file("part.hop")
+machining = job.machinings[0]
+
+# Access feedrate overrides
+for (op_idx, cmd_idx), override in machining.feedrate_overrides:
+    if cmd_idx is None:
+        print(f"Feedrate {override.feedrate} before operation {op_idx}")
+    else:
+        print(f"Feedrate {override.feedrate} at op {op_idx}, command {cmd_idx}")
+```
 
 ### 4. Variable Reference Resolution
 

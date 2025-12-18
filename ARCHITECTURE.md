@@ -47,8 +47,9 @@ easyhops/
 ├─────────────────────────────────────────────────────────────┤
 │ • tool: MachiningTool                                       │
 │ • work_plane: WorkPlane | FreePlane                         │
-│ • operation: MillingOperation | SawingOperation |           │
-│              DrillingOperation                              │
+│ • operations: List[MillingOperation | SawingOperation |     │
+│              DrillingOperation]                             │
+│ • feedrate_overrides: List[Tuple[...]]                      │
 └──────┬──────────────┬─────────────────┬─────────────────────┘
        │              │                 │
        ▼              ▼                 ▼
@@ -231,21 +232,29 @@ Drilling command.
 The main orchestrator that parses entire HOP files using a **two-phase approach**.
 
 #### **HOPSMachining**
-Associates an operation with its tool and work plane.
+Associates operations with their tool, work plane, and feedrate overrides.
 
 ```python
 class HOPSMachining:
     tool: MachiningTool
     work_plane: Union[WorkPlane, FreePlane]
-    operation: Union[MillingOperation, SawingOperation, DrillingOperation]
+    operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]]
+    comments: List[str]
+    feedrate_overrides: List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]
 ```
+
+**Feedrate Override Tracking**:
+- Stored as `((operation_idx, command_idx), FeedrateOverride)` tuples
+- `command_idx=None` for sawing/drilling (override before the operation)
+- `command_idx=0,1,2,...` for milling (before SP, moves, or EP respectively)
 
 **Example**:
 ```python
 # Tool: WZF(504,...)
 # Plane: EBENEF(1351.763,268.987,182.642,13.003,0,0,0)
-# Operation: SP(...) + G01(...) + ... + EP(...)
-machining = HOPSMachining(tool, work_plane, operation)
+# Operations: [MillingOperation(SP+G01s+EP), MillingOperation(...)]
+# Feedrate overrides: [((0, 0), FeedrateOverride(3000)), ((0, 3), FeedrateOverride(4000))]
+machining = HOPSMachining(tool, work_plane, operations, feedrate_overrides=overrides)
 ```
 
 #### **HOPSJob**
@@ -273,7 +282,14 @@ print(f"Operations: {len(job.machinings)}")
 for machining in job.machinings:
     print(f"Tool: {machining.tool.tool_type.value}@{machining.tool.position}")
     print(f"Plane: {machining.work_plane}")
-    print(f"Type: {type(machining.operation).__name__}")
+    print(f"Operations: {len(machining.operations)}")
+    
+    # Access feedrate overrides
+    for (op_idx, cmd_idx), override in machining.feedrate_overrides:
+        if cmd_idx is None:
+            print(f"  Feedrate {override.feedrate} before operation {op_idx}")
+        else:
+            print(f"  Feedrate {override.feedrate} at op {op_idx}, command {cmd_idx}")
 ```
 
 ---

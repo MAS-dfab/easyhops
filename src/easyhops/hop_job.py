@@ -23,6 +23,7 @@ from .machining_commands import EndPoint
 from .machining_commands import MillingOperation
 from .machining_commands import SawingOperation
 from .machining_commands import StartPoint
+from .tool_library import FeedrateOverride
 from .tool_library import MachiningTool
 from .work_planes import FreePlane
 from .work_planes import WorkPlane
@@ -83,6 +84,11 @@ class HOPSMachining:
         The work plane on which these operations are performed
     operations : List[Union[MillingOperation, SawingOperation, DrillingOperation]]
         The actual machining operations (one or more)
+    feedrate_overrides : List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]
+        List of ((operation_idx, command_idx), FeedrateOverride) tuples.
+        - operation_idx: index of the operation in self.operations
+        - command_idx: None for sawing/drilling, or index within milling operation
+          (0=before SP, 1=before first move, 2=before second move, ..., n+1=before EP)
 
     Example:
     --------
@@ -101,6 +107,7 @@ class HOPSMachining:
         work_plane: Union[WorkPlane, FreePlane],
         operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]],
         comments: Optional[List[str]] = None,
+        feedrate_overrides: Optional[List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]] = None,
     ):
         self.tool = tool
         self.work_plane = work_plane
@@ -110,25 +117,73 @@ class HOPSMachining:
         else:
             self.operations = [operations]
         self.comments = comments or []
+        self.feedrate_overrides = feedrate_overrides or []
 
     def __repr__(self) -> str:
         """Return string representation."""
         op_count = len(self.operations)
-        return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, ops={op_count}x{type(self.operations[0]).__name__ if self.operations else 'None'})"
+        return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, ops={op_count}x{type(self.operations[0]).__name__ if self.operations else 'None'})"  # noqa: E501
 
     def __str__(self) -> str:
         """Generate HOPS commands for this machining.
 
-        Returns comments, tool, work plane, and all operations on separate lines.
+        Returns comments, tool, work plane, feedrate overrides, and all operations on separate lines.
+        Feedrate overrides are inserted at their correct positions, including within milling operations.
         """
         lines = []
         # Add comments first
         if self.comments:
             lines.extend(self.comments)
         lines.extend([str(self.tool), str(self.work_plane)])
-        for operation in self.operations:
-            lines.append(str(operation))
+
+        # Add operations with feedrate overrides in the correct positions
+        for op_idx, operation in enumerate(self.operations):
+            if isinstance(operation, MillingOperation):
+                # For milling operations, insert feedrate overrides within the operation
+                op_lines = self._milling_operation_with_feedrates(op_idx, operation)
+                lines.extend(op_lines)
+            else:
+                # For sawing/drilling, check for feedrate override before the operation
+                for (o_idx, cmd_idx), override in self.feedrate_overrides:
+                    if o_idx == op_idx and cmd_idx is None:
+                        lines.append(str(override))
+                        break
+                lines.append(str(operation))
+
         return "\n".join(lines)
+
+    def _milling_operation_with_feedrates(self, op_idx: int, operation: MillingOperation) -> List[str]:
+        """Generate lines for a milling operation with feedrate overrides inserted at correct positions."""
+        from .machining_commands import MillingOperation
+
+        # Build a map of command indices to feedrate overrides for this operation
+        feedrate_map = {}
+        for (o_idx, cmd_idx), override in self.feedrate_overrides:
+            if o_idx == op_idx and cmd_idx is not None:
+                feedrate_map[cmd_idx] = override
+
+        lines = []
+        cmd_idx = 0
+
+        # Before SP
+        if cmd_idx in feedrate_map:
+            lines.append(str(feedrate_map[cmd_idx]))
+        lines.append(str(operation.start_point))
+        cmd_idx += 1
+
+        # Before each move
+        for move in operation.moves:
+            if cmd_idx in feedrate_map:
+                lines.append(str(feedrate_map[cmd_idx]))
+            lines.append(str(move))
+            cmd_idx += 1
+
+        # Before EP
+        if cmd_idx in feedrate_map:
+            lines.append(str(feedrate_map[cmd_idx]))
+        lines.append(str(operation.end_point))
+
+        return lines
 
 
 class HOPSJob:
@@ -195,6 +250,139 @@ class HOPSJob:
             Complete HOP file content
         """
         return self._to_hop_lines()
+
+    def to_hop_file(self, filepath: str):
+        """Write this job to a HOP file.
+
+        Parameters:
+        -----------
+        filepath : str
+            Path to write the HOP file
+        """
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(str(self))
+
+    @classmethod
+    def from_hop_string(cls, hop_content: str, strict: bool = False) -> "HOPSJob":
+        """Parse a HOP string and create a HOPSJob.
+
+        Parameters:
+        -----------
+        hop_content : str
+            Content of the HOP file as a string
+        strict : bool, optional
+            If True, raises UnparsedLineError for any unparseable lines.
+            If False (default), collects unparsed lines as warnings.
+
+        Returns:
+        --------
+        HOPSJob
+            Parsed HOPSJob object with all machinings
+
+        Raises:
+        -------
+        HOPParsingError
+            If strict=True and parsing encounters errors
+
+        Example:
+        --------
+        >>> job = HOPSJob.from_hop_string(hop_content)
+        >>> print(f"Found {len(job.machinings)} operations")
+
+        >>> # Strict mode - raises on any parsing error
+        >>> try:
+        ...     job = HOPSJob.from_hop_string(hop_content, strict=True)
+        ... except UnparsedLineError as e:
+        ...     print(f"Parse error at line {e.line_number}: {e.context}")
+        """
+        # PHASE 1: Split file into chunks
+        lines = hop_content.splitlines(True)  # Split string into a list of lines
+        header_chunk, vars_chunk, fp_chunk, pm_chunk, mach_chunks = cls._split_lines(lines)
+
+        # PHASE 2: Parse each chunk independently
+        # Parse header
+        header_lines = None
+        if header_chunk:
+            header_lines = [line.rstrip() for line in header_chunk.lines]
+
+        # Parse VARS
+        vars_def = None
+        if vars_chunk:
+            vars_def = cls._parse_vars_chunk(vars_chunk)
+
+        # Parse FERTIGTEIL
+        finished_part_def = None
+        if fp_chunk:
+            finished_part_def = cls._parse_finished_part_chunk(fp_chunk)
+
+        # Parse Park Mode
+        park_mode_def = None
+        if pm_chunk:
+            park_mode_def = cls._parse_park_mode_chunk(pm_chunk)
+
+        # Parse machining chunks
+        machinings_list = []
+        unparsed_errors = []
+        for mach_chunk in mach_chunks:
+            machining, errors = cls._parse_machining_chunk(mach_chunk, strict=strict)
+            if machining:
+                machinings_list.append(machining)
+            if errors:
+                unparsed_errors.extend(errors)
+
+        # In strict mode, raise if there were any unparsed lines
+        if strict and unparsed_errors:
+            # Raise the first error
+            raise unparsed_errors[0]
+
+        # Create job with parsed components
+        job = cls(
+            vars=vars_def or VarsDefinition(0.0, 0.0, 0.0),
+            finished_part=finished_part_def or FinishedPart(None, None, None),
+            park_mode=park_mode_def or ParkMode(),
+            machinings=machinings_list,
+            header=header_lines if header_lines else None,
+        )
+
+        return job
+
+    @classmethod
+    def from_hop_file(cls, filepath: str, strict: bool = False) -> "HOPSJob":
+        """Parse a HOP file and create a HOPSJob.
+
+        Parameters:
+        -----------
+        filepath : str
+            Path to the HOP file to parse
+        strict : bool, optional
+            If True, raises UnparsedLineError for any unparseable lines.
+            If False (default), collects unparsed lines as warnings.
+
+        Returns:
+        --------
+        HOPSJob
+            Parsed HOPSJob object with all machinings
+
+        Raises:
+        -------
+        HOPParsingError
+            If strict=True and parsing encounters errors
+
+        Example:
+        --------
+        >>> job = HOPSJob.from_hop_file("part.hop")
+        >>> print(f"Found {len(job.machinings)} operations")
+
+        >>> # Strict mode - raises on any parsing error
+        >>> try:
+        ...     job = HOPSJob.from_hop_file("part.hop", strict=True)
+        ... except UnparsedLineError as e:
+        ...     print(f"Parse error at line {e.line_number}: {e.context}")
+        """
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+
+        return cls.from_hop_string("".join(lines), strict=strict)
 
     @staticmethod
     def _extract_header_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
@@ -420,128 +608,6 @@ class HOPSJob:
 
         return header_chunk, vars_chunk, finished_part_chunk, park_mode_chunk, machining_chunks
 
-    @classmethod
-    def from_hop_string(cls, hop_content: str, strict: bool = False) -> "HOPSJob":
-        """Parse a HOP string and create a HOPSJob.
-
-        Parameters:
-        -----------
-        hop_content : str
-            Content of the HOP file as a string
-        strict : bool, optional
-            If True, raises UnparsedLineError for any unparseable lines.
-            If False (default), collects unparsed lines as warnings.
-
-        Returns:
-        --------
-        HOPSJob
-            Parsed HOPSJob object with all machinings
-
-        Raises:
-        -------
-        HOPParsingError
-            If strict=True and parsing encounters errors
-
-        Example:
-        --------
-        >>> job = HOPSJob.from_hop_string(hop_content)
-        >>> print(f"Found {len(job.machinings)} operations")
-
-        >>> # Strict mode - raises on any parsing error
-        >>> try:
-        ...     job = HOPSJob.from_hop_string(hop_content, strict=True)
-        ... except UnparsedLineError as e:
-        ...     print(f"Parse error at line {e.line_number}: {e.context}")
-        """
-        # PHASE 1: Split file into chunks
-        lines = hop_content.splitlines(True)  # Split string into a list of lines
-        header_chunk, vars_chunk, fp_chunk, pm_chunk, mach_chunks = cls._split_lines(lines)
-
-        # PHASE 2: Parse each chunk independently
-        # Parse header
-        header_lines = None
-        if header_chunk:
-            header_lines = [line.rstrip() for line in header_chunk.lines]
-
-        # Parse VARS
-        vars_def = None
-        if vars_chunk:
-            vars_def = cls._parse_vars_chunk(vars_chunk)
-
-        # Parse FERTIGTEIL
-        finished_part_def = None
-        if fp_chunk:
-            finished_part_def = cls._parse_finished_part_chunk(fp_chunk)
-
-        # Parse Park Mode
-        park_mode_def = None
-        if pm_chunk:
-            park_mode_def = cls._parse_park_mode_chunk(pm_chunk)
-
-        # Parse machining chunks
-        machinings_list = []
-        unparsed_errors = []
-        for mach_chunk in mach_chunks:
-            machining, errors = cls._parse_machining_chunk(mach_chunk, strict=strict)
-            if machining:
-                machinings_list.append(machining)
-            if errors:
-                unparsed_errors.extend(errors)
-
-        # In strict mode, raise if there were any unparsed lines
-        if strict and unparsed_errors:
-            # Raise the first error
-            raise unparsed_errors[0]
-
-        # Create job with parsed components
-        job = cls(
-            vars=vars_def or VarsDefinition(0.0, 0.0, 0.0),
-            finished_part=finished_part_def or FinishedPart(None, None, None),
-            park_mode=park_mode_def or ParkMode(),
-            machinings=machinings_list,
-            header=header_lines if header_lines else None,
-        )
-
-        return job
-
-    @classmethod
-    def from_hop_file(cls, filepath: str, strict: bool = False) -> "HOPSJob":
-        """Parse a HOP file and create a HOPSJob.
-
-        Parameters:
-        -----------
-        filepath : str
-            Path to the HOP file to parse
-        strict : bool, optional
-            If True, raises UnparsedLineError for any unparseable lines.
-            If False (default), collects unparsed lines as warnings.
-
-        Returns:
-        --------
-        HOPSJob
-            Parsed HOPSJob object with all machinings
-
-        Raises:
-        -------
-        HOPParsingError
-            If strict=True and parsing encounters errors
-
-        Example:
-        --------
-        >>> job = HOPSJob.from_hop_file("part.hop")
-        >>> print(f"Found {len(job.machinings)} operations")
-
-        >>> # Strict mode - raises on any parsing error
-        >>> try:
-        ...     job = HOPSJob.from_hop_file("part.hop", strict=True)
-        ... except UnparsedLineError as e:
-        ...     print(f"Parse error at line {e.line_number}: {e.context}")
-        """
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
-
-        return cls.from_hop_string("".join(lines), strict=strict)
-
     @staticmethod
     def _parse_vars_chunk(chunk: HOPChunk) -> Optional[VarsDefinition]:
         """Parse VARS chunk.
@@ -595,10 +661,11 @@ class HOPSJob:
 
     @staticmethod
     def _parse_machining_chunk(chunk: HOPChunk, strict: bool = False) -> Tuple[Optional[HOPSMachining], List[UnparsedLineError]]:
-        """Parse a machining chunk (tool + work plane + operations).
+        """Parse a machining chunk (tool + work plane + operations + feedrate overrides).
 
         A single chunk may contain multiple operations using the same
-        tool and work plane (e.g., multiple milling paths).
+        tool and work plane (e.g., multiple milling paths), along with
+        feedrate override commands at various positions.
 
         Parameters:
         -----------
@@ -617,6 +684,7 @@ class HOPSJob:
         tool = None
         work_plane = None
         operations = []
+        feedrate_overrides = []  # Store (operation_index, FeedrateOverride) tuples
         errors = []
 
         chunk_idx = 0
@@ -695,103 +763,181 @@ class HOPSJob:
             return None, errors
 
         # Parse ALL operations in this chunk (SP+G01+EP, SAEGEN, or BOHR)
+        # Also collect feedrate overrides and track their positions
         while chunk_idx < len(chunk.lines):
             line = chunk.lines[chunk_idx].strip()
 
-            # Skip CALL feedrate commands
-            if line.startswith("CALL"):
-                chunk_idx += 1
-                continue
+            # Check if this might be the start of a milling operation
+            # Milling can start with CALL _Tvorschub_v5 or directly with SP
+            if line.startswith("CALL _Tvorschub_v5(") or line.startswith("SP("):
+                # Look ahead to determine if this is a milling operation
+                lookahead_idx = chunk_idx
+                while lookahead_idx < len(chunk.lines):
+                    lookahead_line = chunk.lines[lookahead_idx].strip()
+                    if lookahead_line.startswith("SP("):
+                        # This is a milling operation, parse it (including any preceding CALL commands)
+                        operation, milling_feedrates, next_idx = HOPSJob._parse_milling_from_chunk(chunk, chunk_idx)
+                        if operation:
+                            # Add milling operation
+                            op_idx = len(operations)
+                            operations.append(operation)
 
-            operation = None
-            try:
-                if line.startswith("SP("):
-                    # Parse milling and get next index
-                    operation, next_idx = HOPSJob._parse_milling_from_chunk(chunk, chunk_idx)
-                    if operation:
-                        operations.append(operation)
-                        chunk_idx = next_idx
+                            # Add feedrate overrides for this milling operation with (op_idx, cmd_idx)
+                            for cmd_idx, override in milling_feedrates:
+                                feedrate_overrides.append(((op_idx, cmd_idx), override))
+
+                            chunk_idx = next_idx
+                        else:
+                            # Parsing failed, skip this line to avoid infinite loop
+                            chunk_idx += 1
+                        break
+                    elif lookahead_line.startswith("CALL"):
+                        # Keep looking
+                        lookahead_idx += 1
                     else:
-                        # Parsing failed, skip this line to avoid infinite loop
+                        # Not a milling operation, this CALL is for sawing/drilling
+                        if line.startswith("CALL _Tvorschub_v5("):
+                            try:
+                                feedrate_override = FeedrateOverride.from_hop_line(line)
+                                feedrate_overrides.append(((len(operations), None), feedrate_override))
+                            except Exception:
+                                pass
                         chunk_idx += 1
-                    # chunk_idx already advanced past EP
-                elif line.startswith("SAEGEN("):
+                        break
+                else:
+                    # Reached end of chunk without finding SP
+                    chunk_idx += 1
+
+            elif line.startswith("CALL"):
+                # Other CALL commands, skip them
+                chunk_idx += 1
+            elif line.startswith("CALL"):
+                # Other CALL commands, skip them
+                chunk_idx += 1
+            elif line.startswith("SAEGEN("):
+                try:
                     operation = SawingOperation.from_hop_line(line)
                     if operation:
                         operations.append(operation)
-                    chunk_idx += 1
-                elif line.startswith("BOHR("):
+                except Exception:
+                    pass
+                chunk_idx += 1
+            elif line.startswith("BOHR("):
+                try:
                     operation = DrillingOperation.from_hop_line(line)
                     if operation:
                         operations.append(operation)
-                    chunk_idx += 1
-                else:
-                    # Unknown line, skip it
-                    chunk_idx += 1
-            except Exception:
-                # Error parsing operation, skip this line
+                except Exception:
+                    pass
+                chunk_idx += 1
+            else:
+                # Unknown line, skip it
                 chunk_idx += 1
 
-        # Return machining with all collected operations
+        # Return machining with all collected operations and feedrate overrides
         if operations:
-            return HOPSMachining(tool, work_plane, operations, comments=chunk.comments), errors
+            return HOPSMachining(tool, work_plane, operations, comments=chunk.comments, feedrate_overrides=feedrate_overrides), errors
 
         return None, errors
 
     @staticmethod
-    def _parse_milling_from_chunk(chunk: HOPChunk, start_idx: int) -> Tuple[Optional[MillingOperation], int]:
+    def _parse_milling_from_chunk(chunk: HOPChunk, start_idx: int) -> Tuple[Optional[MillingOperation], List[Tuple[int, FeedrateOverride]], int]:
         """Parse milling operation from chunk lines starting at start_idx.
 
         Returns:
         --------
-        Tuple[Optional[MillingOperation], int]
-            Tuple of (parsed MillingOperation or None, next index after EP)
+        Tuple[Optional[MillingOperation], List[Tuple[int, FeedrateOverride]], int]
+            Tuple of (parsed MillingOperation or None, list of (command_idx, FeedrateOverride), next index after EP)
+            command_idx is relative to the milling operation (0=before SP, 1=before first move, etc.)
         """
         chunk_idx = start_idx
+        feedrate_overrides = []  # (command_idx, FeedrateOverride)
+        cmd_idx = 0  # Track position within milling operation
 
         try:
-            # Parse SP
-            start_point = StartPoint.from_hop_line(chunk.lines[chunk_idx].strip())
-            chunk_idx += 1
+            # Find StartPoint (SP), checking for feedrate override before it
+            while chunk_idx < len(chunk.lines):
+                line = chunk.lines[chunk_idx].strip()
 
-            # Parse G01 moves - chunk.lines has no comments
+                if line.startswith("CALL _Tvorschub_v5("):
+                    # Feedrate override before SP
+                    try:
+                        override = FeedrateOverride.from_hop_line(line)
+                        feedrate_overrides.append((cmd_idx, override))
+                    except Exception:
+                        pass
+                    chunk_idx += 1
+                elif line.startswith("SP("):
+                    start_point = StartPoint.from_hop_line(line)
+                    chunk_idx += 1
+                    cmd_idx += 1  # Increment to position for first move
+                    break
+                elif line.startswith("CALL"):
+                    # Other CALL commands, skip
+                    chunk_idx += 1
+                else:
+                    chunk_idx += 1
+            else:
+                return None, [], start_idx  # No SP found
+
+            # Parse moves (G01, G02M, G03M), checking for feedrate overrides before each
             moves = []
             while chunk_idx < len(chunk.lines):
                 line = chunk.lines[chunk_idx].strip()
-                if line.startswith("G01("):
-                    move = G01.from_hop_line(line)
-                    moves.append(move)
+
+                if line.startswith("CALL _Tvorschub_v5("):
+                    # Feedrate override before next move or EP
+                    try:
+                        override = FeedrateOverride.from_hop_line(line)
+                        feedrate_overrides.append((cmd_idx, override))
+                    except Exception:
+                        pass
                     chunk_idx += 1
+                elif line.startswith("G01("):
+                    moves.append(G01.from_hop_line(line))
+                    chunk_idx += 1
+                    cmd_idx += 1
                 elif line.startswith("G02M("):
-                    move = G02M.from_hop_line(line)
-                    moves.append(move)
+                    moves.append(G02M.from_hop_line(line))
                     chunk_idx += 1
+                    cmd_idx += 1
                 elif line.startswith("G03M("):
-                    move = G03M.from_hop_line(line)
-                    moves.append(move)
+                    moves.append(G03M.from_hop_line(line))
                     chunk_idx += 1
+                    cmd_idx += 1
                 elif line.startswith("EP("):
                     break
                 elif line.startswith("CALL"):
+                    # Other CALL commands, skip
                     chunk_idx += 1
                 else:
-                    break
+                    chunk_idx += 1  # Skip unknown lines
 
-            # Parse EP
-            if chunk_idx < len(chunk.lines) and chunk.lines[chunk_idx].strip().startswith("EP("):
-                end_point = EndPoint.from_hop_line(chunk.lines[chunk_idx].strip())
-                chunk_idx += 1  # Move past EP
+            # Parse EndPoint (EP), checking for feedrate override before it
+            while chunk_idx < len(chunk.lines):
+                line = chunk.lines[chunk_idx].strip()
 
-                return MillingOperation(
-                    start_point=start_point,
-                    moves=moves,
-                    end_point=end_point,
-                ), chunk_idx
-            else:
-                return None, chunk_idx
+                if line.startswith("CALL _Tvorschub_v5("):
+                    # Feedrate override before EP
+                    try:
+                        override = FeedrateOverride.from_hop_line(line)
+                        feedrate_overrides.append((cmd_idx, override))
+                    except Exception:
+                        pass
+                    chunk_idx += 1
+                elif line.startswith("EP("):
+                    end_point = EndPoint.from_hop_line(line)
+                    chunk_idx += 1
+                    return MillingOperation(start_point=start_point, moves=moves, end_point=end_point), feedrate_overrides, chunk_idx
+                elif line.startswith("CALL"):
+                    # Other CALL commands, skip
+                    chunk_idx += 1
+                else:
+                    chunk_idx += 1
 
+            return None, [], start_idx  # No EP found
         except Exception:
-            return None, start_idx
+            return None, [], start_idx
 
     def _to_hop_lines(self) -> str:
         lines = []
@@ -821,14 +967,3 @@ class HOPSJob:
             lines.append("")
 
         return "\n".join(lines)
-
-    def to_hop_file(self, filepath: str):
-        """Write this job to a HOP file.
-
-        Parameters:
-        -----------
-        filepath : str
-            Path to write the HOP file
-        """
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(str(self))
