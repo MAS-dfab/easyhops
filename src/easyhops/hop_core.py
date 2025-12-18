@@ -112,7 +112,7 @@ class VarsDefinition:
         self.dz = dz
 
     def __str__(self):
-        return f"VARS\n   DX := {self.dx};\n   DY := {self.dy};\n   DZ := {self.dz};\nSTART"
+        return f"VARS\n   DX := {self.dx}\n   DY := {self.dy}\n   DZ := {self.dz}\nSTART"
 
     @classmethod
     def from_hop_line(cls, line: List[str]) -> "VarsDefinition":
@@ -212,7 +212,7 @@ class FinishedPart:
         dy_str = f"{self.dy}" if self.dy is not None else "DY"
         dz_str = f"{self.dz}" if self.dz is not None else "DZ"
         # Comment should be quoted if non-empty, or empty string
-        comment_str = f"'{self.comment}'" if self.comment else ""
+        comment_str = f"'{self.comment}'" if self.comment else "''"
         field_linking_str = "1" if self.field_linking else "0"
         activates_laser_str = "1" if self.activates_laser else "0"
 

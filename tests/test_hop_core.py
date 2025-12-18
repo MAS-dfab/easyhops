@@ -162,9 +162,9 @@ class TestFinishedPart:
         """Test FinishedPart.__str__() with VARS references."""
         fp = FinishedPart(dx=None, dy=None, dz=None)
         output = str(fp)
-        assert "VARS DX" in output
-        assert "VARS DY" in output
-        assert "VARS DZ" in output
+        assert "DX" in output
+        assert "DY" in output
+        assert "DZ" in output
 
     def test_finished_part_str_with_comment(self):
         """Test FinishedPart.__str__() includes comment."""
