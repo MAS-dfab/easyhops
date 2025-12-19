@@ -107,8 +107,8 @@ class FreePlane:
         Applied first in transformation sequence
     easy_snap_xy : Optional[EasySnapXY]
         Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
-    easy_snap_z : Optional[EasySnapZ]
-        Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
+    offset_z : Optional[float] #! TODO: check at which posiion this appears and if EASY_SNAP_Z is still needed in HOPS
+        Z-axis offset for depth calculations. If None, defaults to 0.0
 
     Example:
     --------
@@ -128,7 +128,7 @@ class FreePlane:
         rotation_angle: float,
         tilt_angle: float,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
-        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+        offset_z: Optional[float] = 0.0,
     ):
         self._x = None
         self._y = None
@@ -136,7 +136,7 @@ class FreePlane:
         self._rotation_angle = None
         self._tilt_angle = None
         self._easy_snap_xy = None
-        self._easy_snap_z = None
+        self._offset_z = None
 
         self.x = x
         self.y = y
@@ -144,7 +144,7 @@ class FreePlane:
         self.rotation_angle = rotation_angle
         self.tilt_angle = tilt_angle
         self.easy_snap_xy = easy_snap_xy
-        self.easy_snap_z = easy_snap_z
+        self.offset_z = offset_z
 
     @property
     def x(self) -> float:
@@ -219,21 +219,15 @@ class FreePlane:
         self._easy_snap_xy = value
 
     @property
-    def easy_snap_z(self) -> int:
-        """Z-axis reference mode for depth calculations (0-2)."""
-        return self._easy_snap_z
+    def offset_z(self) -> float:
+        """Z-axis offset for depth calculations."""
+        return self._offset_z
 
-    @easy_snap_z.setter
-    def easy_snap_z(self, value):
-        if isinstance(value, EasySnapZ):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 2:
-            raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
-
-        self._easy_snap_z = value
+    @offset_z.setter
+    def offset_z(self, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"offset_z must be a number, got {type(value).__name__}")
+        self._offset_z = float(value)
 
     @staticmethod
     def _format_number(value: float) -> str:
@@ -266,16 +260,14 @@ class FreePlane:
             self._format_number(self.rotation_angle),
             self._format_number(self.tilt_angle),
             str(self.easy_snap_xy),
-            str(self.easy_snap_z),
+            self._format_number(self.offset_z),
         ]
         return f"EBENEF({','.join(params)})"
 
     def __repr__(self) -> str:
         """Return detailed string representation for debugging."""
         return (
-            f"FreePlane(x={self.x}, y={self.y}, z={self.z}, "
-            f"rotation={self.rotation_angle}°, tilt={self.tilt_angle}°, "
-            f"easy_snap_xy={self.easy_snap_xy}, easy_snap_z={self.easy_snap_z})"
+            f"FreePlane(x={self.x}, y={self.y}, z={self.z}, rotation={self.rotation_angle}°, tilt={self.tilt_angle}°, easy_snap_xy={self.easy_snap_xy}, offset_z={self.offset_z})"
         )
 
     @classmethod
