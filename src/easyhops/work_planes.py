@@ -1,3 +1,4 @@
+import re
 from enum import StrEnum
 from typing import Optional
 
@@ -5,6 +6,7 @@ from compas.geometry import Frame
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_projected
 
+from .base_commands import WorkPlaneCommand
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
 
@@ -56,8 +58,6 @@ class WorkPlane(StrEnum):
             >>> WorkPlane.from_hop_line("EBENE(1)")
             <WorkPlane.FRONT: 'EBENE1()'>
         """
-        import re
-
         # Try to match EBENE0() format first
         if line.strip() in cls._value2member_map_:
             return cls(line.strip())
@@ -79,7 +79,7 @@ class WorkPlane(StrEnum):
         raise ValueError(f"Invalid EBENE line: {line}")
 
 
-class FreePlane:
+class FreePlane(WorkPlaneCommand):
     """EBENEF (Free View) parametric work plane definition.
 
     Defines a free view coordinate system where all subsequent machining operations
@@ -107,7 +107,9 @@ class FreePlane:
         Applied first in transformation sequence
     easy_snap_xy : Optional[EasySnapXY]
         Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
-    offset_z : Optional[float] #! TODO: check at which posiion this appears and if EASY_SNAP_Z is still needed in HOPS
+    easy_snap_z : Optional[EasySnapZ]
+        Corner snap mode for Z movement. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
+    offset_z : Optional[float]
         Z-axis offset for depth calculations. If None, defaults to 0.0
 
     Example:
@@ -118,6 +120,7 @@ class FreePlane:
         >>> plane.easy_snap_xy = 10
         >>> str(plane)
         'EBENEF(100,50,0,45,0,10)'
+        'EBENEF(x=2058.631,y=-19.864,z=384.569,tilt=64.735,angle=180, snapXY=0,snapZ=0,offset_z=666)'
     """
 
     def __init__(
@@ -128,14 +131,17 @@ class FreePlane:
         rotation_angle: float,
         tilt_angle: float,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         offset_z: Optional[float] = 0.0,
     ):
+        super().__init__()
         self._x = None
         self._y = None
         self._z = None
         self._rotation_angle = None
         self._tilt_angle = None
         self._easy_snap_xy = None
+        self._easy_snap_z = None
         self._offset_z = None
 
         self.x = x
@@ -144,6 +150,7 @@ class FreePlane:
         self.rotation_angle = rotation_angle
         self.tilt_angle = tilt_angle
         self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
         self.offset_z = offset_z
 
     @property
@@ -215,8 +222,22 @@ class FreePlane:
 
         if not 0 <= value <= 9:
             raise ValueError(f"easy_snap_xy must be between 0 and 9, got {value}")
-
         self._easy_snap_xy = value
+
+    @property
+    def easy_snap_z(self) -> int:
+        """Corner snap mode for Z movement (0-2)."""
+        return self._easy_snap_z
+
+    @easy_snap_z.setter
+    def easy_snap_z(self, value):
+        if isinstance(value, EasySnapZ):
+            value = value.value
+        elif not isinstance(value, int):
+            raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
+        if not 0 <= value <= 2:
+            raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
+        self._easy_snap_z = value
 
     @property
     def offset_z(self) -> float:
@@ -247,7 +268,7 @@ class FreePlane:
             return str(int(value))
         return f"{value:.3f}"
 
-    def __str__(self) -> str:
+    def _to_hop_line(self) -> str:
         """Return EBENEF command string.
 
         Returns:
@@ -260,15 +281,14 @@ class FreePlane:
             self._format_number(self.rotation_angle),
             self._format_number(self.tilt_angle),
             str(self.easy_snap_xy),
+            str(self.easy_snap_z),
             self._format_number(self.offset_z),
         ]
         return f"EBENEF({','.join(params)})"
 
     def __repr__(self) -> str:
         """Return detailed string representation for debugging."""
-        return (
-            f"FreePlane(x={self.x}, y={self.y}, z={self.z}, rotation={self.rotation_angle}°, tilt={self.tilt_angle}°, easy_snap_xy={self.easy_snap_xy}, offset_z={self.offset_z})"
-        )
+        return f"FreePlane(x={self.x}, y={self.y}, z={self.z}, tilt={self.tilt_angle}°, rotation={self.rotation_angle}°, easy_snap_xy={self.easy_snap_xy}, easy_snap_z={self.easy_snap_z}, offset_z={self.offset_z})"  # noqa: E501
 
     @classmethod
     def from_frame(cls, frame: Frame) -> "FreePlane":
@@ -310,15 +330,14 @@ class FreePlane:
 
         Example:
         --------
-            >>> FreePlane.from_hop_line("EBENEF(1351.763,268.987,182.642,13.003,0,0,0)")
-            FreePlane(x=1351.763, y=268.987, z=182.642, rotation=13.003°, tilt=0.0°, ...)
+            >>> FreePlane.from_hop_line("EBENEF(1351.763,268.987,182.642,13.003,0,0,0,0)")
+            FreePlane(x=1351.763, y=268.987, z=182.642, rotation=13.003, tilt=0.0, ...)
         """
-        import re
-
-        # Match EBENEF with 5 or 7 parameters
-        pattern = (
-            r"EBENEF\(\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)(?:\s*,\s*([-+]?\d+)\s*,\s*([-+]?\d+))?\s*\)"
-        )
+        # Match EBENEF with 5, 7, or 8 parameters
+        # 5 params: x, y, z, rotation, tilt
+        # 7 params: x, y, z, rotation, tilt, snap_xy, snap_z
+        # 8 params: x, y, z, rotation, tilt, snap_xy, snap_z, offset_z
+        pattern = r"EBENEF\(\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)\s*,\s*([-+]?\d+\.?\d*)(?:\s*,\s*([-+]?\d+)(?:\s*,\s*([-+]?\d+)(?:\s*,\s*([-+]?\d+\.?\d*))?)?)?\s*\)"
         match = re.match(pattern, line.strip())
 
         if match:
@@ -329,7 +348,8 @@ class FreePlane:
             tilt = float(match.group(5))
             snap_xy = EasySnapXY(int(match.group(6))) if match.group(6) else EasySnapXY.DISABLED
             snap_z = EasySnapZ(int(match.group(7))) if match.group(7) else EasySnapZ.RELATIVE
+            offset = float(match.group(8)) if match.group(8) else 0.0
 
-            return cls(x, y, z, rotation, tilt, snap_xy, snap_z)
+            return cls(x, y, z, rotation, tilt, snap_xy, snap_z, offset)
 
         raise ValueError(f"Invalid EBENEF line: {line}")

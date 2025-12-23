@@ -187,7 +187,7 @@ class TestSawingOperation:
             saw.easy_snap_z = -1
 
     def test_sawing_to_line(self):
-        """Test SawingOperation._to_line() formatting."""
+        """Test SawingOperation._to_hop_line() formatting."""
         saw = SawingOperation(
             sx=100,
             sy=200,
@@ -198,7 +198,7 @@ class TestSawingOperation:
             fit_in=True,
             tilt_angle=-7.57,
         )
-        line = saw._to_line()
+        line = saw._to_hop_line()
         assert line.startswith("SAEGEN(")
         assert "100," in line
         assert "200," in line
@@ -206,9 +206,9 @@ class TestSawingOperation:
         assert "-7.57" in line
 
     def test_sawing_str(self):
-        """Test SawingOperation.__str__() calls _to_line()."""
+        """Test SawingOperation.__str__() calls _to_hop_line()."""
         saw = SawingOperation(100, 200, -50, 300, 400, -50)
-        assert str(saw) == saw._to_line()
+        assert str(saw) == saw._to_hop_line()
 
     def test_sawing_repr(self):
         """Test SawingOperation.__repr__()."""
@@ -354,9 +354,9 @@ class TestDrillingOperation:
             drill.easy_snap_z = -1
 
     def test_drilling_to_line_with_diameter(self):
-        """Test DrillingOperation._to_line() with diameter."""
+        """Test DrillingOperation._to_hop_line() with diameter."""
         drill = DrillingOperation(x=100.5, y=200, z=50, depth=-30, diameter=10.5, rotation=45, tilt=-30)
-        line = drill._to_line()
+        line = drill._to_hop_line()
         assert line.startswith("BOHRUNG(")
         assert "100.5" in line
         assert "200," in line
@@ -365,15 +365,15 @@ class TestDrillingOperation:
         assert "45," in line
 
     def test_drilling_to_line_without_diameter(self):
-        """Test DrillingOperation._to_line() without diameter (uses _WZD)."""
+        """Test DrillingOperation._to_hop_line() without diameter (uses _WZD)."""
         drill = DrillingOperation(x=100, y=200, z=50, depth=-30)
-        line = drill._to_line()
+        line = drill._to_hop_line()
         assert "_WZD" in line
 
     def test_drilling_str(self):
-        """Test DrillingOperation.__str__() calls _to_line()."""
+        """Test DrillingOperation.__str__() calls _to_hop_line()."""
         drill = DrillingOperation(100, 200, 50)
-        assert str(drill) == drill._to_line()
+        assert str(drill) == drill._to_hop_line()
 
     def test_drilling_repr(self):
         """Test DrillingOperation.__repr__()."""
@@ -419,7 +419,7 @@ class TestDrillingOperation:
     def test_drilling_number_formatting(self):
         """Test that drilling formats numbers correctly (integers without decimals)."""
         drill = DrillingOperation(x=100.0, y=200.0, z=50.0, depth=-30.0, diameter=10.0)
-        line = drill._to_line()
+        line = drill._to_hop_line()
         # Integers should not have decimals
         assert "100" in line
         assert "200" in line
@@ -430,7 +430,7 @@ class TestDrillingOperation:
     def test_drilling_number_formatting_with_floats(self):
         """Test that drilling formats floats with 3 decimals."""
         drill = DrillingOperation(x=100.123, y=200.456, z=50.789, depth=-30.5)
-        line = drill._to_line()
+        line = drill._to_hop_line()
         # Floats should have 3 decimals
         assert "100.123" in line
         assert "200.456" in line

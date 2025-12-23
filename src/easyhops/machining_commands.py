@@ -1,10 +1,11 @@
 import re
-from abc import ABC
 from enum import IntEnum
 from typing import List
 from typing import Optional
 from typing import Union
 
+from .base_commands import MoveCommand
+from .base_commands import OperationCommand
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
 
@@ -74,7 +75,7 @@ class ProcessMode(IntEnum):
     AGAINST_ROTATION_MIRROR = 4
 
 
-class StartPoint:
+class StartPoint(MoveCommand):
     """HOPS start point (SP) command definition.
 
     Represents a milling starting point with all associated parameters.
@@ -158,6 +159,7 @@ class StartPoint:
         axial_distance: Optional[float] = 0.0,
         param_23: Optional[float] = 0.0,  # TODO: figure out what this is
     ):
+        super().__init__()
         self.x = x
         self.y = y
         self.z = z
@@ -182,7 +184,7 @@ class StartPoint:
         self.axial_distance = axial_distance
         self.param_23 = param_23
 
-    def __str__(self):
+    def _to_hop_line(self):
         lead_in_factor_str = self.lead_in_factor if self.lead_in_factor is not None else "_ANF"
         params = [
             self.x,
@@ -285,7 +287,7 @@ class StartPoint:
         raise ValueError(f"Invalid SP line: {line}")
 
 
-class G01:
+class G01(MoveCommand):
     """HOPS G01 linear interpolation movement command.
 
     Represents a single G01 movement with all associated parameters.
@@ -325,6 +327,7 @@ class G01:
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
+        super().__init__()
         self.x = x
         self.y = y
         self.z = z
@@ -332,7 +335,7 @@ class G01:
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
 
-    def __str__(self):
+    def _to_hop_line(self):
         return f"G01({self.x},{self.y},{self.z},{self.corner_radius},{self.easy_snap_xy},{int(self.easy_snap_z)})"
 
     @classmethod
@@ -374,7 +377,7 @@ class G01:
         raise ValueError(f"Invalid G01 line: {line}")
 
 
-class G02M:
+class G02M(MoveCommand):
     """HOPS G02M clockwise arc with center point command.
 
     Represents a clockwise arc movement (G2) with explicit center point specification.
@@ -418,6 +421,7 @@ class G02M:
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         easy_snap_center: Optional[int] = 0,
     ):
+        super().__init__()
         self.x = x
         self.y = y
         self.z = z
@@ -428,7 +432,7 @@ class G02M:
         self.easy_snap_z = easy_snap_z
         self.easy_snap_center = easy_snap_center
 
-    def __str__(self):
+    def _to_hop_line(self):
         return f"G02M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
 
     @classmethod
@@ -476,7 +480,7 @@ class G02M:
         raise ValueError(f"Invalid G02M line: {line}")
 
 
-class G03M:
+class G03M(MoveCommand):
     """HOPS G03M counter-clockwise arc with center point command.
 
     Represents a counter-clockwise arc movement (G3) with explicit center point specification.
@@ -520,6 +524,7 @@ class G03M:
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         easy_snap_center: Optional[int] = 0,
     ):
+        super().__init__()
         self.x = x
         self.y = y
         self.z = z
@@ -530,7 +535,7 @@ class G03M:
         self.easy_snap_z = easy_snap_z
         self.easy_snap_center = easy_snap_center
 
-    def __str__(self):
+    def _to_hop_line(self):
         return f"G03M({self.x},{self.y},{self.z},{self.mx},{self.my},{self.corner_radius},{int(self.easy_snap_xy)},{int(self.easy_snap_z)},{self.easy_snap_center})"
 
     @classmethod
@@ -578,7 +583,7 @@ class G03M:
         raise ValueError(f"Invalid G03M line: {line}")
 
 
-class EndPoint:
+class EndPoint(MoveCommand):
     """HOPS end point (EP) command definition.
 
     Represents the end of a milling path with associated parameters.
@@ -603,11 +608,12 @@ class EndPoint:
         lead_out_factor: Optional[float] = None,
         reverse_direction: bool = False,
     ):
+        super().__init__()
         self.lead_out_mode = lead_out_mode
         self.lead_out_factor = lead_out_factor
         self.reverse_direction = reverse_direction
 
-    def __str__(self):
+    def _to_hop_line(self):
         lead_out_factor_str = self.lead_out_factor if self.lead_out_factor is not None else "_ANF"
         return f"EP({self.lead_out_mode},{lead_out_factor_str},{int(self.reverse_direction)})"
 
@@ -648,7 +654,7 @@ class EndPoint:
 # ==================== Machining Command Classes ====================
 
 
-class MillingOperation:
+class MillingOperation(OperationCommand):
     """Represents a milling path sequence (SP + moves + EP).
 
     MillingOperation encapsulates a complete milling operation including the start point, moves, and end point.
@@ -675,6 +681,7 @@ class MillingOperation:
     """
 
     def __init__(self, start_point: StartPoint, moves: List[Union[G01, G02M, G03M]], end_point: EndPoint):
+        super().__init__()
         self.start_point = start_point
         self.moves = moves
         self.end_point = end_point
@@ -682,7 +689,12 @@ class MillingOperation:
     def __repr__(self) -> str:
         return f"MillingOperation(start={self.start_point.x:.1f},{self.start_point.y:.1f}, moves={len(self.moves)})"
 
-    def __str__(self):
+    def _to_hop_line(self) -> str:
+        """Generate HOPS command lines for the milling operation.
+
+        Returns the complete milling path as a multi-line string containing
+        the start point, all moves, and the end point.
+        """
         return "\n".join(self._to_lines())
 
     def _to_lines(self) -> List[str]:
@@ -696,7 +708,7 @@ class MillingOperation:
         return lines
 
 
-class SawingOperation:
+class SawingOperation(OperationCommand):
     """Represents a saw cutting operation (SAEGEN).
 
     Sawing cuts a straight line from point 1 to point 2 with full control over
@@ -765,6 +777,7 @@ class SawingOperation:
         easy_snap_xy_end: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
+        super().__init__()
         self._sx = None
         self._sy = None
         self._sz = None
@@ -796,10 +809,6 @@ class SawingOperation:
         self.easy_snap_xy_start = easy_snap_xy_start
         self.easy_snap_xy_end = easy_snap_xy_end
         self.easy_snap_z = easy_snap_z
-
-    def __str__(self) -> str:
-        """Return HOPS SAEGEN command line."""
-        return self._to_line()
 
     def __repr__(self) -> str:
         return f"SawingOperation(from=({self.sx:.1f},{self.sy:.1f},{self.sz:.1f}), to=({self.ex:.1f},{self.ey:.1f},{self.ez:.1f}), tilt={self.tilt_angle}°)"
@@ -1045,7 +1054,7 @@ class SawingOperation:
             )
         raise ValueError(f"Invalid SAEGEN line: {line}")
 
-    def _to_line(self) -> str:
+    def _to_hop_line(self) -> str:
         """Generate HOPS SAEGEN command line.
 
         Returns:
@@ -1072,7 +1081,7 @@ class SawingOperation:
         )
 
 
-class DrillingOperation:
+class DrillingOperation(OperationCommand):
     """Represents a horizontal drilling operation.
 
     Drilling creates holes at specific points.
@@ -1114,6 +1123,7 @@ class DrillingOperation:
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
+        super().__init__()
         self._x = None
         self._y = None
         self._z = None
@@ -1135,10 +1145,6 @@ class DrillingOperation:
         self.tilt = tilt
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
-
-    def __str__(self):
-        """Return HOPS BOHR command line."""
-        return self._to_line()
 
     def __repr__(self) -> str:
         return f"DrillingOperation(pos=({self.x:.1f},{self.y:.1f},{self.z:.1f}), depth={self.depth}, ø={self.diameter})"
@@ -1321,7 +1327,7 @@ class DrillingOperation:
             )
         raise ValueError(f"Invalid BOHRUNG line: {line}")
 
-    def _to_line(self) -> str:
+    def _to_hop_line(self) -> str:
         """Generate HOPS BOHRUNG command line.
 
         Returns:

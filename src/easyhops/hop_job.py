@@ -14,6 +14,7 @@ from typing import Union
 
 from .hop_core import FinishedPart
 from .hop_core import ParkMode
+from .hop_core import ParkPosition
 from .hop_core import VarsDefinition
 from .machining_commands import G01
 from .machining_commands import G02M
@@ -23,8 +24,8 @@ from .machining_commands import EndPoint
 from .machining_commands import MillingOperation
 from .machining_commands import SawingOperation
 from .machining_commands import StartPoint
-from .tool_library import FeedrateOverride
 from .tool_library import MachiningTool
+from .utility_commands import FeedrateOverride
 from .work_planes import FreePlane
 from .work_planes import WorkPlane
 
@@ -339,7 +340,7 @@ class HOPSJob:
         job = cls(
             vars=vars_def or VarsDefinition(0.0, 0.0, 0.0),
             finished_part=finished_part_def or FinishedPart(None, None, None),
-            park_mode=park_mode_def or ParkMode(),
+            park_mode=park_mode_def or ParkPosition(),
             machinings=machinings_list,
             header=header_lines if header_lines else None,
         )
@@ -521,6 +522,45 @@ class HOPSJob:
         return None, idx
 
     @staticmethod
+    def _filter_verbose_comments(comments: List[str]) -> List[str]:
+        """Filter out verbose machine-generated comments, keeping only meaningful operation names.
+
+        Removes comments like:
+        - "; Tool Selection"
+        - "; Work Plane Definition: ..."
+        - "; Compensation (Par...): ..."
+        - "; ######## END MACH TYPE = ..."
+        - "; Type LeadOut (Par...): ..."
+
+        Keeps comments with operation names like:
+        - "; S14_446,C_Birdsmouth_LongCut"
+        - "; ---------------------------------"
+        """
+        filtered = []
+        for comment in comments:
+            stripped = comment.strip()
+            # Keep separator lines and operation name comments
+            if stripped == "; ---------------------------------":
+                filtered.append(comment)
+            # Skip verbose machine-generated comments
+            elif any(
+                pattern in stripped
+                for pattern in [
+                    "; Tool Selection",
+                    "; Work Plane Definition:",
+                    "; Compensation (Par",
+                    "; ######## END MACH TYPE",
+                    "; Type LeadOut (Par",
+                    "; Type LeadIn (Par",
+                ]
+            ):
+                continue
+            # Keep other comments (like operation names)
+            else:
+                filtered.append(comment)
+        return filtered
+
+    @staticmethod
     def _extract_machining_lines(lines: List[str], start_idx: int) -> List[HOPChunk]:
         """Extract all machining chunks (WZF/WZS/WZB blocks with operations).
 
@@ -551,6 +591,9 @@ class HOPSJob:
                     else:
                         # Hit non-comment code, stop
                         break
+
+                # Filter out verbose machine-generated comments
+                mach_comments = HOPSJob._filter_verbose_comments(mach_comments)
 
                 mach_start = idx
                 mach_code = []

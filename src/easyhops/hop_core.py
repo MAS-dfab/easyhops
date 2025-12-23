@@ -33,6 +33,7 @@ from enum import IntEnum
 from typing import List
 from typing import Optional
 
+from .base_commands import HOPSCommand
 from .tool_library import ToolCallType
 
 
@@ -91,6 +92,51 @@ class EasySnapXY(IntEnum):
     TOP_LEFT = 7  # Top-left corner
     CENTER_LEFT = 8  # Left-center
     CENTER = 9  # Center position
+
+
+class ParkMode(IntEnum):
+    """Park position modes for tool parking.
+
+    Attributes:
+    -----------
+    WITHOUT : 0
+        Without parking
+    LEFT_REAR : 1
+        Left rear position
+    RIGHT_REAR : 2
+        Right rear position
+    MIDDLE_REAR : 3
+        Middle rear position
+    LEFT_FRONT : 4
+        Left front position
+    RIGHT_FRONT : 5
+        Right front position
+    MIDDLE_FRONT : 6
+        Middle front position
+    LEFT_MIDDLE : 7
+        Left middle position
+    RIGHT_MIDDLE : 8
+        Right middle position
+    MACHINE_CENTRE : 9
+        Machine centre position
+    MANUAL : 10
+        Manual parking
+    AUTOMATIC : 11
+        Automatic parking
+    """
+
+    WITHOUT = 0
+    LEFT_REAR = 1
+    RIGHT_REAR = 2
+    MIDDLE_REAR = 3
+    LEFT_FRONT = 4
+    RIGHT_FRONT = 5
+    MIDDLE_FRONT = 6
+    LEFT_MIDDLE = 7
+    RIGHT_MIDDLE = 8
+    MACHINE_CENTRE = 9
+    MANUAL = 10
+    AUTOMATIC = 11
 
 
 class VarsDefinition:
@@ -219,7 +265,7 @@ class FinishedPart:
         return (
             f"FERTIGTEIL({dx_str},{dy_str},{dz_str},"
             f"{self.rotation_flag},{self.empty_parameter},"
-            f"{self.offset_x},{self.offset_y},{self.offset_z},"
+            f"{self.offset_x:.3f},{self.offset_y:.3f},{self.offset_z:.3f},"
             f"{comment_str},{field_linking_str},{activates_laser_str},{self.stop_flag})\n"
         )
 
@@ -286,29 +332,29 @@ class FinishedPart:
             raise ValueError(f"Invalid FERTIGTEIL line: {line}")
 
 
-class ParkMode:
+class ParkPosition:
     """Represents the Park_V7 command for tool parking positions.
 
     Parameters:
     -----------
-    mode : int
-        Park mode value (typically 11 for standard parking)
-    pos_x : float
+    mode : Optional[ParkMode]
+        Park mode position setting (default AUTOMATIC)
+    pos_x : Optional[float]
         X position for parking (default 0)
-    pos_y : float
+    pos_y : Optional[float]
         Y position for parking (default 0)
     """
 
-    def __init__(self, mode: int = 11, pos_x: float = 0, pos_y: float = 0):
+    def __init__(self, mode: ParkMode = ParkMode.AUTOMATIC, pos_x: float = 0, pos_y: float = 0):
         self.mode = mode
         self.pos_x = pos_x
         self.pos_y = pos_y
 
     def __str__(self):
-        return f"CALL Park_V7 ( VAL MODE:={self.mode},POSX:={self.pos_x},POSY:={self.pos_y})"
+        return f"CALL Park_V7 ( VAL MODE:={self.mode.value},POSX:={self.pos_x},POSY:={self.pos_y})"
 
     @classmethod
-    def from_hop_line(cls, line: str) -> "ParkMode":
+    def from_hop_line(cls, line: str) -> "ParkPosition":
         """Parse Park_V7 command from HOPS line.
 
         Parameters:
@@ -318,14 +364,14 @@ class ParkMode:
 
         Returns:
         --------
-        ParkMode
-            Parsed ParkMode object
+        ParkPosition
+            Parsed ParkPosition object
         """
         pattern = r"CALL Park_V7\s*\(\s*VAL\s+MODE:=([-+]?\d+)\s*,\s*POSX:=([-+]?\d+\.?\d*)\s*,\s*POSY:=([-+]?\d+\.?\d*)\s*\)"
 
         match = re.match(pattern, line.strip())
         if match:
-            return cls(mode=int(match.group(1)), pos_x=float(match.group(2)), pos_y=float(match.group(3)))
+            return cls(mode=ParkMode(int(match.group(1))), pos_x=float(match.group(2)), pos_y=float(match.group(3)))
         raise ValueError(f"Invalid Park_V7 line: {line}")
 
 

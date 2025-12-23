@@ -12,15 +12,69 @@ EasyHops is a Python library for parsing, manipulating, and generating HOPS mach
 
 ```
 easyhops/
-├── hop_core.py              # Fundamental HOP file components
+├── base_commands.py         # Abstract base classes for all HOPS commands
+├── hop_core.py              # Fundamental HOP file components and enums
 ├── hop_job.py               # Complete file parser and container
-├── machining_commands.py    # Operation types (milling, sawing, drilling)
+├── machining_commands.py    # Operation types (milling, sawing, drilling, moves)
 ├── tool_library.py          # Tool definitions and types
 ├── work_planes.py           # Work plane definitions
+├── utility_commands.py      # Utility commands (feedrate override, stops, etc.)
 ├── btlx_processes.py        # BTLx file processing
 ├── parse_btlx.py            # BTLx XML parsing
 ├── writehops.py             # Legacy HOP file generation
 └── merge_stock_hops.py      # Stock merging utilities
+```
+
+---
+
+## Command Architecture
+
+### Hierarchical Class Structure
+
+All HOPS commands inherit from a unified base class hierarchy that enables:
+- **Command chaining**: Add commands before/after other commands
+- **Fluent API**: Method chaining for common modifications
+- **Type safety**: Semantic grouping by command category
+- **No circular dependencies**: Clean module separation
+
+```
+HOPSCommand (abstract base)
+    │
+    ├── OperationCommand (abstract)
+    │   ├── MillingOperation
+    │   ├── SawingOperation
+    │   └── DrillingOperation
+    │
+    ├── MoveCommand (abstract)
+    │   ├── StartPoint
+    │   ├── G01
+    │   ├── G02M
+    │   ├── G03M
+    │   └── EndPoint
+    │
+    ├── WorkPlaneCommand (abstract)
+    │   ├── WorkPlane (enum-based)
+    │   └── FreePlane
+    │
+    ├── ToolCommand (abstract)
+    │   └── MachiningTool
+    │
+    └── UtilityCommand (abstract)
+        ├── FeedrateOverride
+        └── MachineStop
+```
+
+### Module Dependencies
+
+Clean dependency hierarchy with no circular imports:
+
+```
+base_commands.py
+     ↓ (imported by all)
+┌────┴────┬────────────┬─────────────┬──────────────┐
+│         │            │             │              │
+tool_   work_      utility_    machining_      hop_core.py
+library  planes     commands    commands
 ```
 
 ---
@@ -66,7 +120,139 @@ easyhops/
 
 ## Core Components
 
-### 1. hop_core.py - Fundamental Building Blocks
+### 0. base_commands.py - Abstract Base Classes
+
+The foundation for all HOPS commands, providing unified command manipulation interface.
+
+#### **HOPSCommand (Abstract)**
+Root base class for all HOPS commands with command chaining support.
+
+```python
+class HOPSCommand(ABC):
+    def __init__(self):
+        self._before_commands: List[HOPSCommand] = []
+        self._after_commands: List[HOPSCommand] = []
+    
+    @abstractmethod
+    def _to_hop_line(self) -> str:
+        """Generate the core HOPS command line."""
+        pass
+    
+    def add_before(self, command: HOPSCommand) -> HOPSCommand:
+        """Add a command to execute before this command."""
+        ...
+    
+    def add_after(self, command: HOPSCommand) -> HOPSCommand:
+        """Add a command to execute after this command."""
+        ...
+    
+    def __str__(self) -> str:
+        """Generate complete output including before/after commands."""
+        ...
+```
+
+**Usage**:
+```python
+# Chain commands together
+sp = StartPoint(0, 0, 0)
+sp.add_before(FeedrateOverride(3000))
+sp.add_before(MachineStop("Check setup"))
+
+# Output:
+# CALL _Tvorschub_v5(VAL VORSCHUB:=3000)
+# CALL MachineStop_V7(...)
+# SP(0,0,0,...)
+```
+
+#### **OperationCommand (Abstract)**
+Base for complete machining operations with operation-specific fluent API.
+
+**Fluent Methods**:
+- `.with_tool(tool)` - Add tool before operation
+- `.with_workplane(workplane)` - Add workplane before operation
+- `.with_feedrate(feedrate)` - Add feedrate override before operation
+- `.with_stop(message, **kwargs)` - Add machine stop before operation
+
+**Example**:
+```python
+from easyhops.tool_library import MachiningTool, ToolCallType
+from easyhops.work_planes import FreePlane
+
+tool = MachiningTool(ToolCallType.ROUTER, position=505, depth=3000, diameter=10)
+plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
+
+# Create operation with fluent API
+operation = SawingOperation(
+    sx=100, sy=200, sz=-50,
+    ex=300, ey=400, ez=-50
+).with_tool(tool).with_workplane(plane).with_feedrate(2000)
+
+# Output includes tool, plane, feedrate override, then operation
+print(str(operation))
+```
+
+#### **MoveCommand (Abstract)**
+Base for individual movements with move-specific fluent API.
+
+**Fluent Methods**:
+- `.with_feedrate(feedrate)` - Add feedrate override before move
+- `.with_stop(message, **kwargs)` - Add machine stop before move
+
+**Example**:
+```python
+# Create move with feedrate override
+g01 = G01(100, 100, 0).with_feedrate(4000).with_stop("Check alignment")
+
+# Output:
+# CALL _Tvorschub_v5(VAL VORSCHUB:=4000)
+# CALL MachineStop_V7(...)
+# G01(100,100,0,...)
+```
+
+#### **WorkPlaneCommand (Abstract)**
+Base for work plane definitions (EBENE, EBENEF).
+
+#### **ToolCommand (Abstract)**
+Base for tool definitions (WZF, WZS, WZB).
+
+#### **UtilityCommand (Abstract)**
+Base for utility/modifier commands that enhance other commands.
+
+---
+
+### 1. utility_commands.py - Command Modifiers
+
+#### **FeedrateOverride**
+Standalone feedrate override command.
+
+**Format**: `CALL _Tvorschub_v5(VAL VORSCHUB:={feedrate})`
+
+**Usage**:
+```python
+override = FeedrateOverride(3000)
+print(str(override))  # CALL _Tvorschub_v5(VAL VORSCHUB:=3000)
+```
+
+#### **MachineStop**
+Machine stop/pause command with optional message and park position.
+
+**Format**: `CALL MachineStop_V7 ( VAL MODE:={mode},PARKMODE:={park_mode},PARKPOSX:={park_pos_x:.3f},PARKPOSY:={park_pos_y},TYP:={typ},R6:={r6}, STR:='{message}',R7:={r7})`
+
+**Parameters**:
+- `message` - Optional message to display
+- `mode` - Stop mode (default: 2)
+- `park_mode` - Park mode (default: 0)
+- `park_pos_x`, `park_pos_y` - Park position coordinates
+- Additional machine-specific parameters
+
+**Example**:
+```python
+stop = MachineStop("Flip workpiece", park_pos_x=1500.0, park_pos_y=800.0)
+```
+
+---
+
+### 2. hop_core.py - Fundamental Building Blocks
 
 Contains the basic HOP file components that are independent of parsing logic.
 
@@ -113,7 +299,9 @@ Enum for Z-axis reference modes:
 
 ---
 
-### 2. tool_library.py - Tool Definitions
+### 3. tool_library.py - Tool Definitions
+
+All tool classes inherit from `ToolCommand` base class.
 
 #### **ToolCallType (Enum)**
 ```python
@@ -123,7 +311,7 @@ DRILL = "WZB"   # Drilling tool
 ```
 
 #### **MachiningTool**
-Represents tool call commands (WZF/WZS/WZB).
+Represents tool call commands (WZF/WZS/WZB). Inherits from `ToolCommand`.
 
 **Format**: `WZF(position,depth,diameter,processing_mode,direction,reference,comment)`
 
@@ -141,7 +329,9 @@ Represents tool call commands (WZF/WZS/WZB).
 
 ---
 
-### 3. work_planes.py - Work Plane Definitions
+### 4. work_planes.py - Work Plane Definitions
+
+All work plane classes inherit from `WorkPlaneCommand` base class.
 
 #### **WorkPlane (Enum)**
 Standard work planes mapped to face numbers:
@@ -173,9 +363,18 @@ Parametric free-view work plane with rotation.
 
 ---
 
-### 4. machining_commands.py - Operation Types
+### 5. machining_commands.py - Operation Types
 
-#### **Milling Operations**
+All operation and move classes inherit from their respective base classes.
+
+#### **Move Commands**
+
+All move commands inherit from `MoveCommand` and support fluent API:
+- `StartPoint` - Milling start point (SP)
+- `G01` - Linear interpolation move
+- `G02M` - Clockwise arc with center point
+- `G03M` - Counter-clockwise arc with center point
+- `EndPoint` - Milling end point (EP)
 
 **StartPoint (SP)**
 ```
@@ -183,51 +382,118 @@ SP(x,y,z,depth,ref_mode,direction,corr_side,approach,radius,...)
 ```
 
 **G01 (Linear Move)**
+Linear interpolation movement. Inherits from `MoveCommand`.
+
 ```
-G01(x,y,z,radius,feed_speed,...)
+G01(x,y,z,corner_radius,easy_snap_xy,easy_snap_z)
 ```
+
+**Fluent API Example**:
+```python
+# Add feedrate override to specific move
+g01 = G01(100, 100, -10, corner_radius=5).with_feedrate(4000)
+
+# Output:
+# CALL _Tvorschub_v5(VAL VORSCHUB:=4000)
+# G01(100,100,-10,5,0,2)
+
+# Chain multiple modifiers
+g01 = (G01(100, 100, -10)
+    .with_feedrate(4000)
+    .with_stop(mode=1, message="Check workpiece"))
+```
+
+**G02M / G03M (Arc Moves)**
+Clockwise (G02M) and counter-clockwise (G03M) arc movements with center point.
+Both inherit from `MoveCommand`.
 
 **EndPoint (EP)**
+Milling end point. Inherits from `MoveCommand`.
+
 ```
-EP(z,ref_mode,direction,exit_mode,radius,...)
+EP(lead_out_mode,lead_out_factor,reverse_direction)
 ```
 
-**MillingOperation**
-Combines SP + list of G01 moves + EP into a complete milling path.
+#### **Operation Commands**
+
+All operations inherit from `OperationCommand` and support fluent API.
+
+#### **MillingOperation**
+Composite operation combining SP + list of moves + EP into a complete milling path.
+Inherits from `OperationCommand` for unified interface and fluent API support.
 
 ```python
-MillingOperation(
-    start_point: StartPoint,
-    moves: List[G01],
-    end_point: EndPoint
+class MillingOperation(OperationCommand):
+    def __init__(
+        self,
+        start_point: StartPoint,
+        moves: List[Union[G01, G02M, G03M]],
+        end_point: EndPoint
+    ):
+        super().__init__()
+        self.start_point = start_point
+        self.moves = moves
+        self.end_point = end_point
+```
+
+**Fluent API Support**:
+```python
+from easyhops.tool_library import MachiningTool, ToolCallType
+from easyhops.work_planes import FreePlane
+
+# Create milling operation with fluent API
+tool = MachiningTool(ToolCallType.ROUTER, position=505, depth=3000, diameter=10)
+plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
+
+operation = MillingOperation(
+    start_point=StartPoint(0, 0, -10),
+    moves=[G01(100, 0, -10), G01(100, 100, -10)],
+    end_point=EndPoint()
+).with_tool(tool).with_workplane(plane).with_feedrate(3000)
+
+# Tool, workplane, and feedrate override are automatically added before the operation
+
+# Or add commands to individual moves
+operation = MillingOperation(
+    start_point=StartPoint(0, 0, -10).with_stop(mode=1),
+    moves=[
+        G01(100, 0, -10).with_feedrate(4000),
+        G01(100, 100, -10).with_feedrate(5000)
+    ],
+    end_point=EndPoint()
 )
 ```
 
-#### **Sawing Operations**
+#### **SawingOperation**
+Single sawing cut command. Inherits from `OperationCommand`.
 
-**SawingOperation**
-Single sawing cut command.
-
-**Format**: `SAEGEN(sx,sy,sz,ex,ey,ez,orientation,prep,kal,overcut,plunge,depth,ref,comment)`
+**Format**: `SAEGEN(sx,sy,sz,ex,ey,ez,radius_compensation,fit_in,lead_in_out,process_mode,tilt_angle,z_level,easy_snap_xy_start,easy_snap_xy_end,easy_snap_z,p16,p17)`
 
 **Attributes**:
 - `sx, sy, sz` - Start coordinates
 - `ex, ey, ez` - End coordinates
-- `orientation` - Cut orientation
-- `preparation` - Preparation mode
-- `kalibrierung` - Calibration setting
+- `radius_compensation` - Tool position relative to path
+- `fit_in` - Saw blade fitting mode
+- `tilt_angle` - C-axis tilt angle for beveled cuts
 - Other sawing-specific parameters
 
-#### **Drilling Operations**
+**Fluent API Example**:
+```python
+saw = SawingOperation(
+    sx=100, sy=200, sz=-50,
+    ex=300, ey=400, ez=-50,
+    tilt_angle=-7.5
+).with_tool(saw_tool).with_workplane(WorkPlane.TOP).with_feedrate(1500)
+```
 
-**DrillingOperation**
-Drilling command.
+#### **DrillingOperation**
+Drilling command. Inherits from `OperationCommand`.
 
-**Format**: `BOHRUNG(x,y,depth,diameter,tolerance,direction,ref,comment)`
+**Format**: `BOHRUNG(x,y,z,diameter,depth,drilling_flags,rotation,tilt,easy_snap_xy,easy_snap_z)`
 
 ---
 
-### 5. hop_job.py - Complete File Parser
+### 6. hop_job.py - Complete File Parser
 
 The main orchestrator that parses entire HOP files using a **two-phase approach**.
 
@@ -463,26 +729,68 @@ HOP File (text)
 
 ## Key Design Patterns
 
-### 1. **Dataclass Pattern**
+### 1. **Hierarchical Command Architecture**
+Two-level inheritance provides category-specific APIs while maintaining unified base.
+
+```
+HOPSCommand (root)
+    ↓
+Category Abstract Classes (OperationCommand, MoveCommand, etc.)
+    ↓
+Concrete Implementations
+```
+
+**Benefits**:
+- Category-specific fluent methods (`.with_tool()` only on operations)
+- Type safety and semantic grouping
+- Extensible without modifying base classes
+- No circular dependencies
+
+### 2. **Fluent API Pattern**
+Method chaining for intuitive command composition.
+
+```python
+operation = SawingOperation(...) \
+    .with_tool(tool) \
+    .with_workplane(plane) \
+    .with_feedrate(2000) \
+    .with_stop("Check alignment")
+```
+
+### 3. **Command Chaining Pattern**
+Generic `add_before()` and `add_after()` for arbitrary command composition.
+
+```python
+sp = StartPoint(0, 0, -10)
+sp.add_before(FeedrateOverride(3000))
+sp.add_before(MachineStop("Ready?"))
+# Outputs feedrate override, then stop, then start point
+```
+
+### 4. **Dataclass Pattern**
 Most classes use `@dataclass` for concise definitions and automatic `__init__`.
 
-### 2. **Factory Pattern**
+### 5. **Factory Pattern**
 Each class has a `from_hop_line(line: str)` class method for parsing.
 
 ```python
 tool = MachiningTool.from_hop_line("WZF(504,3000,4000,5000,_SD,_ANF,'Tool')")
 plane = WorkPlane.from_hop_line("EBENE0()")
+saw = SawingOperation.from_hop_line("SAEGEN(...)")
 ```
 
-### 3. **String Serialization**
-Each class implements `__str__()` to generate valid HOP commands.
+### 6. **Abstract Method Pattern**
+All command classes implement `_to_hop_line()` for serialization.
 
 ```python
-str(tool)   # → "WZF(504,3000,4000,5000,_SD,_ANF,'Tool')"
-str(plane)  # → "EBENE0()"
+class MyCommand(HOPSCommand):
+    def _to_hop_line(self) -> str:
+        return f"MYCMD({self.param1},{self.param2})"
 ```
 
-### 4. **Enum Pattern**
+The base `__str__()` method automatically combines `_before_commands`, `_to_hop_line()`, and `_after_commands`.
+
+### 7. **Enum Pattern**
 Enums for standardized values with string representations.
 
 ```python
@@ -490,7 +798,71 @@ ToolCallType.ROUTER  # → "WZF"
 WorkPlane.TOP        # → EBENE0
 ```
 
-### 5. **Two-Phase Parsing**
+### 8. **Two-Phase Parsing**
+Separate chunking from parsing for robustness and testability.
+
+---
+
+## Design Decisions
+
+### Why Two-Level Abstract Hierarchy?
+
+**Question**: Why not just one `HOPSCommand` base class with all methods?
+
+**Answer**: The two-level hierarchy provides:
+
+1. **Category-Specific APIs**:
+   - `OperationCommand.with_tool()`, `.with_workplane()` - Makes sense for operations
+   - `MoveCommand.with_feedrate()` - Makes sense for moves
+   - Not all commands need all methods
+
+2. **Type Safety**:
+   - Functions can accept `OperationCommand` → knows it's a complete operation
+   - Functions can accept `MoveCommand` → knows it's a single move
+   - Better than generic `HOPSCommand`
+
+3. **Semantic Grouping**:
+   - Clear categorization of command types
+   - Easy to understand what operations are available
+   - Natural extension point for new command categories
+
+4. **Future Extensibility**:
+   - Easy to add category-specific methods without polluting base class
+   - Can create new categories (e.g., `CommentCommand`, `VariableCommand`)
+
+**Trade-off**: Slightly more complex hierarchy vs. simpler flat structure with unnecessary methods on all classes.
+
+**Conclusion**: Two-level provides meaningful organization without significant complexity cost.
+
+### Why Separate base_commands.py Module?
+
+**Question**: Why not keep abstract classes in their respective modules?
+
+**Answer**: Circular dependency avoidance:
+
+**Before** (Circular Dependencies):
+```
+machining_commands.py → tool_library.py (for MachiningTool)
+tool_library.py → hop_core.py (for HOPSCommand)
+machining_commands.py → hop_core.py (for HOPSCommand)
+utility_commands.py ← machining_commands.py (runtime imports)
+```
+
+**After** (Clean Hierarchy):
+```
+base_commands.py (no dependencies)
+    ↓
+All modules import from base_commands.py
+No circular dependencies!
+```
+
+**Benefits**:
+- ✅ Modules can be imported in any order
+- ✅ No runtime imports in methods (only in base_commands fluent API)
+- ✅ Clear dependency direction
+- ✅ Easy to test and maintain
+
+### 9. **Two-Phase Parsing**
 Separate chunking from parsing for robustness and testability.
 
 ---

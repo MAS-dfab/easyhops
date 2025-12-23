@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from easyhops.hop_core import FinishedPart, ParkMode, VarsDefinition
+from easyhops.hop_core import FinishedPart, ParkMode, ParkPosition, VarsDefinition
 from easyhops.hop_job import HOPSJob, HOPSMachining, HOPParsingError, UnparsedLineError
 from easyhops.machining_commands import (
     DrillingOperation,
@@ -122,7 +122,7 @@ class TestParkModeParsing:
     def test_parse_park_mode(self):
         """Test parsing Park_V7 line."""
         line = "CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)"
-        park = ParkMode.from_hop_line(line)
+        park = ParkPosition.from_hop_line(line)
 
         assert park.mode == 11
         assert park.pos_x == pytest.approx(0.0)

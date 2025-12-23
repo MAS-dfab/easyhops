@@ -9,7 +9,7 @@ For parsing tests, see test_hop_job_parsing.py
 import tempfile
 from pathlib import Path
 
-from easyhops.hop_core import FinishedPart, ParkMode, VarsDefinition
+from easyhops.hop_core import FinishedPart, ParkMode, ParkPosition, VarsDefinition
 from easyhops.hop_job import HOPSJob, HOPSMachining
 from easyhops.machining_commands import (
     DrillingOperation,
@@ -122,10 +122,10 @@ class TestHOPSJob:
     """Tests for HOPSJob class object behavior."""
 
     def test_HOPSJob_init(self):
-        """Test HOPSJob initialization."""
+        \"\"\"Test HOPSJob initialization.\"\"\"
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         machinings = []
 
         job = HOPSJob(vars_def, finished_part, park_mode, machinings)
@@ -137,12 +137,12 @@ class TestHOPSJob:
         assert job.header is None
 
     def test_HOPSJob_init_with_header(self):
-        """Test HOPSJob initialization with header."""
+        \"\"\"Test HOPSJob initialization with header.\"\"\"
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         machinings = []
-        header = ["; Test header", "; Another comment"]
+        header = [\"; Test header\", \"; Another comment\"]
 
         job = HOPSJob(vars_def, finished_part, park_mode, machinings, header=header)
 
@@ -152,7 +152,7 @@ class TestHOPSJob:
         """Test HOPSJob __repr__."""
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         machinings = []
 
         job = HOPSJob(vars_def, finished_part, park_mode, machinings)
@@ -165,7 +165,7 @@ class TestHOPSJob:
         """Test HOPSJob __str__ with simple job."""
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         machinings = []
 
         job = HOPSJob(vars_def, finished_part, park_mode, machinings)
@@ -180,7 +180,7 @@ class TestHOPSJob:
         """Test HOPSJob __str__ includes header."""
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         header = ["; Test header", "; Comment line 2"]
 
         job = HOPSJob(vars_def, finished_part, park_mode, [], header=header)
@@ -194,7 +194,7 @@ class TestHOPSJob:
         """Test HOPSJob __str__ with machining operations."""
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
 
         # Create a milling operation
         tool = MachiningTool(tool_type=ToolCallType.ROUTER, position=1)
@@ -223,7 +223,7 @@ class TestHOPSJob:
         """Test HOPSJob.to_hop_file() writes to file."""
         vars_def = VarsDefinition(1000.0, 500.0, 50.0)
         finished_part = FinishedPart(1000.0, 500.0, 50.0)
-        park_mode = ParkMode(11, 0, 0)
+        park_mode = ParkPosition(ParkMode.AUTOMATIC, 0, 0)
         header = ["; Test file"]
 
         job = HOPSJob(vars_def, finished_part, park_mode, [], header=header)

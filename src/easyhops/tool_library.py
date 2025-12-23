@@ -7,6 +7,7 @@ from typing import Optional
 from typing import Union
 
 from . import DATA
+from .base_commands import ToolCommand
 
 
 class HopsSystemVars(StrEnum):
@@ -65,38 +66,7 @@ class ToolCallType(StrEnum):
     DRILLER = "WZB"  # TOOLD
 
 
-class FeedrateOverride:
-    """Represents a standalone feedrate override command.
-
-    Should be called before a machining command to set a specific feedrate that would override
-    the tool's default feedrate for the subsequent operation.
-
-    Parameters:
-    -----------
-    feedrate : float
-        Feedrate in mm/min
-
-    Example:
-        >>> override = FeedrateOverride(3500)
-        >>> str(override)
-        'CALL _Tvorschub_v5(VAL VORSCHUB:=3500)'
-    """
-
-    def __init__(self, feedrate: float):
-        self.feedrate = feedrate
-
-    def __str__(self):
-        return f"CALL _Tvorschub_v5(VAL VORSCHUB:={self.feedrate})"
-
-    @classmethod
-    def from_hop_line(cls, line: str) -> "FeedrateOverride":
-        match = re.match(r"CALL _Tvorschub_v5\(VAL VORSCHUB:=(\d+\.?\d*)\)", line.strip())
-        if match:
-            return cls(float(match.group(1)))
-        raise ValueError(f"Invalid feedrate override line: {line}")
-
-
-class MachiningTool:
+class MachiningTool(ToolCommand):
     """HOPS tool instance with parameters for generating machining commands.
 
     Represents a machining tool with configurable parameters like feedrates
@@ -155,6 +125,7 @@ class MachiningTool:
         head_id: str = "1",
         name: str = "",
     ):
+        super().__init__()
         self._tool_type = None
         self._position = None
         self._lead_in_feedrate = None
@@ -296,7 +267,7 @@ class MachiningTool:
             raise TypeError(f"name must be str, got {type(value).__name__}")
         self._name = value
 
-    def __str__(self) -> str:
+    def _to_hop_line(self) -> str:
         """Return HOPS tool command string."""
         cmd_prefix = self.tool_type.value
         lead_in_feedrate_str = str(int(self.lead_in_feedrate)) if self.lead_in_feedrate is not None else HopsSystemVars.LEAD_IN_FEEDRATE

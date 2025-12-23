@@ -37,6 +37,7 @@ def plane_with_snaps():
         tilt_angle=30,
         easy_snap_xy=EasySnapXY.BOTTOM_CENTER,
         easy_snap_z=EasySnapZ.BOTTOM_EDGE,
+        offset_z=1.0,
     )
 
 
@@ -81,6 +82,7 @@ def test_free_plane_creation_with_snap_modes(plane_with_snaps):
     """Test creating free plane with snap modes."""
     assert plane_with_snaps.easy_snap_xy == EasySnapXY.BOTTOM_CENTER
     assert plane_with_snaps.easy_snap_z == EasySnapZ.BOTTOM_EDGE
+    assert plane_with_snaps.offset_z == 1.0
 
 
 def test_free_plane_default_snap_modes():
@@ -89,20 +91,21 @@ def test_free_plane_default_snap_modes():
 
     assert plane.easy_snap_xy == EasySnapXY.DISABLED
     assert plane.easy_snap_z == EasySnapZ.RELATIVE
+    assert plane.offset_z == 0.0
 
 
 def test_free_plane_string_basic(basic_plane):
     """Test EBENEF command string generation."""
     result = str(basic_plane)
-    assert result == "EBENEF(100,50,0,45,0,0,2)"
+    assert result == "EBENEF(100,50,0,45,0,0,2,0)"
 
 
 def test_free_plane_string_with_snap_modes():
     """Test EBENEF string with snap modes."""
-    plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=30, easy_snap_xy=9, easy_snap_z=1)
+    plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=30, easy_snap_xy=9, easy_snap_z=1, offset_z=1.5)
 
     result = str(plane)
-    assert result == "EBENEF(100,50,0,45,30,9,1)"
+    assert result == "EBENEF(100,50,0,45,30,9,1,1.500)"
 
 
 def test_free_plane_string_negative_values():
@@ -134,7 +137,7 @@ def test_free_plane_zero_origin():
     plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0)
 
     result = str(plane)
-    assert result == "EBENEF(0,0,0,0,0,0,2)"
+    assert result == "EBENEF(0,0,0,0,0,0,2,0)"
 
 
 def test_free_plane_90_degree_rotation():
@@ -195,7 +198,7 @@ def test_number_formatting_integers_vs_floats():
     # Integer values - no decimals
     plane_int = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
     result_int = str(plane_int)
-    assert result_int == "EBENEF(100,50,0,45,0,0,2)"
+    assert result_int == "EBENEF(100,50,0,45,0,0,2,0)"
 
     # Float values - 3 decimals
     plane_float = FreePlane(x=100.5, y=50.25, z=0.125, rotation_angle=45.5, tilt_angle=0.1)
@@ -258,14 +261,14 @@ def test_free_plane_command_format():
     assert result.startswith("EBENEF(")
     # Should end with )
     assert result.endswith(")")
-    # Should contain 7 parameters separated by commas
+    # Should contain 8 parameters separated by commas
     params = result[7:-1].split(",")
-    assert len(params) == 7
+    assert len(params) == 8
 
 
 def test_free_plane_parameter_order():
     """Test parameter order in EBENEF command."""
-    plane = FreePlane(x=111, y=222, z=333, rotation_angle=444, tilt_angle=555, easy_snap_xy=6, easy_snap_z=2)
+    plane = FreePlane(x=111, y=222, z=333, rotation_angle=444, tilt_angle=555, easy_snap_xy=6, easy_snap_z=1, offset_z=2.5)
 
     result = str(plane)
     params = result[7:-1].split(",")
@@ -276,7 +279,8 @@ def test_free_plane_parameter_order():
     assert params[3] == "444"  # rotation_angle
     assert params[4] == "555"  # tilt_angle
     assert params[5] == "6"  # easy_snap_xy
-    assert params[6] == "2"  # easy_snap_z
+    assert params[6] == "1"  # easy_snap_z
+    assert params[7] == "2.500"  # offset_z
 
 
 def test_multiple_free_planes():
@@ -341,6 +345,12 @@ def test_type_validation_easy_snap_z_invalid():
         FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0, easy_snap_z="2")
 
 
+def test_type_validation_offset_z_invalid():
+    """Test that offset_z setter rejects invalid types."""
+    with pytest.raises(TypeError, match="offset_z must be a number"):
+        FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0, offset_z="2")
+
+
 def test_type_validation_accepts_int_for_coordinates():
     """Test that coordinate setters accept integers and convert to float."""
     plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
@@ -372,48 +382,60 @@ def test_type_validation_accepts_enum_values():
         tilt_angle=0,
         easy_snap_xy=EasySnapXY.TOP_LEFT,
         easy_snap_z=EasySnapZ.TOP_EDGE,
+        offset_z=1.0,
     )
 
     assert plane.easy_snap_xy == EasySnapXY.TOP_LEFT.value
     assert plane.easy_snap_z == EasySnapZ.TOP_EDGE.value
+    assert plane.offset_z == 1.0
 
 
 def test_type_validation_accepts_int_for_snap_modes():
     """Test that snap parameters accept raw integer values."""
-    plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0, easy_snap_xy=5, easy_snap_z=1)
+    plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0, easy_snap_xy=5, easy_snap_z=1, offset_z=1)
 
     assert plane.easy_snap_xy == 5
     assert plane.easy_snap_z == 1
+    assert plane.offset_z == 1.0
 
 
 def test_easy_snap_xy_range_validation():
     """Test that easy_snap_xy enforces valid range (0-9)."""
     # Valid values should work
     for i in range(10):
-        plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=i, easy_snap_z=0)
+        plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=i, easy_snap_z=0, offset_z=0)
         assert plane.easy_snap_xy == i
 
     # Invalid values should raise
     with pytest.raises(ValueError, match="easy_snap_xy must be between 0 and 9"):
-        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=10, easy_snap_z=0)
+        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=10, easy_snap_z=0, offset_z=0)
 
     with pytest.raises(ValueError, match="easy_snap_xy must be between 0 and 9"):
-        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=-1, easy_snap_z=0)
+        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=-1, easy_snap_z=0, offset_z=0)
 
 
 def test_easy_snap_z_range_validation():
     """Test that easy_snap_z enforces valid range (0-2)."""
     # Valid values should work
     for i in range(3):
-        plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=i)
+        plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=i, offset_z=0)
         assert plane.easy_snap_z == i
 
     # Invalid values should raise
     with pytest.raises(ValueError, match="easy_snap_z must be between 0 and 2"):
-        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=3)
+        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=3, offset_z=0)
 
     with pytest.raises(ValueError, match="easy_snap_z must be between 0 and 2"):
-        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=-1)
+        FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=-1, offset_z=0)
+
+
+def test_offset_z_accepts_any_float():
+    """Test that offset_z accepts any float value."""
+    # Valid values should work
+    test_values = [0.0, 1.5, -10.0, 100.5, -50.25]
+    for val in test_values:
+        plane = FreePlane(x=0, y=0, z=0, rotation_angle=0, tilt_angle=0, easy_snap_xy=0, easy_snap_z=0, offset_z=val)
+        assert plane.offset_z == val
 
 
 def test_easy_snap_property_setters_validate_range(basic_plane):
@@ -423,3 +445,7 @@ def test_easy_snap_property_setters_validate_range(basic_plane):
 
     with pytest.raises(ValueError, match="easy_snap_z must be between 0 and 2"):
         basic_plane.easy_snap_z = 10
+
+    # offset_z can be any float, no range validation needed
+    basic_plane.offset_z = 10.5
+    assert basic_plane.offset_z == 10.5

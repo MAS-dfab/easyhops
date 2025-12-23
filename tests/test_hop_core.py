@@ -6,6 +6,7 @@ from easyhops.hop_core import (
     EasySnapZ,
     FinishedPart,
     ParkMode,
+    ParkPosition,
     VarsDefinition,
 )
 
@@ -243,74 +244,74 @@ class TestParkMode:
 
     def test_park_mode_init_defaults(self):
         """Test ParkMode initialization with defaults."""
-        park = ParkMode()
-        assert park.mode == 11
+        park = ParkPosition()
+        assert park.mode == ParkMode.AUTOMATIC
         assert park.pos_x == 0
         assert park.pos_y == 0
 
     def test_park_mode_init_with_values(self):
         """Test ParkMode initialization with explicit values."""
-        park = ParkMode(mode=15, pos_x=100.5, pos_y=200.5)
-        assert park.mode == 15
+        park = ParkPosition(mode=ParkMode(2), pos_x=100.5, pos_y=200.5)
+        assert park.mode == ParkMode(2)
         assert park.pos_x == 100.5
         assert park.pos_y == 200.5
 
     def test_park_mode_str(self):
         """Test ParkMode.__str__() generates Park_V7 command."""
-        park = ParkMode(mode=11, pos_x=0, pos_y=0)
+        park = ParkPosition(mode=ParkMode(11), pos_x=0, pos_y=0)
         output = str(park)
         assert output == "CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)"
 
     def test_park_mode_str_with_values(self):
         """Test ParkMode.__str__() with non-default values."""
-        park = ParkMode(mode=15, pos_x=100.5, pos_y=200.5)
+        park = ParkPosition(mode=ParkMode(2), pos_x=100.5, pos_y=200.5)
         output = str(park)
-        assert "MODE:=15" in output
+        assert "MODE:=2" in output
         assert "POSX:=100.5" in output
         assert "POSY:=200.5" in output
 
     def test_park_mode_from_hop_line(self):
         """Test ParkMode.from_hop_line() parsing."""
         line = "CALL Park_V7 ( VAL MODE:=11,POSX:=0,POSY:=0)"
-        park = ParkMode.from_hop_line(line)
-        assert park.mode == 11
+        park = ParkPosition.from_hop_line(line)
+        assert park.mode == ParkMode(11)
         assert park.pos_x == pytest.approx(0)
         assert park.pos_y == pytest.approx(0)
 
     def test_park_mode_from_hop_line_with_values(self):
         """Test ParkMode.from_hop_line() with non-default values."""
-        line = "CALL Park_V7 ( VAL MODE:=15,POSX:=100.5,POSY:=200.5)"
-        park = ParkMode.from_hop_line(line)
-        assert park.mode == 15
+        line = "CALL Park_V7 ( VAL MODE:=2,POSX:=100.5,POSY:=200.5)"
+        park = ParkPosition.from_hop_line(line)
+        assert park.mode == ParkMode(2)
         assert park.pos_x == pytest.approx(100.5)
         assert park.pos_y == pytest.approx(200.5)
 
     def test_park_mode_from_hop_line_with_spaces(self):
         """Test ParkMode.from_hop_line() handles various spacing."""
         line = "CALL Park_V7 (  VAL  MODE:=11 , POSX:=0 , POSY:=0 )"
-        park = ParkMode.from_hop_line(line)
-        assert park.mode == 11
+        park = ParkPosition.from_hop_line(line)
+        assert park.mode == ParkMode(11)
         assert park.pos_x == pytest.approx(0)
         assert park.pos_y == pytest.approx(0)
 
     def test_park_mode_from_hop_line_negative_values(self):
         """Test ParkMode.from_hop_line() with negative positions."""
         line = "CALL Park_V7 ( VAL MODE:=11,POSX:=-50.5,POSY:=-100.5)"
-        park = ParkMode.from_hop_line(line)
-        assert park.mode == 11
+        park = ParkPosition.from_hop_line(line)
+        assert park.mode == ParkMode(11)
         assert park.pos_x == pytest.approx(-50.5)
         assert park.pos_y == pytest.approx(-100.5)
 
     def test_park_mode_from_hop_line_invalid(self):
         """Test ParkMode.from_hop_line() with invalid input."""
         with pytest.raises(ValueError, match="Invalid Park_V7 line"):
-            ParkMode.from_hop_line("INVALID(1,2,3)")
+            ParkPosition.from_hop_line("INVALID(1,2,3)")
 
     def test_park_mode_round_trip(self):
         """Test ParkMode round-trip conversion (to string and back)."""
-        park1 = ParkMode(mode=15, pos_x=100.5, pos_y=200.5)
+        park1 = ParkPosition(mode=ParkMode(2), pos_x=100.5, pos_y=200.5)
         line = str(park1)
-        park2 = ParkMode.from_hop_line(line)
+        park2 = ParkPosition.from_hop_line(line)
         assert park2.mode == park1.mode
         assert park2.pos_x == pytest.approx(park1.pos_x)
         assert park2.pos_y == pytest.approx(park1.pos_y)
