@@ -158,7 +158,7 @@ class VarsDefinition:
         self.dz = dz
 
     def __str__(self):
-        return f"VARS\n   DX := {self.dx}\n   DY := {self.dy}\n   DZ := {self.dz}\nSTART"
+        return f"VARS\n   DX := {self.dx};*VAR* Piece Length\n   DY := {self.dy};*VAR* Piece Height\n   DZ := {self.dz};*VAR* Piece Thickness\nSTART"
 
     @classmethod
     def from_hop_line(cls, line: List[str]) -> "VarsDefinition":
