@@ -4,7 +4,7 @@ This module provides a complete parser for HOP files, creating structured
 representations of all machining operations with their associated tools and work planes.
 """
 
-import warnings
+import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import List
@@ -12,6 +12,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from .generate_jlx import JLXGenerator
 from .hop_core import FinishedPart
 from .hop_core import ParkMode
 from .hop_core import ParkPosition
@@ -262,6 +263,70 @@ class HOPSJob:
         """
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(str(self))
+
+    def to_layout_file(
+        self,
+        filepath: str,
+        hop_path: str = "",
+        machine_id: str = "7235C_219",
+        placement: Tuple[float, float, float] = (0, 0, 0),
+    ):
+        """Generate JLX layout file from this HOP job.
+
+        Automatically extracts:
+        - Dimensions (DX, DY, DZ) from vars
+        - Bar positions (K1-K6) from custom variables (consoles)
+        - HOP filename derived from JLX filepath (e.g., "S0_R01.jlx" → "S0_R01.hop")
+
+        Parameters:
+        -----------
+        filepath : str
+            Path to write the JLX file (e.g., "S0_R01.jlx" or "output_layout.jlx")
+        hop_path : str, optional
+            Path to HOP file directory, default empty string
+        machine_id : str, optional
+            Machine identifier, default "7235C_219"
+        placement : Tuple[float, float, float], optional
+            Workpiece placement (X, Y, Z), default (0, 0, 0)
+
+        Raises:
+        -------
+        ValueError
+            If custom variables don't contain exactly 6 bar positions (K1-K6)
+
+        Example:
+        --------
+        >>> # Parse HOP file with K1-K6 custom variables
+        >>> job = HOPSJob.from_hop_file("S0_R01.hop")
+        >>> # Generate layout file - everything extracted automatically
+        >>> job.to_layout_file("S0_R01.jlx")
+        """
+
+        # Extract bar positions from custom variables (K1, K2, K3, K4, K5, K6)
+        bar_positions = []
+        for i in range(1, 7):  # K1 through K6
+            key = f"K{i}"
+            if key not in self.vars.custom_vars:
+                raise ValueError(f"Missing bar position variable '{key}' in custom variables. Expected K1-K6, found: {list(self.vars.custom_vars.keys())}")
+            bar_positions.append(self.vars.custom_vars[key]["value"])
+
+        # Derive HOP filename from JLX filepath
+        hop_filename = os.path.basename(filepath).replace(".jlx", ".hop")
+
+        # Create JLX generator
+        generator = JLXGenerator(machine_id=machine_id)
+
+        # Add workpiece with extracted dimensions and bar positions
+        generator.add_workpiece(
+            hop_filename=hop_filename,
+            hop_path=hop_path,
+            bar_positions=bar_positions,
+            dimensions=(self.vars.dx, self.vars.dy, self.vars.dz),
+            placement=placement,
+        )
+
+        # Write JLX file
+        generator.write_jlx(filepath)
 
     @classmethod
     def from_hop_string(cls, hop_content: str, strict: bool = False) -> "HOPSJob":
