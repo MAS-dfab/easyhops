@@ -33,9 +33,6 @@ from enum import IntEnum
 from typing import List
 from typing import Optional
 
-from .base_commands import HOPSCommand
-from .tool_library import ToolCallType
-
 
 class EasySnapZ(IntEnum):
     """Z reference mode for depth calculations.
@@ -150,15 +147,80 @@ class VarsDefinition:
         Piece height (DY)
     dz : float
         Piece thickness (DZ)
+    **kwargs : float or tuple
+        Additional custom variables (optional). Can be:
+        - Just a value: B1=6000
+        - Tuple of (value, description): B1=(6000, "Beam width")
+
+    Example:
+    --------
+    >>> # Explicit method approach (recommended for clarity)
+    >>> vars_def = VarsDefinition(dx=1000, dy=60, dz=60)
+    >>> vars_def.add_variable("B1", 6000, "Beam width")
+    >>> vars_def.add_variable("K1", 500, "Offset parameter")
+    >>> # Or with chaining:
+    >>> vars_def = VarsDefinition(dx=1000, dy=60, dz=60).add_variable("B1", 6000, "Beam width").add_variable("K1", 500, "Offset parameter")
+    >>> # Convenient shorthand with **kwargs:
+    >>> vars_def = VarsDefinition(dx=1000, dy=60, dz=60, B1=(6000, "Beam width"), K1=500)  # Uses default description
     """
 
-    def __init__(self, dx: float, dy: float, dz: float):
+    def __init__(self, dx: float, dy: float, dz: float, **kwargs):
         self.dx = dx
         self.dy = dy
         self.dz = dz
+        # Parse kwargs to handle (value, description) tuples
+        self.custom_vars = {}
+        for key, val in kwargs.items():
+            if isinstance(val, tuple) and len(val) == 2:
+                # (value, description) tuple
+                self.custom_vars[key] = {"value": val[0], "desc": val[1]}
+            else:
+                # Just a value, use default description
+                self.custom_vars[key] = {"value": val, "desc": "Custom Variable"}
 
     def __str__(self):
-        return f"VARS\n   DX := {self.dx};*VAR* Piece Length\n   DY := {self.dy};*VAR* Piece Height\n   DZ := {self.dz};*VAR* Piece Thickness\nSTART"
+        lines = ["VARS"]
+        lines.append(f"   DX := {self.dx};*VAR* Piece Length")
+        lines.append(f"   DY := {self.dy};*VAR* Piece Height")
+        lines.append(f"   DZ := {self.dz};*VAR* Piece Thickness")
+
+        # Add custom variables in sorted order for consistency
+        for key in sorted(self.custom_vars.keys()):
+            var_data = self.custom_vars[key]
+            lines.append(f"   {key} := {var_data['value']};*VAR* {var_data['desc']}")
+
+        lines.append("START")
+        return "\n".join(lines)
+
+    def add_variable(self, name: str, value: int, description: str) -> "VarsDefinition":
+        """Add a custom variable with explicit name, value, and description.
+
+        This is the recommended way to add variables when you need clear documentation.
+
+        Parameters:
+        -----------
+        name : str
+            Variable name (e.g., "B1", "K1")
+        value : int
+            Variable value
+        description : str
+            Description for the variable (appears in HOPS comments)
+
+        Returns:
+        --------
+        VarsDefinition
+            Self, for method chaining
+
+        Example:
+        --------
+        >>> vars_def = VarsDefinition(dx=1000, dy=60, dz=60)
+        >>> vars_def.add_variable("B1", 6000, "Beam width")
+        >>> vars_def.add_variable("K1", 500, "Offset parameter")
+        >>> # Or chain the calls:
+        >>> vars_def = VarsDefinition(dx=1000, dy=60, dz=60).add_variable("B1", 6000, "Beam width").add_variable("K1", 500, "Offset parameter")
+        """
+        self.custom_vars[name] = {"value": int(value), "desc": description}
+        return self
 
     @classmethod
     def from_hop_line(cls, line: List[str]) -> "VarsDefinition":
@@ -175,6 +237,7 @@ class VarsDefinition:
             Parsed VarsDefinition object
         """
         dx = dy = dz = 0.0
+        custom_vars = {}
 
         for l in line:
             if "DX :=" in l:
@@ -189,8 +252,19 @@ class VarsDefinition:
                 match = re.search(r"DZ := ([-+]?\d+\.?\d*)", l)
                 if match:
                     dz = float(match.group(1))
+            else:
+                # Try to parse custom variables with optional description
+                # Format: "   B1 := 6000;*VAR* Beam width"
+                match = re.search(r"([A-Z]\w*) := ([-+]?\d+\.?\d*)(?:;\*VAR\*\s*(.*))?", l)
+                if match:
+                    var_name = match.group(1)
+                    var_value = float(match.group(2))
+                    var_desc = match.group(3).strip() if match.group(3) else "Custom Variable"
+                    # Exclude DX, DY, DZ if they appear again
+                    if var_name not in ["DX", "DY", "DZ"]:
+                        custom_vars[var_name] = (var_value, var_desc)
 
-        return cls(dx=dx, dy=dy, dz=dz)
+        return cls(dx=dx, dy=dy, dz=dz, **custom_vars)
 
 
 class FinishedPart:
