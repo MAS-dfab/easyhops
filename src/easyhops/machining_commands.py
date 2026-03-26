@@ -707,6 +707,65 @@ class MillingOperation(OperationCommand):
         lines.append(str(self.end_point))
         return lines
 
+    @classmethod
+    def from_polyline(
+        cls,
+        points: List[tuple],
+        radius_compensation: Optional[CompensationMode] = CompensationMode.CENTER,
+        lead_in_mode: Optional[LeadInOutMode] = LeadInOutMode.NONE,
+        lead_in_factor: Optional[float] = None,
+        lead_out_mode: Optional[LeadInOutMode] = LeadInOutMode.NONE,
+        lead_out_factor: Optional[float] = None,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+    ) -> "MillingOperation":
+        """Create a MillingOperation from a sequence of (x, y, z) points.
+
+        The first point becomes the StartPoint (SP), each subsequent point
+        becomes a G01 linear move, and the operation is closed with an
+        EndPoint (EP).
+
+        Parameters:
+        -----------
+        points : List[tuple]
+            Sequence of (x, y, z) coordinate tuples. Must contain at least
+            two points. Coordinates are in the active work-plane frame.
+        radius_compensation : CompensationMode
+            Tool offset mode applied at the StartPoint. Defaults to CENTER.
+        lead_in_mode : LeadInOutMode
+            Lead-in strategy for the StartPoint. Defaults to NONE.
+        lead_in_factor : Optional[float]
+            Lead-in factor. None serializes as _ANF (tool-manager default).
+        lead_out_mode : LeadInOutMode
+            Lead-out strategy for the EndPoint. Defaults to NONE.
+        lead_out_factor : Optional[float]
+            Lead-out factor. None serializes as _ANF (tool-manager default).
+        easy_snap_z : EasySnapZ
+            Z-axis reference mode applied to every move command. Defaults to RELATIVE.
+
+        Returns:
+        --------
+        MillingOperation
+        """
+        if len(points) < 2:
+            raise ValueError("from_polyline requires at least 2 points (start + one move).")
+
+        x0, y0, z0 = points[0]
+        start = StartPoint(
+            x=x0,
+            y=y0,
+            z=z0,
+            radius_compensation=radius_compensation,
+            lead_in_mode=lead_in_mode,
+            lead_in_factor=lead_in_factor,
+            easy_snap_z=easy_snap_z,
+        )
+
+        moves = [G01(x=x, y=y, z=z, easy_snap_z=easy_snap_z) for x, y, z in points[1:]]
+
+        end = EndPoint(lead_out_mode=lead_out_mode, lead_out_factor=lead_out_factor)
+
+        return cls(start_point=start, moves=moves, end_point=end)
+
 
 class SawingOperation(OperationCommand):
     """Represents a saw cutting operation (SAEGEN).

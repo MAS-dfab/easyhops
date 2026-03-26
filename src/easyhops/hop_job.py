@@ -156,8 +156,6 @@ class HOPSMachining:
 
     def _milling_operation_with_feedrates(self, op_idx: int, operation: MillingOperation) -> List[str]:
         """Generate lines for a milling operation with feedrate overrides inserted at correct positions."""
-        from .machining_commands import MillingOperation
-
         # Build a map of command indices to feedrate overrides for this operation
         feedrate_map = {}
         for (o_idx, cmd_idx), override in self.feedrate_overrides:
