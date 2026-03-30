@@ -59,36 +59,39 @@ class EasySnapXY(IntEnum):
     -----------
     DISABLED : 0
         Disabled
-    BOTTOM_LEFT : 1
-        Bottom-left corner
-    BOTTOM_CENTER : 2
-        Bottom-center
-    BOTTOM_RIGHT : 3
-        Bottom-right corner
+    FRONT_LEFT : 1
+        Front-left corner
+    FRONT_CENTER : 2
+        Front-center
+    FRONT_RIGHT : 3
+        Front-right corner
     CENTER_RIGHT : 4
         Right-center
-    TOP_RIGHT : 5
-        Top-right corner
-    TOP_CENTER : 6
-        Top-center
-    TOP_LEFT : 7
-        Top-left corner
+    REAR_RIGHT : 5
+        Rear-right corner
+    REAR_CENTER : 6
+        Rear-center
+    REAR_LEFT : 7
+        Rear-left corner
     CENTER_LEFT : 8
         Left-center
-    CENTER : 9
-        Center position
+    WORKPIECE_CENTER : 9
+        Center position'
+    RELATIVE : 10
+        Relative/incremental (maintain current XY position)
     """
 
     DISABLED = 0  # Disabled
-    BOTTOM_LEFT = 1  # Bottom-left corner
-    BOTTOM_CENTER = 2  # Bottom-center
-    BOTTOM_RIGHT = 3  # Bottom-right corner
+    FRONT_LEFT = 1  # Front-left corner
+    FRONT_CENTER = 2  # Front-center
+    FRONT_RIGHT = 3  # Front-right corner
     CENTER_RIGHT = 4  # Right-center
-    TOP_RIGHT = 5  # Top-right corner
-    TOP_CENTER = 6  # Top-center
-    TOP_LEFT = 7  # Top-left corner
+    REAR_RIGHT = 5  # Rear-right corner
+    REAR_CENTER = 6  # Rear-center
+    REAR_LEFT = 7  # Rear-left corner
     CENTER_LEFT = 8  # Left-center
-    CENTER = 9  # Center position
+    WORKPIECE_CENTER = 9  # Center position
+    RELATIVE = 10  # Relative/incremental (maintain current XY position)
 
 
 class ParkMode(IntEnum):
