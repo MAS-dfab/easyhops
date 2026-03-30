@@ -13,6 +13,8 @@ from typing import Tuple
 from typing import Union
 
 from .generate_jlx import JLXGenerator
+from .hop_core import EasySnapXY
+from .hop_core import EasySnapZ
 from .hop_core import FinishedPart
 from .hop_core import ParkMode
 from .hop_core import ParkPosition
@@ -447,6 +449,55 @@ class HOPSJob:
             lines = f.readlines()
 
         return cls.from_hop_string("".join(lines), strict=strict)
+
+    @classmethod
+    def from_timber_element(cls, element, tool: MachiningTool) -> "HOPSJob":
+        """Create a HOPSJob from a TimberModel element.
+
+        This method extracts machining information from the given TimberModel element,
+        including its reference planes and associated machining operations, and constructs
+        a HOPSJob with appropriate VarsDefinition, FinishedPart, ParkMode, and HOPSMachining instances.
+
+        Parameters:
+        -----------
+        element : TimberElement
+            The TimberModel element containing machining information
+        tool : MachiningTool
+            The tool to assign to all generated machining operations
+
+        Returns:
+        --------
+        HOPSJob
+            A HOPSJob instance representing the machining operations for the given element
+
+        Example:
+        --------
+        >>> job = HOPSJob.from_timber_element(timber_element, tool)
+        >>> print(f"Generated HOPSMachining for {len(job.machinings)} operations")
+        """
+        vars = VarsDefinition(dx=element.blank_length, dy=element.width, dz=element.height)
+        finished_part = FinishedPart(dx=element.blank_length, dy=element.width, dz=element.height)
+        park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
+        machinings = []
+
+        for processing in element.features:
+            print(f"Processing feature with type '{processing.name}' and ref_side_index {processing.ref_side_index}")
+            if processing.name == "FreeContour":
+                # get contour polyline
+                contour_polyline = processing.contour_param_object.polyline
+                milling_operation = MillingOperation.from_polyline(contour_polyline)
+                # get working plane
+                if processing.ref_side_index >= 100:
+                    ref_frame = element.get_user_ref_plane(processing.ref_side_index)
+                else:
+                    ref_frame = element.ref_sides[processing.ref_side_index]
+
+                ref_frame_local = ref_frame.transformed(element.transformation_to_local())
+                work_plane = FreePlane.from_frame(ref_frame_local, easy_snap_xy=EasySnapXY.CENTER_LEFT, easy_snap_z=EasySnapZ.BOTTOM_EDGE)
+
+                machinings.append(HOPSMachining(tool=tool, work_plane=work_plane, operations=[milling_operation]))
+
+        return cls(vars=vars, finished_part=finished_part, park_mode=park_mode, machinings=machinings)
 
     @staticmethod
     def _extract_header_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
