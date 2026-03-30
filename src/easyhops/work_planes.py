@@ -1,10 +1,13 @@
+import math
 import re
 from enum import StrEnum
 from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Vector
-from compas.geometry import angle_vectors_projected
+from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_signed
+from compas.tolerance import TOL
 
 from .base_commands import WorkPlaneCommand
 from .hop_core import EasySnapXY
@@ -195,6 +198,8 @@ class FreePlane(WorkPlaneCommand):
     def rotation_angle(self, value: float):
         if not isinstance(value, (int, float)):
             raise TypeError(f"rotation_angle must be a number, got {type(value).__name__}")
+        if not (-180 <= value <= 180):
+            raise ValueError(f"rotation_angle must be between -180 and 180 degrees, got {value}")
         self._rotation_angle = float(value)
 
     @property
@@ -206,6 +211,8 @@ class FreePlane(WorkPlaneCommand):
     def tilt_angle(self, value: float):
         if not isinstance(value, (int, float)):
             raise TypeError(f"tilt_angle must be a number, got {type(value).__name__}")
+        if not (0 <= value <= 180):
+            raise ValueError(f"tilt_angle must be between 0 and 180 degrees, got {value}")
         self._tilt_angle = float(value)
 
     @property
@@ -290,28 +297,113 @@ class FreePlane(WorkPlaneCommand):
         """Return detailed string representation for debugging."""
         return f"FreePlane(x={self.x}, y={self.y}, z={self.z}, tilt={self.tilt_angle}°, rotation={self.rotation_angle}°, easy_snap_xy={self.easy_snap_xy}, easy_snap_z={self.easy_snap_z}, offset_z={self.offset_z})"  # noqa: E501
 
+    @staticmethod
+    def _wrap_to_pi(angle: float) -> float:
+        """Normalize angle (in radians) to [0, π] range.
+
+        This helper ensures tilt angles fall within HOPS-required [0, 180°] range.
+        Algorithm ported from btlx_processes.py wrap_to_pi() function.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in radians.
+
+        Returns
+        -------
+        float
+            Normalized angle in [0, π] radians.
+        """
+        # First normalize to [-π, π]
+        angle = (angle + math.pi) % (2 * math.pi) - math.pi
+        # Then map to [0, 2π]
+        if angle < 0:
+            angle += 2 * math.pi
+        # Finally ensure [0, π]
+        if angle > math.pi:
+            angle = 2 * math.pi - angle
+        return angle
+
     @classmethod
-    def from_frame(cls, frame: Frame) -> "FreePlane":
-        """Create FreePlane from a frame dictionary.
+    def from_frame(cls, frame: Frame, easy_snap_xy=EasySnapXY.DISABLED, easy_snap_z=EasySnapZ.RELATIVE, offset_z=0.0) -> "FreePlane":
+        """Create FreePlane from a COMPAS Frame.
+
+        Derives EBENEF rotation and tilt angles from the frame's orientation.
+
+        The algorithm:
+        1. Selects hemisphere via angle_vectors(-zaxis, Z) > 99° test
+        2. Computes beta: rotation around Z-axis to align normal into XZ plane
+        3. Computes theta: signed angle from Z to normal around rotated X-axis
+        4. Wraps theta to [0, π] to guarantee tilt ∈ [0, 180°]
+        5. Maps beta → rotation_angle, theta → tilt_angle
 
         Parameters:
         ----------
         frame : :class:`~compas.geometry.Frame`
-            Frame defining origin and orientation.
+            Frame defining origin and orientation of the work plane.
+        easy_snap_xy : :class:`EasySnapXY`, optional
+            XY snap mode. Defaults to ``EasySnapXY.DISABLED``.
+        easy_snap_z : :class:`EasySnapZ`, optional
+            Z snap mode. Defaults to ``EasySnapZ.RELATIVE``.
+        offset_z : float, optional
+            Z-axis offset. Defaults to 0.0.
 
         Returns:
         --------
         :class:`FreePlane`
-            The constructed FreePlane object.
+            The constructed FreePlane object with correct HOPS angles.
         """
-        rotation_angle = angle_vectors_projected(Vector.Xaxis(), frame.xaxis, Vector.Zaxis(), deg=True)
-        tilt_angle = angle_vectors_projected(frame.yaxis, Vector.Yaxis(), frame.xaxis, deg=True)
+        if not isinstance(frame, Frame):
+            raise TypeError(f"Input must be a compas.geometry.Frame instance, got {type(frame).__name__}")
+
+        print(frame)
+        # Step 1: Hemisphere selection
+        # If angle between -zaxis and world Z > 90°, use +zaxis
+        # Otherwise use -zaxis
+        angle_rad = angle_vectors(-frame.zaxis, Vector(0, 0, 1))
+        condition = TOL.is_positive(angle_rad - (math.pi / 2))
+        if condition:
+            target_normal = frame.zaxis
+        else:
+            target_normal = -frame.zaxis
+
+        # Step 2: Beta - rotation around Z-axis (azimuth)
+        # Align target_normal into XZ plane via atan2
+        beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
+        # Normalize beta to [-π, π] range
+        beta = (beta + math.pi) % (2 * math.pi) - math.pi
+
+        # Step 3: Create temporary frame and rotate by beta
+        work_frame = Frame(frame.point, [1, 0, 0], [0, 1, 0])
+        work_frame.rotate(beta, work_frame.zaxis, work_frame.point)
+
+        # Step 4: Theta - tilt from Z-axis (inclination)
+        # Signed angle from world Z to target_normal around rotated X-axis
+        theta = angle_vectors_signed([0, 0, 1], target_normal, work_frame.xaxis)
+
+        # Step 5: Wrap theta to [0, π] based on hemisphere
+        if condition:
+            theta = cls._wrap_to_pi(theta)
+        else:
+            theta = cls._wrap_to_pi(-theta)
+
+        work_frame.rotate(theta, work_frame.xaxis, work_frame.point)
+        print(work_frame)
+
+        # Convert radians to degrees and assign to HOPS parameters
+        # Geometric mapping: beta (Z-rotation) → rotation_angle, theta (X-rotation) → tilt_angle
+        rotation_angle = math.degrees(beta)
+        tilt_angle = math.degrees(theta)
+
         return cls(
             x=frame.point.x,
             y=frame.point.y,
             z=frame.point.z,
             rotation_angle=rotation_angle,
             tilt_angle=tilt_angle,
+            easy_snap_xy=easy_snap_xy,
+            easy_snap_z=easy_snap_z,
+            offset_z=offset_z,
         )
 
     @classmethod
