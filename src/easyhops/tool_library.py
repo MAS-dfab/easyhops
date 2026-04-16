@@ -1,6 +1,6 @@
 import configparser
 import re
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Dict
 from typing import Optional
@@ -8,46 +8,10 @@ from typing import Union
 
 from . import DATA
 from .base_commands import ToolCommand
+from .hop_core import HopsSystemVars
 
 
-class HopsSystemVars(StrEnum):
-    """HOPS global system variables for tool parameters.
-
-    These macro variables reference the CNC machine's configured default values.
-    When used in HOPS commands, the machine substitutes them with current values
-    from the tool manager during program execution.
-
-    Parameters:
-    -----------
-    FEEDRATE : str
-        Current feed rate from tool manager ("_V")
-    LEAD_OUT_FEEDRATE : str
-        Current lead out feed rate from tool manager ("_VA")
-    LEAD_IN_FEEDRATE : str
-        Current lead in feed rate from tool manager ("_VE")
-    MOTOR_SPEED : str
-        Current motor speed from tool manager ("_SD")
-    LEAD_IN_OUT_FACTOR : str
-        Current tool lead in and lead out factor from tool manager ("_ANF")
-    TOOL_DIAMETER : str
-        Current tool diameter from tool manager ("_WZD")
-    TOOL_RADIUS : str
-        Current tool radius from tool manager ("_WZR")
-    SAW_WIDTH : str
-        Current saw blade width from tool manager ("_SBB")
-    """
-
-    LEAD_IN_FEEDRATE = "_VE"  # Current lead in feed rate (tool manager)
-    FEEDRATE = "_V"  # Current feed rate (tool manager)
-    LEAD_OUT_FEEDRATE = "_VA"  # Current lead out feed rate (tool manager)
-    MOTOR_SPEED = "_SD"  # Current motor speed (tool manager)
-    LEAD_IN_OUT_FACTOR = "_ANF"  # Current tool lead in/out factor (tool manager)
-    TOOL_DIAMETER = "_WZD"  # Current tool diameter (tool manager)
-    TOOL_RADIUS = "_WZR"  # Current tool radius (tool manager)
-    SAW_WIDTH = "_SBB"  # Current saw blade width (tool manager)
-
-
-class ToolCallType(StrEnum):
+class ToolCallType(str, Enum):
     """Tool holder types for HOPS commands.
 
     Parameters:
