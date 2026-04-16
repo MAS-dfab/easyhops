@@ -4,9 +4,12 @@ This module provides a complete parser for HOP files, creating structured
 representations of all machining operations with their associated tools and work planes.
 """
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -22,15 +25,25 @@ from .hop_core import VarsDefinition
 from .machining_commands import G01
 from .machining_commands import G02M
 from .machining_commands import G03M
+from .machining_commands import CompensationMode
 from .machining_commands import DrillingOperation
 from .machining_commands import EndPoint
+from .machining_commands import LeadInOutMode
 from .machining_commands import MillingOperation
+from .machining_commands import SawingLengthAngleOperation
 from .machining_commands import SawingOperation
 from .machining_commands import StartPoint
+from .tool_library import CastorD61
 from .tool_library import MachiningTool
+from .tool_library import SaegeD350
 from .utility_commands import FeedrateOverride
 from .work_planes import FreePlane
 from .work_planes import WorkPlane
+
+if TYPE_CHECKING:
+    from compas_timber.fabrication import BirdsMouth
+    from compas_timber.fabrication import DoubleCut
+    from compas_timber.fabrication import JackRafterCut
 
 
 class HOPParsingError(Exception):
@@ -128,6 +141,17 @@ class HOPSMachining:
         op_count = len(self.operations)
         return f"Machining(tool={self.tool.tool_type.value}@{self.tool.position}, plane={self.work_plane}, ops={op_count}x{type(self.operations[0]).__name__ if self.operations else 'None'})"  # noqa: E501
 
+    @property
+    def OPERATION_TYPE(self) -> str:
+        """Return the operation type of this machining block.
+
+        HOPSMachining groups operations that should share the same type.
+        Sorting uses this value to prioritize sawing before milling before drilling.
+        """
+        if not self.operations:
+            return "UNKNOWN"
+        return getattr(self.operations[0], "OPERATION_TYPE", "UNKNOWN")
+
     def __str__(self) -> str:
         """Generate HOPS commands for this machining.
 
@@ -186,6 +210,218 @@ class HOPSMachining:
         lines.append(str(operation.end_point))
 
         return lines
+
+    @classmethod
+    def from_double_cut_milling(cls, double_cut: DoubleCut, tool: Optional[MachiningTool] = None, first_cut: bool = True) -> "HOPSMachining":
+        """Create a HOPSMachining instance for a milling operation derived from a DoubleCut processing.
+
+        This method is a convenience constructor that takes the geometric information from a DoubleCut processing,
+        creates the corresponding FreePlane and MillingOperation, and returns a HOPSMachining instance with the provided tool and optional feedrate overrides.
+
+        Parameters:
+        -----------
+        tool : MachiningTool
+            The machining tool to use for this operation
+        work_plane : FreePlane
+            The work plane derived from the DoubleCut processing
+        first_cut : bool
+            In case of 90 degree cuts, determines whether this is the first cut (True) or second cut (False) to set the correct rotation angle and compensation mode
+
+        Returns:
+        --------
+        HOPSMachining
+            A HOPSMachining instance representing this milling operation on the given tool and work plane
+        """
+        # Define the tool (default to Castor D61 if not provided)
+        tool = tool or CastorD61()  # Default to Castor D61 if no tool provided
+
+        # Extract necessary information from the DoubleCut processing to define the FreePlane and MillingOperation
+        if double_cut.ref_side_index == 1:
+            easy_snap_xy = EasySnapXY.REAR_LEFT
+            rotation_angle = -double_cut.angle_2 if double_cut.orientation == "start" else double_cut.angle_2
+            radius_compensation = CompensationMode.LEFT if double_cut.orientation == "start" else CompensationMode.RIGHT
+        elif double_cut.ref_side_index == 3:
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            rotation_angle = 180 + double_cut.angle_2 if double_cut.orientation == "start" else 180 - double_cut.angle_2
+            radius_compensation = CompensationMode.RIGHT if double_cut.orientation == "start" else CompensationMode.LEFT
+        else:
+            raise NotImplementedError(f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut processing. Expected 1 or 3.")
+
+        # if ref_side_index == 1:
+        work_plane = FreePlane(
+            x=double_cut.start_x,
+            y=double_cut.start_y,
+            z=0.0,
+            rotation_angle=rotation_angle,
+            tilt_angle=double_cut.inclination_2,
+            easy_snap_xy=easy_snap_xy,
+            easy_snap_z=EasySnapZ.RELATIVE,
+            offset_z=0.0,
+        )
+
+        # The milling operation for a double cut is a simple linear move from start to end point, with no lead in/out
+        milling_operation = MillingOperation(
+            start_point=StartPoint(radius_compensation=radius_compensation, lead_in_mode=LeadInOutMode.LINEAR),
+            moves=[G01(x=0.0, y="-_RZ", z=0.0)],
+            end_point=EndPoint(lead_out_mode=LeadInOutMode.LINEAR),
+        )
+
+        return cls(tool=tool, work_plane=work_plane, operations=[milling_operation], comments=["; ###### DoubleCut ######"])
+
+    @classmethod
+    def from_birdsmouth_milling(cls, birdsmouth: BirdsMouth, tool: Optional[MachiningTool] = None) -> "HOPSMachining":
+        """Create a HOPSMachining instance for a milling operation derived from a BirdsMouth processing.
+
+        This method is a convenience constructor that takes the geometric information from a BirdsMouth processing,
+        creates the corresponding FreePlane and MillingOperation, and returns a HOPSMachining instance with the provided tool and optional feedrate overrides.
+
+        Parameters:
+        -----------
+        tool : MachiningTool
+            The machining tool to use for this operation
+        work_plane : FreePlane
+            The work plane derived from the BirdsMouth processing
+        milling_operation : MillingOperation
+            The milling operation derived from the BirdsMouth processing
+        feedrate_overrides : Optional[List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]]
+            Optional list of feedrate overrides to apply to this operation
+
+        Returns:
+        --------
+        HOPSMachining
+            A HOPSMachining instance representing this milling operation on the given tool and work plane
+        """
+        # Define the tool (default to Castor D61 if not provided)
+        tool = tool or CastorD61()  # Default to Castor D61 if no tool provided
+
+        if birdsmouth.ref_side_index == 0:
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            rotation_angle = -birdsmouth.inclination1 if birdsmouth.orientation == "start" else birdsmouth.inclination1
+            radius_compensation = CompensationMode.LEFT if birdsmouth.orientation == "start" else CompensationMode.RIGHT
+        elif birdsmouth.ref_side_index == 2:
+            easy_snap_xy = EasySnapXY.REAR_LEFT
+            rotation_angle = 180 + birdsmouth.inclination1 if birdsmouth.orientation == "start" else 180 - birdsmouth.inclination1
+            radius_compensation = CompensationMode.RIGHT if birdsmouth.orientation == "start" else CompensationMode.LEFT
+        else:
+            raise NotImplementedError(f"Unsupported ref_side_index {birdsmouth.ref_side_index} for BirdsMouth processing. Expected 0 or 2.")
+
+        work_plane = FreePlane(
+            x=birdsmouth.start_x,
+            y=birdsmouth.start_depth,
+            z=birdsmouth.start_y,
+            rotation_angle=rotation_angle,
+            tilt_angle=birdsmouth.angle,
+            easy_snap_xy=easy_snap_xy,
+            easy_snap_z=EasySnapZ.RELATIVE,
+            offset_z=0.0,
+        )
+
+        # The milling operation for a double cut is a simple linear move from start to end point, with no lead in/out
+        milling_operation = MillingOperation(
+            start_point=StartPoint(radius_compensation=radius_compensation, lead_in_mode=LeadInOutMode.LINEAR),
+            moves=[G01(x=0.0, y="-_RZ", z=0.0)],
+            end_point=EndPoint(lead_out_mode=LeadInOutMode.LINEAR),
+        )
+
+        return cls(tool=tool, work_plane=work_plane, operations=[milling_operation], comments=["; ###### BirdsMouth ######"])
+
+    @classmethod
+    def from_jack_rafter_cut_sawing(cls, jack_rafter_cut: JackRafterCut) -> "HOPSMachining":
+        """Create a HOPSMachining instance for a sawing operation derived from a JackRafterCut processing.
+
+        This method is a convenience constructor that takes the geometric information from a JackRafterCut processing,
+        creates the corresponding WorkPlane and SawingOperation, and returns a HOPSMachining instance with the appropriate tool.
+
+        Parameters:
+        -----------
+        jack_rafter_cut : JackRafterCut
+            The JackRafterCut processing containing the geometric information for this sawing operation
+
+        Returns:
+        --------
+        HOPSMachining
+            A HOPSMachining instance representing this sawing operation on the given tool and work plane
+        """
+        # Define the tool (default to Saege D350 for sawing)
+        tool = SaegeD350()
+
+        # Define the work plane - for sawing operations the work plane is always the top plane (EBENE0)
+        work_plane = WorkPlane.TOP
+
+        # Define reference side index for JackRafterCut
+        ref_side_index = jack_rafter_cut.ref_side_index
+
+        # This would probably work with only this reference side, but we can add more cases if needed
+        if ref_side_index == 3:
+            sx = jack_rafter_cut.start_x
+            sy = jack_rafter_cut.start_y
+            sz = jack_rafter_cut.start_depth
+            angle = jack_rafter_cut.angle if jack_rafter_cut.orientation == "start" else 180 - jack_rafter_cut.angle
+            radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+
+            length = f"_RY/SIN({angle})"  # Calculate length based on the angle and the vertical depth (RY)
+            tilt_angle = jack_rafter_cut.inclination % 90
+        else:
+            raise NotImplementedError(f"Unsupported ref_side_index {ref_side_index} for JackRafterCut processing. Expected 3.")
+
+        sawing_operation = SawingLengthAngleOperation(
+            sx=sx,
+            sy=sy,
+            sz=sz,
+            length=length,
+            angle=angle,
+            radius_compensation=radius_compensation,
+            tilt_angle=tilt_angle,
+            easy_snap_xy=easy_snap_xy,
+            easy_snap_z=EasySnapZ.BOTTOM_SIDE,
+        )
+
+        return cls(tool=tool, work_plane=work_plane, operations=[sawing_operation], comments=["; ###### JackRafterCut ######"])
+
+    # @classmethod
+    # def from_jack_rafter_cut_sawing(cls, jack_rafter_cut: JackRafterCut):
+    #     # define the tool (default to Saege D350 for sawing)
+    #     tool = SaegeD350()
+
+    #     # define the work plane - free sawing operations the work plane is always the top plane (EBENE0)
+    #     work_plane = WorkPlane.TOP
+
+    #     # define reference side index for JackRafterCut
+    #     ref_side_index = jack_rafter_cut.ref_side_index
+
+    #     # This would probably work with only this reference side, but we can add more cases if needed
+    #     if ref_side_index == 3:
+    #         sx = jack_rafter_cut.start_x
+    #         sy = jack_rafter_cut.start_y
+    #         sz = jack_rafter_cut.start_depth
+
+    #         angle = jack_rafter_cut.angle
+    #         tilt_angle = jack_rafter_cut.inclination
+
+    #         ex = sx + abs(sx) / math.tan(angle)
+    #         ey = sy + abs(sx)
+    #         ez = sz
+
+    #         radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
+    #         easy_snap_xy_start = EasySnapXY.FRONT_LEFT
+
+    #     sawing_operation = SawingOperation(
+    #         sx=sx,
+    #         sy=sy,
+    #         sz=sz,
+    #         ex=ex,
+    #         ey=ey,
+    #         ez=ez,
+    #         radius_compensation=radius_compensation,
+    #         tilt_angle=tilt_angle,
+    #         z_level=-2.0,
+    #         easy_snap_xy_start=easy_snap_xy_start,
+    #         easy_snap_xy_end=EasySnapXY.RELATIVE,
+    #         easy_snap_z=EasySnapZ.BOTTOM_EDGE,
+    #     )
+
+    #     return cls(tool=tool, work_plane=work_plane, operations=[sawing_operation], comments=["; ###### JackRafterCut ######"])
 
 
 class HOPSJob:
@@ -451,7 +687,7 @@ class HOPSJob:
         return cls.from_hop_string("".join(lines), strict=strict)
 
     @classmethod
-    def from_timber_element(cls, element, tool: MachiningTool) -> "HOPSJob":
+    def from_timber_element(cls, element) -> "HOPSJob":
         """Create a HOPSJob from a TimberModel element.
 
         This method extracts machining information from the given TimberModel element,
@@ -475,29 +711,45 @@ class HOPSJob:
         >>> job = HOPSJob.from_timber_element(timber_element, tool)
         >>> print(f"Generated HOPSMachining for {len(job.machinings)} operations")
         """
-        vars = VarsDefinition(dx=element.blank_length, dy=element.width, dz=element.height)
-        finished_part = FinishedPart(dx=element.blank_length, dy=element.width, dz=element.height)
+        vars = VarsDefinition(dx=element.blank_length, dy=element.height, dz=element.width)
+        finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
         park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
         machinings = []
 
         for processing in element.features:
-            print(f"Processing feature with type '{processing.name}' and ref_side_index {processing.ref_side_index}")
-            if processing.name == "FreeContour":
-                # get contour polyline
-                contour_polyline = processing.contour_param_object.polyline
-                milling_operation = MillingOperation.from_polyline(contour_polyline)
-                # get working plane
-                if processing.ref_side_index >= 100:
-                    ref_frame = element.get_user_ref_plane(processing.ref_side_index)
-                else:
-                    ref_frame = element.ref_sides[processing.ref_side_index]
+            print(f"Processing feature with type '{processing.PROCESSING_NAME}' and ref_side_index {processing.ref_side_index}")
+            if processing.PROCESSING_NAME == "DoubleCut":
+                machining = HOPSMachining.from_double_cut_milling(processing)
+                machinings.append(machining)
+            elif processing.PROCESSING_NAME == "BirdsMouth":
+                machining = HOPSMachining.from_birdsmouth_milling(processing)
+                machinings.append(machining)
+            elif processing.PROCESSING_NAME == "JackRafterCut":
+                machining = HOPSMachining.from_jack_rafter_cut_sawing(processing)
+                machinings.append(machining)
 
-                ref_frame_local = ref_frame.transformed(element.transformation_to_local())
-                work_plane = FreePlane.from_frame(ref_frame_local, easy_snap_xy=EasySnapXY.CENTER_LEFT, easy_snap_z=EasySnapZ.BOTTOM_EDGE)
+        sorted_machinings = cls._sort_machinings_based_on_operation(machinings)
 
-                machinings.append(HOPSMachining(tool=tool, work_plane=work_plane, operations=[milling_operation]))
+        return cls(vars=vars, finished_part=finished_part, park_mode=park_mode, machinings=sorted_machinings)
 
-        return cls(vars=vars, finished_part=finished_part, park_mode=park_mode, machinings=machinings)
+    @staticmethod
+    def _sort_machinings_based_on_operation(machinings: List[HOPSMachining]) -> List[HOPSMachining]:
+        """Sort machinings based on machining operation type.
+        The sorting order is:
+            1. Sawing operations (SAWING)
+            2. Milling operations (MILLING)
+            3. Drilling operations (DRILLING)
+        """
+        # ordering of machining types
+        machining_order = {
+            "SAWING": 0,
+            "MILLING": 1,
+            "DRILLING": 2,
+        }
+
+        # Sort the machinings using the defined key
+        sorted_machinings = sorted(machinings, key=lambda m: machining_order.get(getattr(m, "OPERATION_TYPE", "UNKNOWN"), 3))
+        return sorted_machinings
 
     @staticmethod
     def _extract_header_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
