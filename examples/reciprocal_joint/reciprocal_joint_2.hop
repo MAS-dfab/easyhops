@@ -1,0 +1,68 @@
+VARS
+   DX := 1574.9551358634587;*VAR* Piece Length
+   DY := 160.0;*VAR* Piece Height
+   DZ := 80.0;*VAR* Piece Thickness
+START
+
+FERTIGTEIL(1574.9551358634587,160.0,80.0,0,0,0.000,0.000,0.000,'',0,0,0)
+
+CALL Park_V7 ( VAL MODE:=8,POSX:=0,POSY:=0)
+
+; ###### JackRafterCut ######
+WZS(201,_VE,_V,_VA,_SD,_ANF,'1')
+WorkPlane.TOP
+CALL _saege_lae_wi_V7 ( VAL SX:=1455.440,SY:=0,SZ:=0,LAENGE:=_RY/SIN(67.32737258057232),SCHNITTWINKEL:=67.327,EZ:=-2,BL:=2,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=1,KW:=0,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1)
+
+; ###### JackRafterCut ######
+WZS(201,_VE,_V,_VA,_SD,_ANF,'1')
+WorkPlane.TOP
+CALL _saege_lae_wi_V7 ( VAL SX:=1500.000,SY:=0,SZ:=0,LAENGE:=_RY/SIN(90.0),SCHNITTWINKEL:=90,EZ:=-2,BL:=2,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=1,KW:=0,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1)
+
+; ###### BirdsMouth ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1223.026,20,0,90,114.137,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.LEFT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### BirdsMouth ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1276.621,20,0,90,114.137,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.LEFT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### BirdsMouth ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1330.217,20,0,90,114.137,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.LEFT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### BirdsMouth ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1383.812,20,0,90,114.137,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.LEFT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### BirdsMouth ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1437.407,20,0,90,114.137,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.LEFT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### DoubleCut ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1477.720,53.333,0,90,90,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.RIGHT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
+
+; ###### DoubleCut ######
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(1455.440,106.667,0,90,90,7,2,0)
+SP(0.0,0.0,0.0,CompensationMode.RIGHT,LeadInOutMode.LINEAR,HopsSystemVars.LEAD_IN_OUT_FACTOR,0.0,0.0,0.0,EasySnapXY.DISABLED,EasySnapZ.RELATIVE,ProcessMode.NO_CHANGE,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+G01(0.0,-_RZ,0.0,0,0,2)
+EP(1,_ANF,0)
