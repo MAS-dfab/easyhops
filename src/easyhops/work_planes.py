@@ -1,20 +1,25 @@
+from __future__ import annotations
+
 import math
 import re
-from enum import StrEnum
+from enum import Enum
+from typing import TYPE_CHECKING
 from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from .base_commands import WorkPlaneCommand
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
 
+if TYPE_CHECKING:
+    from compas_timber.fabrication import DoubleCut
 
-class WorkPlane(StrEnum):
+
+class WorkPlane(str, Enum):
     """Standard HOPS work plane type definitions.
 
     Parameters:
@@ -39,6 +44,9 @@ class WorkPlane(StrEnum):
     BACK = "EBENE3()"
     END = "EBENE4()"
     UNKNOWN = "UNKNOWN"
+
+    def __str__(self):
+        return self.value
 
     @classmethod
     def from_hop_line(cls, line: str) -> "WorkPlane":
@@ -102,12 +110,12 @@ class FreePlane(WorkPlaneCommand):
         Y-coordinate of the free view zero point (origin)
     z : float
         Z-coordinate of the free view zero point (origin)
-    rotation_angle : float
-        Rotation angle β1 in degrees (rotation around Z-axis)
-        Applied after tilting the view
     tilt_angle : float
         Tilt angle β2 in degrees (rotation around X-axis)
         Applied first in transformation sequence
+    rotation_angle : float
+        Rotation angle β1 in degrees (rotation around Z-axis)
+        Applied after tilting the view
     easy_snap_xy : Optional[EasySnapXY]
         Corner snap mode for XY movement. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
     easy_snap_z : Optional[EasySnapZ]
@@ -117,7 +125,7 @@ class FreePlane(WorkPlaneCommand):
 
     Example:
     --------
-        >>> plane = FreePlane(x=100, y=50, z=0, rotation_angle=45, tilt_angle=0)
+        >>> plane = FreePlane(x=100, y=50, z=0, tilt_angle=0, rotation_angle=45)
         >>> str(plane)
         'EBENEF(100,50,0,45,0)'
         >>> plane.easy_snap_xy = 10
@@ -131,8 +139,8 @@ class FreePlane(WorkPlaneCommand):
         x: float,
         y: float,
         z: float,
-        rotation_angle: float,
         tilt_angle: float,
+        rotation_angle: float,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
         offset_z: Optional[float] = 0.0,
@@ -141,8 +149,8 @@ class FreePlane(WorkPlaneCommand):
         self._x = None
         self._y = None
         self._z = None
-        self._rotation_angle = None
         self._tilt_angle = None
+        self._rotation_angle = None
         self._easy_snap_xy = None
         self._easy_snap_z = None
         self._offset_z = None
@@ -150,8 +158,8 @@ class FreePlane(WorkPlaneCommand):
         self.x = x
         self.y = y
         self.z = z
-        self.rotation_angle = rotation_angle
         self.tilt_angle = tilt_angle
+        self.rotation_angle = rotation_angle
         self.easy_snap_xy = easy_snap_xy
         self.easy_snap_z = easy_snap_z
         self.offset_z = offset_z
@@ -190,19 +198,6 @@ class FreePlane(WorkPlaneCommand):
         self._z = float(value)
 
     @property
-    def rotation_angle(self) -> float:
-        """Rotation angle β1 in degrees (rotation around Z-axis)."""
-        return self._rotation_angle
-
-    @rotation_angle.setter
-    def rotation_angle(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"rotation_angle must be a number, got {type(value).__name__}")
-        if not (-180 <= value <= 180):
-            raise ValueError(f"rotation_angle must be between -180 and 180 degrees, got {value}")
-        self._rotation_angle = float(value)
-
-    @property
     def tilt_angle(self) -> float:
         """Tilt angle β2 in degrees (rotation around X-axis)."""
         return self._tilt_angle
@@ -214,6 +209,17 @@ class FreePlane(WorkPlaneCommand):
         if not (0 <= value <= 180):
             raise ValueError(f"tilt_angle must be between 0 and 180 degrees, got {value}")
         self._tilt_angle = float(value)
+
+    @property
+    def rotation_angle(self) -> float:
+        """Rotation angle β1 in degrees (rotation around Z-axis)."""
+        return self._rotation_angle
+
+    @rotation_angle.setter
+    def rotation_angle(self, value: float):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"rotation_angle must be a number, got {type(value).__name__}")
+        self._rotation_angle = float(value)
 
     @property
     def easy_snap_xy(self) -> int:
@@ -285,8 +291,8 @@ class FreePlane(WorkPlaneCommand):
             self._format_number(self.x),
             self._format_number(self.y),
             self._format_number(self.z),
-            self._format_number(self.rotation_angle),
             self._format_number(self.tilt_angle),
+            self._format_number(self.rotation_angle),
             str(self.easy_snap_xy),
             str(self.easy_snap_z),
             self._format_number(self.offset_z),
@@ -331,11 +337,11 @@ class FreePlane(WorkPlaneCommand):
         Derives EBENEF rotation and tilt angles from the frame's orientation.
 
         The algorithm:
-        1. Selects hemisphere via angle_vectors(-zaxis, Z) > 99° test
-        2. Computes beta: rotation around Z-axis to align normal into XZ plane
-        3. Computes theta: signed angle from Z to normal around rotated X-axis
-        4. Wraps theta to [0, π] to guarantee tilt ∈ [0, 180°]
-        5. Maps beta → rotation_angle, theta → tilt_angle
+        1. Selects hemisphere and `factor` to determine the `target_normal`.
+        2. Computes `tilt_angle` directly from the angle between world Z and the `target_normal`.
+        3. Adjusts `tilt_angle` based on the `factor` from hemisphere selection.
+        4. Computes `rotation_angle` from the XY projection of the `target_normal`.
+        5. Applies a -90° offset to `rotation_angle` to match machine convention.
 
         Parameters:
         ----------
@@ -356,44 +362,40 @@ class FreePlane(WorkPlaneCommand):
         if not isinstance(frame, Frame):
             raise TypeError(f"Input must be a compas.geometry.Frame instance, got {type(frame).__name__}")
 
-        print(frame)
         # Step 1: Hemisphere selection
-        # If angle between -zaxis and world Z > 90°, use +zaxis
-        # Otherwise use -zaxis
+        # Determine the target_normal and a factor to track inversion.
         angle_rad = angle_vectors(-frame.zaxis, Vector(0, 0, 1))
-        condition = TOL.is_positive(angle_rad - (math.pi / 2))
-        if condition:
+        if TOL.is_positive(angle_rad - (math.pi / 2)):
             target_normal = frame.zaxis
+            factor = -1
         else:
             target_normal = -frame.zaxis
+            factor = 1
 
-        # Step 2: Beta - rotation around Z-axis (azimuth)
-        # Align target_normal into XZ plane via atan2
-        beta = math.atan2(target_normal.y, target_normal.x) + math.pi / 2
-        # Normalize beta to [-π, π] range
-        beta = (beta + math.pi) % (2 * math.pi) - math.pi
+        # Step 2: Calculate tilt_angle (inclination) directly
+        tilt_angle_rad = angle_vectors(Vector(0, 0, 1), target_normal)
+        tilt_angle = math.degrees(tilt_angle_rad)
 
-        # Step 3: Create temporary frame and rotate by beta
-        work_frame = Frame(frame.point, [1, 0, 0], [0, 1, 0])
-        work_frame.rotate(beta, work_frame.zaxis, work_frame.point)
+        # Step 3: Adjust tilt_angle based on hemisphere selection factor
+        if factor == -1:
+            tilt_angle = 180 - tilt_angle
 
-        # Step 4: Theta - tilt from Z-axis (inclination)
-        # Signed angle from world Z to target_normal around rotated X-axis
-        theta = angle_vectors_signed([0, 0, 1], target_normal, work_frame.xaxis)
-
-        # Step 5: Wrap theta to [0, π] based on hemisphere
-        if condition:
-            theta = cls._wrap_to_pi(theta)
+        # Step 4: Calculate rotation_angle (azimuth) directly
+        projection_xy = Vector(target_normal.x, target_normal.y, 0)
+        if TOL.is_zero(projection_xy.length):
+            rotation_angle = 0.0
         else:
-            theta = cls._wrap_to_pi(-theta)
+            rotation_angle_rad = math.atan2(projection_xy.y, projection_xy.x)
+            rotation_angle = math.degrees(rotation_angle_rad)
 
-        work_frame.rotate(theta, work_frame.xaxis, work_frame.point)
-        print(work_frame)
+        # Step 5: Apply machine-specific convention offset and normalize
+        rotation_angle -= 90.0
+        rotation_angle = (rotation_angle + 180) % 360 - 180
 
-        # Convert radians to degrees and assign to HOPS parameters
-        # Geometric mapping: beta (Z-rotation) → rotation_angle, theta (X-rotation) → tilt_angle
-        rotation_angle = math.degrees(beta)
-        tilt_angle = math.degrees(theta)
+        test_plane = Frame(frame.point, frame.xaxis, frame.yaxis)
+        test_plane.rotate(math.radians(rotation_angle), axis=test_plane.zaxis, point=test_plane.point)
+        test_plane.rotate(math.radians(tilt_angle), axis=test_plane.xaxis, point=test_plane.point)
+        print(test_plane)
 
         return cls(
             x=frame.point.x,
