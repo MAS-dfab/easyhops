@@ -71,6 +71,9 @@ class HopsSystemVars(str, Enum):
     TOOL_RADIUS = "_WZR"  # Current tool radius (tool manager)
     SAW_WIDTH = "_SBB"  # Current saw blade width (tool manager)
 
+    def __str__(self):
+        return self.value
+
 
 class EasySnapZ(IntEnum):
     """Z reference mode for depth calculations.
@@ -92,6 +95,9 @@ class EasySnapZ(IntEnum):
     TOP_SIDE = 2  # Reference from top side // SAEGEN
     CENTER = 1  # Reference from center // SAEGEN
     BOTTOM_SIDE = 0  # Reference from bottom side // SAEGEN
+
+    def __str__(self):
+        return str(self.value)
 
 
 class EasySnapXY(IntEnum):
@@ -134,6 +140,9 @@ class EasySnapXY(IntEnum):
     CENTER_LEFT = 8  # Left-center
     WORKPIECE_CENTER = 9  # Center position
     RELATIVE = 10  # Relative/incremental (maintain current XY position)
+
+    def __str__(self):
+        return str(self.value)
 
 
 class ParkMode(IntEnum):
@@ -179,6 +188,9 @@ class ParkMode(IntEnum):
     MACHINE_CENTRE = 9
     MANUAL = 10
     AUTOMATIC = 11
+
+    def __str__(self):
+        return str(self.value)
 
 
 class VarsDefinition:

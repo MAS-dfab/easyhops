@@ -29,6 +29,9 @@ class ToolCallType(str, Enum):
     SAW = "WZS"  # TOOLS
     DRILLER = "WZB"  # TOOLD
 
+    def __str__(self):
+        return self.value
+
 
 class MachiningTool(ToolCommand):
     """HOPS tool instance with parameters for generating machining commands.
