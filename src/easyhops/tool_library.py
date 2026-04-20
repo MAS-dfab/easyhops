@@ -388,6 +388,13 @@ class BirdsmouthW41(MachiningTool):
     head_id : str
         Tool head identifier (default: '1')
 
+    Attributes:
+    -----------
+    max_depth : float
+        Maximum cutting depth in mm (default: 31.0)
+    diameter : float
+        Tool diameter in mm (default: 200.0)
+
     Example:
         >>> tool = BirdsmouthW41(lead_out_feedrate=4500)
         >>> str(tool)
@@ -418,6 +425,9 @@ class BirdsmouthW41(MachiningTool):
             head_id=head_id,
             name="Birdsmouth W41",
         )
+
+        self.max_depth = 31.0
+        self.diameter = 200.0
 
 
 class SaegeD350(MachiningTool):
@@ -490,6 +500,13 @@ class CastorD61(MachiningTool):
     head_id : str
         Tool head identifier (default: '1')
 
+    Attributes:
+    -----------
+    max_depth : float
+        Maximum cutting depth in mm (default: 130.0)
+    diameter : float
+        Tool diameter in mm (default: 61.092)
+
     Example:
         >>> tool = CastorD61()
         >>> str(tool)
@@ -520,6 +537,9 @@ class CastorD61(MachiningTool):
             head_id=head_id,
             name="Castor Ø61",
         )
+
+        self.max_depth = 130.0
+        self.diameter = 61.092
 
 
 class ToolLibrary:
