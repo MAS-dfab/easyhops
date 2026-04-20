@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
    <FileHistory>
-      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.14.1" ComputerName="PAPACHAP" UserName="kapso" FileName="None" Date="2026-04-16" Time="11:35:54" Comment=""/>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.14.1" ComputerName="PAPACHAP" UserName="kapso" FileName="delete_after.3dm" Date="2026-04-20" Time="16:17:03" Comment=""/>
    </FileHistory>
    <Project Name="COMPAS Timber Project">
       <Parts>
-         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1671.236" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="7099" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1671.236" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6cc4" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{709962f5-4acd-4ed6-8fcd-abd89cd1b3b3}">
+               <Transformation GUID="{6cc47537-4b9c-4041-8174-b09ca19a83a6}">
                   <Position>
                      <ReferencePoint X="-3112.213" Y="1941.246" Z="1184.037"/>
                      <XVector X="0.000" Y="-0.946" Z="-0.325"/>
@@ -43,6 +43,10 @@
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1608.767</StartX>
                   <StartY>40.000</StartY>
@@ -52,6 +56,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1573.096</StartX>
                   <StartY>80.000</StartY>
@@ -61,6 +69,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1537.424</StartX>
                   <StartY>120.000</StartY>
@@ -70,6 +82,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1501.752</StartX>
                   <StartY>160.000</StartY>
@@ -79,6 +95,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="33.79948778244095" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="201.39862366440525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>808.268</StartX>
                   <StartY>0.000</StartY>
@@ -101,6 +121,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="33.79948778244095" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="201.39862366440525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1012.483</StartX>
                   <StartY>0.000</StartY>
@@ -123,6 +147,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="33.79948778244095" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="201.39862366440525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1216.698</StartX>
                   <StartY>0.000</StartY>
@@ -151,9 +179,9 @@
                </IndexedFaceSet>
             </Shape>
          </Part>
-         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1602.108" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="0183" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1602.108" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="4cdb" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{0183cb33-37b9-4957-b128-3f643c260a57}">
+               <Transformation GUID="{4cdbf5a5-e1cb-4602-ba09-b21572c77eaf}">
                   <Position>
                      <ReferencePoint X="-3192.213" Y="0.000" Z="-0.000"/>
                      <XVector X="0.000" Y="0.788" Z="0.616"/>
@@ -165,6 +193,10 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="22.27988455804209" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="53.333333333333336" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>830.650</StartX>
                   <StartY>0.000</StartY>
@@ -187,6 +219,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="22.27988455804209" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="53.333333333333336" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>772.850</StartX>
                   <StartY>0.000</StartY>
@@ -209,6 +245,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="22.27988455804209" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="53.333333333333336" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>715.050</StartX>
                   <StartY>0.000</StartY>
@@ -255,6 +295,10 @@
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="33.79948778244095" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="201.39862366440525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1306.973</StartX>
                   <StartY>66.667</StartY>
@@ -264,6 +308,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="33.79948778244095" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="201.39862366440525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1113.946</StartX>
                   <StartY>133.333</StartY>
@@ -279,9 +327,9 @@
                </IndexedFaceSet>
             </Shape>
          </Part>
-         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1574.955" Height="160.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="b9e2" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1574.955" Height="160.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="89cf" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{b9e2f569-8f44-45d1-b28b-9b5f8dc02977}">
+               <Transformation GUID="{89cf72c4-8d08-4da2-8838-e1b6a41b6cd6}">
                   <Position>
                      <ReferencePoint X="-3192.213" Y="-815.867" Z="1294.533"/>
                      <XVector X="0.000" Y="0.872" Z="-0.490"/>
@@ -293,6 +341,10 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1223.026</StartX>
                   <StartY>0.000</StartY>
@@ -315,6 +367,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1276.621</StartX>
                   <StartY>0.000</StartY>
@@ -337,6 +393,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1330.217</StartX>
                   <StartY>0.000</StartY>
@@ -359,6 +419,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1383.812</StartX>
                   <StartY>0.000</StartY>
@@ -381,6 +445,10 @@
                   <RafterNailHole>no</RafterNailHole>
                </BirdsMouth>
                <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="21.916097136103488" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="48.909591141647525" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1437.407</StartX>
                   <StartY>0.000</StartY>
@@ -419,6 +487,10 @@
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="22.27988455804209" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="53.333333333333336" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1477.720</StartX>
                   <StartY>53.333</StartY>
@@ -428,6 +500,10 @@
                   <Inclination2>90.000</Inclination2>
                </DoubleCut>
                <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="22.27988455804209" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="53.333333333333336" Type="string"/>
+                  </UserAttributes>
                   <Orientation>end</Orientation>
                   <StartX>1455.440</StartX>
                   <StartY>106.667</StartY>
