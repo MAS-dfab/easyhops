@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+   <FileHistory>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.14.1" ComputerName="PAPACHAP" UserName="kapso" FileName="t2-prototype.3dm" Date="2026-04-27" Time="10:06:17" Comment=""/>
+   </FileHistory>
+   <Project Name="COMPAS Timber Project">
+      <Parts>
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2026.687" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="a197" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{a19788ea-c6bf-4073-b804-b5e079b2d393}">
+                  <Position>
+                     <ReferencePoint X="1069.264" Y="-2357.600" Z="2821.959"/>
+                     <XVector X="0.393" Y="0.900" Z="0.187"/>
+                     <YVector X="-0.075" Y="-0.171" Z="0.982"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>0.418</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>75.169</Angle>
+                  <Inclination>90.289</Inclination>
+               </JackRafterCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>128.947</StartX>
+                  <StartY>135.449</StartY>
+                  <Angle1>22.207</Angle1>
+                  <Inclination1>76.639</Inclination1>
+                  <Angle2>100.765</Angle2>
+                  <Inclination2>129.870</Inclination2>
+               </DoubleCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 0 3 7 -1 8 9 10 11 2 1 -1 6 8 1 0 -1 7 3 2 11 -1 10 4 7 11 -1 10 4 5 9 -1 5 6 8 9 -1 ">
+                  <Coordinate point="2026.687 0.000 80.000 2026.687 0.000 0.000 2026.687 200.000 0.000 2026.687 200.000 80.000 33.284 124.126 80.000 69.451 109.362 80.000 48.659 0.000 80.000 53.374 200.000 80.000 116.675 0.000 0.000 128.947 64.551 0.000 28.003 105.759 0.000 52.956 200.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2026.695" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="c8e9" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{c8e93c51-0622-4b75-b8e2-85db45478275}">
+                  <Position>
+                     <ReferencePoint X="1142.987" Y="-2388.857" Z="2821.927"/>
+                     <XVector X="-0.369" Y="-0.871" Z="0.324"/>
+                     <YVector X="0.126" Y="0.298" Z="0.946"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>75.170</Angle>
+                  <Inclination>89.700</Inclination>
+               </JackRafterCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>153.854</StartX>
+                  <StartY>91.390</StartY>
+                  <Angle1>7.317</Angle1>
+                  <Inclination1>103.243</Inclination1>
+                  <Angle2>108.896</Angle2>
+                  <Inclination2>130.461</Inclination2>
+               </DoubleCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 0 3 7 -1 8 9 10 11 2 1 -1 6 8 1 0 -1 7 3 2 11 -1 10 4 7 11 -1 10 4 5 9 -1 5 6 8 9 -1 ">
+                  <Coordinate point="2026.695 0.000 80.000 2026.695 0.000 0.000 2026.695 200.000 0.000 2026.695 200.000 80.000 28.010 105.788 80.000 78.548 99.299 80.000 44.558 0.000 80.000 52.956 200.000 80.000 116.677 0.000 0.000 153.854 108.610 0.000 33.290 124.092 0.000 53.389 200.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+      </Parts>
+   </Project>
+</BTLx>

@@ -1,66 +1,74 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=8.9.20.5[Hops.exe]
+;BILD=RECIPROCAL_JOINT_1.WMF
+;INFO=reciprocal_joint_1
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HH7
+;NCNAME=
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
 VARS
-   DX := 1671.236491869183;*VAR* Piece Length
-   DY := 200.0;*VAR* Piece Height
-   DZ := 80.0;*VAR* Piece Thickness
+   DX := 1671.236491869183;*VAR*Piece Length
+   DY := 200.0;*VAR*Piece Height
+   DZ := 80.0;*VAR*Piece Thickness
 START
-
 FERTIGTEIL(1671.236491869183,200.0,80.0,0,0,0.000,0.000,0.000,'',0,0,0)
-
 CALL Park_V7 ( VAL MODE:=8,POSX:=0,POSY:=0)
-
 ; ###### JackRafterCut ######
 WZS(201,_VE,_V,_VA,_SD,_ANF,'1')
 EBENE0()
 CALL _saege_lae_wi_V7 ( VAL SX:=1492.878,SY:=0,SZ:=0,LAENGE:=_RY/SIN(48.273735419518005),SCHNITTWINKEL:=48.274,EZ:=-2,BL:=2,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=1,KW:=0,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1)
-
 ; ###### JackRafterCut ######
 WZS(201,_VE,_V,_VA,_SD,_ANF,'1')
 EBENE0()
 CALL _saege_lae_wi_V7 ( VAL SX:=1734.058,SY:=0,SZ:=0,LAENGE:=_RY/SIN(114.13686770975903),SCHNITTWINKEL:=114.137,EZ:=-2,BL:=2,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=1,KW:=0,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1)
-
 ; ###### JackRafterCut ######
 WZS(201,_VE,_V,_VA,_SD,_ANF,'1')
 EBENE0()
 CALL _saege_lae_wi_V7 ( VAL SX:=1466.081,SY:=0,SZ:=0,LAENGE:=_RY/SIN(24.13686770975903),SCHNITTWINKEL:=24.137,EZ:=-2,BL:=2,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=1,KW:=0,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1)
-
 ; ###### DoubleCut ######
 WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1608.767,40.000,0,90,24.137,7,2,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### DoubleCut ######
 WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1573.096,80.000,0,90,24.137,7,2,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### DoubleCut ######
 WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1537.424,120.000,0,90,24.137,7,2,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### DoubleCut ######
 WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1501.752,160.000,0,90,24.137,7,2,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 1/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(808.268,33.333,0,90,350.473,1,2,16.900)
 SP(100.69931183220262,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
+SP (0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,0,0,0.0,0,0,0.0,0.5)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 2/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(808.268,33.333,0,90,350.473,1,2,0)
@@ -70,7 +78,6 @@ EP(1,1.0,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 1/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1012.483,33.333,0,90,350.473,1,2,16.900)
@@ -80,7 +87,6 @@ EP(1,1.0,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 2/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1012.483,33.333,0,90,350.473,1,2,0)
@@ -90,7 +96,6 @@ EP(1,1.0,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 1/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1216.698,33.333,0,90,350.473,1,2,16.900)
@@ -100,7 +105,6 @@ EP(1,1.0,0)
 SP(0.0,0.0,0.0,1,1,_ANF,0.0,0.0,0.0,0,2,0,0,0.0,0.0,0,0,1,0.0,0.0,0,0.0,0.0)
 G01(0.0,-_RZ,0.0,0,10,2)
 EP(1,1.0,0)
-
 ; ###### BirdsMouth (Pass 2/2) ######
 WZF(504,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1216.698,33.333,0,90,350.473,1,2,0)
