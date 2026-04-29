@@ -1,6 +1,10 @@
-;BILD=Beam _00.wmf
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=8.9.20.5[Hops.exe]
+;BILD=RECIPROCAL_JOINT_FLIP_0.WMF
 ;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - 27/04/2026-11:12:06
-;WZGV=7135C_116
+;WZGV=7235C_219
+;WZGVCONFIG=
 ;MASCHINE=HOLZHER
 ;NCNAME=Beam _00
 ;KOMMENTAR=
@@ -9,68 +13,42 @@
 ;DZ=0
 ;DIALOGDLL=Dialoge.Dll
 ;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
 ;AUTOSCRIPTSTART=1
 ;BUTTONBILD=
 ;DIMENSION_UNIT=0
 VARS
-   DX := 1998.684;*VAR* Piece Length
-   DY := 200;*VAR* Piece Height
-   DZ := 80;*VAR* Piece Thickness
+   DX := 1998.684;*VAR*Piece Length
+   DY := 200;*VAR*Piece Height
+   DZ := 80;*VAR*Piece Thickness
 START
-; Piece Definition
 FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
-; Definition of Park Mode
 CALL Park_V7 ( VAL MODE:=2,POSX:=0,POSY:=0)
 ; ---------------------------------
-; Beam _00,C_JackRafterCut
+;JackRafterCut
 ; ---------------------------------
-WZF(503,2000,2000,10000,_SD,_ANF,'1')
-; Work Plane Definition: Generic View
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(2066.349,-23.165,53.25,0.289,104.831,0,0)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(0,32.546,0,2,3,1.065,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(32.546,32.546,0,0,0,2)
 G01(239.546,32.546,0,0,0,2)
-CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
 G01(272.092,32.546,0,0,0,2)
-; ######## END MACH TYPE = 2
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(3,1.065,0)
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(272.092,32.546,-26.708,1,3,1.065,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(239.546,32.546,0,0,0,2)
 G01(32.546,32.546,0,0,0,2)
-CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
 G01(0,32.546,0,0,0,2)
-; ######## END MACH TYPE = 2
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(3,1.065,0)
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(0,32.546,-53.415,2,3,1.065,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(32.546,32.546,0,0,0,2)
 G01(239.546,32.546,0,0,0,2)
-CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
 G01(272.092,32.546,0,0,0,2)
-; ######## END MACH TYPE = 2
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(3,1.065,0)
 ; ---------------------------------
-; Beam _00,P_DoubleCut
+;DoubleCut_PocketMilling
 ; ---------------------------------
-WZF(503,2000,2000,10000,_SD,_ANF,'1')
-; Work Plane Definition: Generic View
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1983.999,-1.296,152.412,50.13,100.765,0,0)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(0,0,0,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(0,0,-61.009,0,0,2)
 G01(1.22,-4.849,0,0,0,2)
@@ -82,12 +60,7 @@ G01(-4.407,-93.111,0,0,0,2)
 G01(75.28,-93.111,0,0,0,2)
 G01(84.582,-122.569,0,0,0,2)
 G01(57.35,-122.569,0,0,0,2)
-; ######## END MACH TYPE = 3
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(0,_ANF,0)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(-19.474,19.271,-41.009,0,0,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(-19.474,19.271,-61.009,0,0,2)
 G01(-15.611,16.097,0,0,0,2)
@@ -103,24 +76,14 @@ G01(-5.009,-98.044,0,0,0,2)
 G01(76.838,-98.044,0,0,0,2)
 G01(84.582,-122.569,0,0,0,2)
 G01(2.388,-122.569,0,0,0,2)
-; ######## END MACH TYPE = 3
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(0,_ANF,0)
 ; ---------------------------------
-; Beam _00,C_DoubleCut
+;DoubleCut_CleanupContour
 ; ---------------------------------
-WZF(503,2000,2000,10000,_SD,_ANF,'1')
-; Work Plane Definition: Generic View
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
 EBENEF(1881.225,13.781,110.778,50.13,100.765,0,0)
-; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
-; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
-CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
 SP(31.036,9.799,0,2,3,1.065,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 G01(40.835,-21.237,0,0,0,2)
 G01(79.702,-144.337,0,0,0,2)
 G01(88.899,-173.465,0,0,0,2)
-; ######## END MACH TYPE = 4
-; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
 EP(3,1.065,0)
-CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
-EBENE0()
