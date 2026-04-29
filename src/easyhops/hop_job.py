@@ -214,9 +214,7 @@ class HOPSMachining:
         return lines
 
     @classmethod
-    def from_double_cut_milling(
-        cls, double_cut: DoubleCut, tool: Optional[MachiningTool] = None, first_cut: bool = True, engagement_ratio: float = 2 / 3
-    ) -> List["HOPSMachining"]:
+    def from_double_cut_milling(cls, double_cut: DoubleCut, tool: Optional[MachiningTool] = None, first_cut: bool = True, engagement_ratio: float = 0.5) -> List["HOPSMachining"]:
         """Create HOPSMachining instances for a milling operation derived from a DoubleCut processing.
 
         When the required riser depth exceeds the tool's max depth, multiple passes are generated,
@@ -287,7 +285,7 @@ class HOPSMachining:
             MillingOperation(
                 start_point=StartPoint(x=x_sign * x_step * (n_x_passes - 1 - j), radius_compensation=radius_compensation, lead_in_mode=LeadInOutMode.LINEAR),
                 moves=[G01(x=0.0, y="-_RZ", z=0.0, easy_snap_xy=EasySnapXY.RELATIVE)],
-                end_point=EndPoint(lead_out_mode=LeadInOutMode.LINEAR, lead_out_factor=1.0),
+                end_point=EndPoint(lead_out_mode=LeadInOutMode.NONE, lead_out_factor=1.0),
             )
             for j in range(n_x_passes)
         ]
@@ -313,7 +311,7 @@ class HOPSMachining:
 
     @classmethod
     def from_birdsmouth_milling(
-        cls, birdsmouth: BirdsMouth, tool: Optional[MachiningTool] = None, first_cut: bool = False, engagement_ratio: float = 2 / 3
+        cls, birdsmouth: BirdsMouth, tool: Optional[MachiningTool] = None, first_cut: bool = False, engagement_ratio: float = 0.5
     ) -> List["HOPSMachining"]:
         """Create HOPSMachining instances for a milling operation derived from a BirdsMouth processing.
 
@@ -377,7 +375,7 @@ class HOPSMachining:
             MillingOperation(
                 start_point=StartPoint(x=x_sign * x_step * (n_x_passes - 1 - j), radius_compensation=radius_compensation, lead_in_mode=LeadInOutMode.LINEAR),
                 moves=[G01(x=0.0, y="-_RZ", z=0.0, easy_snap_xy=EasySnapXY.RELATIVE)],
-                end_point=EndPoint(lead_out_mode=LeadInOutMode.LINEAR, lead_out_factor=1.0),
+                end_point=EndPoint(lead_out_mode=LeadInOutMode.NONE, lead_out_factor=1.0),
             )
             for j in range(n_x_passes)
         ]
@@ -451,6 +449,66 @@ class HOPSMachining:
         )
 
         return [cls(tool=tool, work_plane=work_plane, operations=[sawing_operation], comments=["; ###### JackRafterCut ######"])]
+
+    @classmethod
+    def from_jack_rafter_cut_milling(cls, jack_rafter_cut: JackRafterCut, tool: Optional[MachiningTool] = None) -> List["HOPSMachining"]:
+        """Create a HOPSMachining instance for a contour milling operation derived from a JackRafterCut processing.
+
+        Uses the same sx/angle derivation as from_jack_rafter_cut_sawing, but produces a FreePlane +
+        MillingOperation (SP/G01/EP) instead of a SAEGEN command. The tool traces the cut plane
+        edge-to-edge in the Y direction of the tilted plane (0 → -_RZ).
+
+        Parameters:
+        -----------
+        jack_rafter_cut : JackRafterCut
+            The JackRafterCut processing containing the geometric information for this milling operation
+        tool : Optional[MachiningTool]
+            The tool to use. Defaults to BirdsmouthW41 (WZF504).
+
+        Returns:
+        --------
+        List[HOPSMachining]
+            A single HOPSMachining instance representing this milling operation
+        """
+        if jack_rafter_cut.ref_side_index != 3:
+            raise NotImplementedError(f"Unsupported ref_side_index {jack_rafter_cut.ref_side_index} for JackRafterCut milling. Expected 3.")
+
+        tool = tool or BirdsmouthW41()
+
+        sx = jack_rafter_cut.start_x
+        sy = jack_rafter_cut.start_y
+        sz = jack_rafter_cut.start_depth
+        angle = jack_rafter_cut.angle if jack_rafter_cut.orientation == "start" else 180 - jack_rafter_cut.angle
+
+        # angle >=90: cut enters from rear-right → front-right; angle <90: rear-left → front-left
+        easy_snap_xy_sp = EasySnapXY.REAR_RIGHT if angle >= 90 else EasySnapXY.REAR_LEFT
+        easy_snap_xy_g01 = EasySnapXY.FRONT_RIGHT if angle >= 90 else EasySnapXY.FRONT_LEFT
+
+        work_plane = FreePlane(
+            x=sx,
+            y=sy,
+            z=sz,
+            tilt_angle=90,
+            rotation_angle=angle,
+            easy_snap_xy=EasySnapXY.FRONT_LEFT,
+            easy_snap_z=EasySnapZ.RELATIVE,
+            offset_z=0.0,
+        )
+
+        milling_operation = MillingOperation(
+            start_point=StartPoint(
+                radius_compensation=CompensationMode.CENTER,
+                lead_in_mode=LeadInOutMode.LINEAR,
+                easy_snap_xy=easy_snap_xy_sp,
+                easy_snap_z=EasySnapZ.TOP_EDGE,
+                start_correction_above=False,
+                distance_to_view=0.5,
+            ),
+            moves=[G01(x=0.0, y=0.0, z=0.0, easy_snap_xy=easy_snap_xy_g01)],
+            end_point=EndPoint(),
+        )
+
+        return [cls(tool=tool, work_plane=work_plane, operations=[milling_operation], comments=["; ###### JackRafterCut ######"])]
 
 
 class HOPSJob:
@@ -747,6 +805,8 @@ class HOPSJob:
 
         for processing in element.features:
             if processing.PROCESSING_NAME == "DoubleCut":
+                if processing.user_attributes == {}:
+                    continue  # Skip if necessary attributes are missing
                 tool = CastorD61() if processing.user_attributes["tread_length"] <= CastorD61().diameter else BirdsmouthW41()
                 machinings.extend(HOPSMachining.from_double_cut_milling(processing, tool=tool))
             elif processing.PROCESSING_NAME == "BirdsMouth":
