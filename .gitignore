@@ -24,6 +24,10 @@ wheels/
 *.egg
 MANIFEST
 
+# Vendor CNC macro library — local copy only, not committed (DiREKT CNC Systeme IP)
+# Source: C:\Campus_V8\Data\Hops\HOPMacros\
+data/HOPmacros/
+
 # Virtual environments
 venv/
 env/
