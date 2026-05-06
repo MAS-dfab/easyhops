@@ -10,9 +10,13 @@ from typing import Union
 
 from .base_commands import MoveCommand
 from .base_commands import OperationCommand
+from .contour_commands import CloseContour
+from .contour_commands import ContourLine
+from .contour_commands import ContourStart
 from .hop_core import EasySnapXY
 from .hop_core import EasySnapZ
 from .hop_core import HopsSystemVars
+from .hop_macros import FreeFormPocket
 
 if TYPE_CHECKING:
     from compas_timber.fabrication import JackRafterCut
@@ -1680,3 +1684,304 @@ class DrillingOperation(OperationCommand):
 
         diameter_str = fmt(self.diameter) if self.diameter is not None else "_WZD"
         return f"BOHRUNG({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"  # noqa: E501
+
+
+class OpenPocketOperation(OperationCommand):
+    """Represents one pass of an open pocket roughing operation (EbeneF + CALL OpenPocket).
+
+    Each pass serializes as two lines::
+
+        EbeneF ({sx:.3f},0,{z_expr},0,{rotation_angle:.3f},{snap_xy},2,0)
+        CALL OpenPocket ( VAL ECKE:={corner},DIM_X:={length},DIM_Y:={width},...)
+
+    Parameters:
+    -----------
+    sx : float
+        X origin of the free work plane for this pass
+    rotation_angle : float
+        Rotation angle in degrees for the EbeneF plane (and OpenPocket formula basis)
+    z_expr : str
+        HOPS expression for this pass Z depth, e.g. ``"_RZ*1/3"``
+    corner : int
+        ECKE — pocket reference corner/edge position (0-8, see CNC dialog)
+    length : Union[float, str]
+        DIM_X (L1) — pocket length, may be a HOPS formula string e.g. ``"_RY/SIN(63.41)"``
+    width : Union[float, str]
+        DIM_Y (L2) — pocket width, may be a HOPS formula string e.g. ``"ABS(_RY*SIN(90-63.41))"``
+    radius : float
+        RAD — corner radius of the pocket
+    pos_x : float
+        POSX — tool approach position X offset
+    pos_y : float
+        POSY — tool approach position Y offset
+    easy_snap_x : int
+        ESX — easy snap mode for X
+    easy_snap_y : int
+        ESY — easy snap mode for Y
+    direction : int
+        ANGLE_SWITCH — milling direction: 0 = horizontal, 1 = vertical
+    dist : float
+        DIST — additional offset distance
+    overlap : int
+        UEBERLAPPUNG — path overlap percentage (e.g. 67 = 67%)
+    roughing : int
+        SCHRUP — roughing mode flag (1 = roughing pass)
+    depth : float
+        TIEFE — absolute pocket depth override (0 = use plane depth)
+    count : int
+        ANZAHL — number of depth passes (0 = auto)
+    max_z : float
+        MAXZ — maximum Z depth limit
+    easy_snap_md : int
+        ESMD — easy snap mode for depth direction
+    direct : int
+        DIRECT — direct approach flag
+    finish_mill : int
+        MILL_FIN — finishing mill pass flag
+    finish_mill_smooth : int
+        MILL_FIN_GL — finishing mill smooth mode
+    finish_mill_dist : float
+        MILL_FIN_DIST — finishing mill offset distance
+    finish_mill_depth : float
+        MILL_FIN_DEPTH — finishing mill depth
+    finish_mill_count : int
+        MILL_FIN_COUNT — finishing mill pass count
+    finish_mill_max_z : float
+        MILL_FIN_MAXZ — finishing mill max Z
+    finish_easy_snap_md : int
+        MILL_ESMD — finishing mill easy snap mode for depth
+    laser_path : int
+        MILL_LASER — laser path flag (1 = also use as laser path)
+    """
+
+    OPERATION_TYPE = "ROUGHING"
+    _MACRO_NAME = "OpenPocket"
+
+    def __init__(
+        self,
+        sx: float,
+        rotation_angle: float,
+        z_expr: str,
+        corner: int = 0,
+        length: Union[float, str] = 0.0,
+        width: Union[float, str] = 0.0,
+        radius: float = 0.0,
+        pos_x: float = 400.0,
+        pos_y: float = 300.0,
+        easy_snap_x: int = 0,
+        easy_snap_y: int = 0,
+        direction: int = 0,
+        dist: float = 0.0,
+        overlap: int = 67,
+        roughing: int = 1,
+        depth: float = 0.0,
+        count: int = 0,
+        max_z: float = 0.0,
+        easy_snap_md: int = 0,
+        direct: int = 0,
+        finish_mill: int = 0,
+        finish_mill_smooth: int = 0,
+        finish_mill_dist: float = 0.0,
+        finish_mill_depth: float = 0.0,
+        finish_mill_count: int = 0,
+        finish_mill_max_z: float = 0.0,
+        finish_easy_snap_md: int = 0,
+        laser_path: int = 0,
+    ):
+        super().__init__()
+        self.sx = sx
+        self.rotation_angle = rotation_angle
+        self.z_expr = z_expr
+        self.corner = corner
+        self.length = length
+        self.width = width
+        self.radius = radius
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.easy_snap_x = easy_snap_x
+        self.easy_snap_y = easy_snap_y
+        self.direction = direction
+        self.dist = dist
+        self.overlap = overlap
+        self.roughing = roughing
+        self.depth = depth
+        self.count = count
+        self.max_z = max_z
+        self.easy_snap_md = easy_snap_md
+        self.direct = direct
+        self.finish_mill = finish_mill
+        self.finish_mill_smooth = finish_mill_smooth
+        self.finish_mill_dist = finish_mill_dist
+        self.finish_mill_depth = finish_mill_depth
+        self.finish_mill_count = finish_mill_count
+        self.finish_mill_max_z = finish_mill_max_z
+        self.finish_easy_snap_md = finish_easy_snap_md
+        self.laser_path = laser_path
+
+    def __repr__(self) -> str:
+        return f"OpenPocketOperation(sx={self.sx:.3f}, angle={self.rotation_angle:.3f}, z={self.z_expr}, corner={self.corner})"
+
+    def _fmt(self, val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        easy_snap_xy_plane = 1 if self.rotation_angle < 90 else 0
+        plane = f"EbeneF ({f(self.sx)},0,{self.z_expr},0,{f(self.rotation_angle)},{easy_snap_xy_plane},2,0)"
+        pocket = (
+            f"CALL {self._MACRO_NAME} ( VAL "
+            f"ECKE:={self.corner},"
+            f"DIM_X:={f(self.length)},"
+            f"DIM_Y:={f(self.width)},"
+            f"RAD:={f(self.radius)},"
+            f"POSX:={f(self.pos_x)},"
+            f"POSY:={f(self.pos_y)},"
+            f"ESX:={self.easy_snap_x},"
+            f"ESY:={self.easy_snap_y},"
+            f"ANGLE_SWITCH:={self.direction},"
+            f"DIST:={f(self.dist)},"
+            f"UEBERLAPPUNG:={self.overlap},"
+            f"SCHRUP:={self.roughing},"
+            f"TIEFE:={f(self.depth)},"
+            f"ANZAHL:={self.count},"
+            f"MAXZ:={f(self.max_z)},"
+            f"ESMD:={self.easy_snap_md},"
+            f"DIRECT:={self.direct},"
+            f"MILL_FIN:={self.finish_mill},"
+            f"MILL_FIN_GL:={self.finish_mill_smooth},"
+            f"MILL_FIN_DIST:={f(self.finish_mill_dist)},"
+            f"MILL_FIN_DEPTH:={f(self.finish_mill_depth)},"
+            f"MILL_FIN_COUNT:={self.finish_mill_count},"
+            f"MILL_FIN_MAXZ:={f(self.finish_mill_max_z)},"
+            f"MILL_ESMD:={self.finish_easy_snap_md},"
+            f"MILL_LASER:={self.laser_path})"
+        )
+        return f"{plane}\n{pocket}"
+
+
+class ContourPocketOperation(OperationCommand):
+    """Represents a contour-buffer pocket roughing operation for an angled end cut.
+
+    Serialises as a single EbeneF work-plane definition, a fixed 4-corner rectangle
+    written into a named contour buffer, and a ``CALL _ExecutePocket_V5`` macro::
+
+        EBENEF ({sx},{sy},{sz},{tilt_angle},{rotation_angle},{easy_snap_xy},2,0)
+        KB ('{contour_name}','',-_WZR,-_WZR,0,'',7,0)
+        KG01 ('',0,0,0,'',10,2)
+        KG01 ('',-_WZR,-_WZR,0,'',1,2)
+        KG01 ('',-_WZR,-_WZR,0,'',3,2)
+        KG01 ('',-_WZR,-_WZR,0,'',5,2)
+        KG01ZuKB()
+        CALL _ExecutePocket_V5 ( VAL NAMEN:='{contour_name}',AA:=-_WZR,...)
+
+    The 4-corner rectangle is always defined relative to the tool radius (``_WZR``)
+    and uses the fixed EasySnapXY corners RELATIVE → FRONT_LEFT → FRONT_RIGHT → REAR_RIGHT.
+
+    Parameters
+    ----------
+    sx, sy, sz : Union[float, str]
+        Origin of the EbeneF work plane.
+    tilt_angle : Union[float, str]
+        Tilt angle of the EbeneF plane (maps to inclination of the cut).
+    rotation_angle : Union[float, str]
+        Rotation angle of the EbeneF plane.  Negative values indicate that the
+        part is oriented from the opposite face to the JRC reference plane.
+    easy_snap_xy : int
+        Corner snap mode for the EbeneF origin (default: REAR_LEFT = 7).
+    contour_name : str
+        Name of the contour buffer, shared between KB and _ExecutePocket_V5.
+    overlap : int
+        ``UEBERLAPPUNG`` — path overlap as % of tool diameter.
+    mode : int
+        ``MODE`` — pocket fill strategy (2 = Parallel, default).
+    max_z : Union[float, str]
+        ``MAXZ`` — maximum depth per pass (default: ``'_AT_MAXDEPTH'``).
+    outside_in : int
+        ``RD`` — 1 = mill outside-to-inside.
+    flying_plunge : int
+        ``FLIEGENDEINTAUCHEN`` — helical plunge flag.
+    max_plunge_length : Union[float, str]
+        ``MAXEINTAUCHLAENGE`` — maximum plunge segment length in mm.
+    """
+
+    OPERATION_TYPE = "CONTOUR_POCKET"
+
+    def __init__(
+        self,
+        sx: Union[float, str],
+        sy: Union[float, str] = 0,
+        sz: Union[float, str] = 0,
+        tilt_angle: Union[float, str] = 0,
+        rotation_angle: Union[float, str] = 0,
+        easy_snap_xy: int = EasySnapXY.REAR_LEFT,
+        contour_name: str = "K0",
+        overlap: int = 10,
+        mode: int = 2,
+        max_z: Union[float, str] = "_AT_MAXDEPTH",
+        outside_in: int = 1,
+        flying_plunge: int = 0,
+        max_plunge_length: Union[float, str] = 20,
+    ):
+        super().__init__()
+        self.sx = sx
+        self.sy = sy
+        self.sz = sz
+        self.tilt_angle = tilt_angle
+        self.rotation_angle = rotation_angle
+        self.easy_snap_xy = easy_snap_xy
+        self.contour_name = contour_name
+        self.overlap = overlap
+        self.mode = mode
+        self.max_z = max_z
+        self.outside_in = outside_in
+        self.flying_plunge = flying_plunge
+        self.max_plunge_length = max_plunge_length
+
+    def __repr__(self) -> str:
+        return (
+            f"ContourPocketOperation(sx={self.sx}, tilt={self.tilt_angle}, "
+            f"rot={self.rotation_angle})"
+        )
+
+    @staticmethod
+    def _fmt(val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        plane = (
+            f"EBENEF ({f(self.sx)},{f(self.sy)},{f(self.sz)},"
+            f"{f(self.tilt_angle)},{f(self.rotation_angle)},{f(self.easy_snap_xy)},2,0)"
+        )
+        contour_lines = [
+            str(ContourStart(self.contour_name, x="-_WZR", y="-_WZR")),
+            str(ContourLine("", x=0, y=0, z=0, easy_snap_xy=EasySnapXY.RELATIVE, easy_snap_z=EasySnapZ.RELATIVE)),
+            str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.FRONT_LEFT, easy_snap_z=EasySnapZ.RELATIVE)),
+            str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.FRONT_RIGHT, easy_snap_z=EasySnapZ.RELATIVE)),
+            str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.REAR_RIGHT, easy_snap_z=EasySnapZ.RELATIVE)),
+            str(CloseContour()),
+        ]
+        pocket = str(FreeFormPocket(
+            contour_name=self.contour_name,
+            overlap=self.overlap,
+            mode=self.mode,
+            max_z=self.max_z,
+            outside_in=self.outside_in,
+            flying_plunge=self.flying_plunge,
+            max_plunge_length=self.max_plunge_length,
+        ))
+        return "\n".join([plane] + contour_lines + [pocket])
