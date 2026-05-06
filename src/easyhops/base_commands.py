@@ -18,6 +18,10 @@ ToolCommand : ABC
     Base class for tool definitions (WKZ)
 UtilityCommand : ABC
     Base class for utility/modifier commands (feedrate override, stops, etc.)
+HopsMacroCommand : ABC
+    Base class for HOPS CALL macro statements (_ExecutePocket_V5, OpenPocket, etc.)
+ContourCommand : ABC
+    Base class for contour buffer commands (KB, KG01, KG01ZuKB)
 """
 
 from abc import ABC
@@ -324,6 +328,26 @@ class UtilityCommand(HOPSCommand, ABC):
     Utility commands modify the behavior of other commands without being
     standalone operations. Examples include feedrate overrides, spindle speed
     overrides, and machine stops.
+    """
+
+    pass
+
+
+class HopsMacroCommand(HOPSCommand, ABC):
+    """Abstract base class for HOPS CALL macro commands.
+
+    Macro commands represent CALL statements that invoke built-in HOPS macros,
+    such as _ExecutePocket_V5, OpenPocket, KonturFraesen, etc.
+    """
+
+    pass
+
+
+class ContourCommand(HOPSCommand, ABC):
+    """Abstract base class for contour buffer commands.
+
+    Contour commands write geometry into a named HOPS contour buffer
+    (KB, KG01, KG01ZuKB) rather than moving the spindle directly.
     """
 
     pass
