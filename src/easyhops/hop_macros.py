@@ -8,7 +8,7 @@ corresponding HOPS line.
 Classes:
 --------
 FreeFormPocket
-    Wraps ``CALL _ExecutePocket_V5 ( VAL ...)``
+    Wraps ``CALL _ExecutePocket_ETH ( VAL ...)``
 """
 
 from typing import Union
@@ -56,7 +56,7 @@ class FreeFormPocket(HopsMacroCommand):
         ``MAXEINTAUCHLAENGE`` — maximum plunge segment length in mm.
     """
 
-    _MACRO_NAME = "_ExecutePocket_V5"
+    _MACRO_NAME = "_ExecutePocket_ETH"
 
     def __init__(
         self,
