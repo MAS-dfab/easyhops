@@ -1,0 +1,108 @@
+;MAKROTYP=1
+;DIALOGDLL=DialogsHopSys_2.Dll
+;DIALOGPROC=Show_EXECUTEPOCKET_V5Dialog
+;AUTOSCRIPTSTART=0
+VARS
+   Namen := '';*VAR*Konturnamen
+   AA := 0;*VAR*Abstand Aussen/Insel
+   Ueberlappung := 67;*VAR*Ueberlappung in % vom Werkzeugdurchmesser
+   Mode := 0;*VAR*0 = Spiral; 1 = Konturparallel; 2 = Parallel
+   Angle := 0;*VAR*Winkel Mode=3
+   Tiefe := -5;*VAR*Tiefe (positiv = oberhalb der Ebene erlaubt)
+   esmd := 0;*VAR*
+   Anzahl := 0;*VAR*Anzahl Zustellungen
+   MaxZ := _AT_MAXDEPTH;*VAR*Maximale Zustelltiefe
+   RD := 0;*VAR*Richtung umkehren
+   FliegendEintauchen := 1;*VAR*
+   MaxEintauchLaenge := 20;*VAR*
+   AnzahlP := 0;
+   AnzahlOutlineP := 0;
+   Z_Index := 0;
+   Z_Anzahl := 0;
+   Z_Step := 0;
+   Z_AktTiefe := 0;
+   PocketKonturName := 'Pocket';
+   HaveToSplit := 0;
+   InClampArea := 0;
+START
+;--
+;-- (c) DiREKT CNC Systeme
+;-- Modified by ETH Zurich MAS-dfab
+;-- Change 1: removed -ABS(Tiefe)/-ABS(MaxZ) enforcement to allow positive depth
+;--           (pocket above the FreePlane, e.g. for DoubleCut / BirdsMouth geometry)
+;-- Change 2: for positive Tiefe, Z-passes run outermost-first (Tiefe→0) so the
+;--           precision cut at the FreePlane is always last.
+;--           For negative Tiefe the original inward order is preserved.
+;-- Original: _ExecutePocket_V5.hop  MW 07.08.2012
+;--
+IF _WZR<>0
+CALL _MNCDC_HaveToSplitContours (REF RESULT:=HaveToSplit,INCLAMPAREA:=InClampArea VAL CONTOURNAME_CONTOURNAMES:=Namen,TIEFE:=Tiefe,TOOLID:=_BOXID,MAXARCTOL:=0.1mm,VIEW_OFFX:=_AV_OFFSETX,VIEW_OFFY:=_AV_OFFSETY,VIEW_OFFZ:=_AV_OFFSETZ,VIEW_ROTA:=_AV_ROTA,VIEW_TIPA:=_AV_TIPA)
+IF (HaveToSplit=1) & (_MNCDC_SplitKind<>-2)
+CALL _MNCDC_ExecutePocket ( VAL NAMEN:=Namen,AA:=AA,UEBERLAPPUNG:=Ueberlappung,MODE:=Mode,ANGLE:=Angle,TIEFE:=Tiefe,ESMD:=esmd,ANZAHL:=Anzahl,MAXZ:=MaxZ,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,INCLAMPAREA:=InClampArea)
+ELSE
+;Easysnap verrechnen
+Transesd (Tiefe,esmd)
+CreatePocketContour (Namen,AA+_WZR,_WZD-_WZD*Ueberlappung/100,Angle,Mode,RD,PocketKonturName,'','',AnzahlP,AnzahlOutlineP,_CreatePocketContourScalingFactor)
+IF (AnzahlP=0)&(AnzahlOutlineP=0)
+;Fehler ausgeben
+IF _MNCDC_SplitKind<>-2
+Fehlermeldung (GetMessageText('1001','Keine Fraeskonturen vorhanden. Text vermutlich zu klein.'))
+END
+ELSE
+;Gleichmaessige Zustellparameter berechnen
+IF Tiefe>=0
+;-- Positive depth: start from outermost layer (Z=Tiefe), finish at FreePlane (Z=0)
+;-- (outermost-first so the precision cut at FreePlane is always last)
+IF (Tiefe<>0) & (MaxZ<>0)
+Z_Anzahl := trunc(Tiefe/MaxZ)
+Z_AktTiefe := Tiefe
+ELSE
+IF Anzahl>0
+Z_Anzahl := Anzahl
+Z_AktTiefe := Tiefe
+MaxZ := Tiefe/Anzahl
+ELSE
+Z_Anzahl := 0
+Z_AktTiefe := 0.1mm
+END
+END
+;-- Change 3: for inside-out (RD=0), force lateral entry (KSP) so the tool does not
+;--           plunge through uncut material at the pocket centre.
+;--           For outside-in (RD=1), the approach point is already at the outer boundary
+;--           so the original flying plunge (helical) is safe and is preserved.
+FOR Z_Index := 1 TO Z_Anzahl STEP 1
+CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=Z_AktTiefe-MaxZ,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen*(RD=1),MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=(Z_AktTiefe-MaxZ)=0)
+Z_AktTiefe := Z_AktTiefe-MaxZ
+END
+IF Z_AktTiefe>0
+CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=0,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen*(RD=1),MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=1)
+END
+ELSE
+;-- Negative depth (original): start from FreePlane surface (Z=0), cut into material
+IF (Tiefe<>0) & (MaxZ<>0)
+Z_Anzahl := trunc(tiefe/maxz)
+Z_AktTiefe := 0
+ELSE
+IF Anzahl>0
+Z_Anzahl := Anzahl
+Z_AktTiefe := 0
+MaxZ := Tiefe/Anzahl
+ELSE
+Z_Anzahl := 0
+Z_AktTiefe := 0.1mm
+END
+END
+FOR Z_Index := 1 TO Z_Anzahl STEP 1
+CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=Z_AktTiefe+MaxZ,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=(Z_AktTiefe+MaxZ)=Tiefe)
+Z_AktTiefe := _z
+END
+IF ABS(Z_AktTiefe)<ABS(Tiefe)
+CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=Tiefe,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=1)
+END
+END
+CALL _DeletePocketContours_V5 ( VAL KN:=PocketKonturName,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP)
+END
+END
+ELSE
+Fehlermeldung (GetMessageText('17','Bitte Werkzeug definieren'))
+END

@@ -1,0 +1,28 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=7.10.0.108[Hops.exe]
+;BILD=SAW_CUT_ANGLED_LEFT.WMF
+;INFO=
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=saw_cut_angled_left
+;KOMMENTAR=
+;DX=0.000
+;DY=0.000
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   start_x := 0;*VAR*
+   angle := 0;*VAR*
+   extra := 50;
+   face_width := 100;*VAR*
+START
+Ebene0()
+WZS (201,_VE,_V,_VA,_SD,_ANF,'1')
+CALL _saege_lae_wi_V7 ( VAL SX:=start_x,SY:=0,SZ:=-3,LAENGE:=extra + face_width,SCHNITTWINKEL:=-angle,EZ:=0,BL:=2,EINPASSEN:=0,EL:=extra,AL:=0,PARALLEL:=0,K:=0,KW:=0,BH:=0,RITZVERSATZ:=0.05,ESZ:=0,ESXY1:=7)

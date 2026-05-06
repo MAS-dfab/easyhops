@@ -1,0 +1,66 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=7.10.0.108[Hops.exe]
+;BILD=AURELE_SPEZIAL.WMF
+;INFO=
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=Aurele_spezial
+;KOMMENTAR=
+;DX=0.000
+;DY=0.000
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 485;Dimension X
+   DY := 228;Dimension Y
+   DZ := 23;Dimension Z
+   Seite := 2;*VAR*Seite 1 = 1 / Seite 2 = 0
+   d := 10;*VAR*Dicke ausfräsung
+   PD := 23;*VAR*Plattendicke
+   PosX := 100;*VAR*Position X
+   LY := DY / 2;*VAR*Laenge in Y
+   AM := 0;*VAR*Aufmass
+START
+Fertigteil (DX,DY,DZ,0,0,2,2,0,'',0,0,0,0)
+CALL Park_V7 ( VAL MODE:=3,POSX:=0,POSY:=0)
+IF Seite = 1
+WZF (106,_VE,_V,_VA,_SD,_ANF,'1')
+/CALL _Format_V5 ( VAL ECKENVERRUNDUNG:=0,TIEFE:=-2,AUFMASS:=0,ANF:=_ANF,ESMD:=1,GGL:=1,LASER:=0,DEPTH:=0)
+WZF (107,_VE,_V,_VA,_SD,_ANF,'1')
+SP (PosX - (D/2),0,-(( _RZ - d) / 2),2,1,_ANF,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5mm)
+G01 (PosX - (D/2),0,0,0,7,2)
+G01 (PosX + (D/2),0,0,0,7,2)
+G01 (PosX + (D/2),0,0,0,1,2)
+EP (1,_ANF,0)
+SP (PosX - (D/2),0,-5,1,1,_ANF,0,0,0,7,1,0,0,10,0,0,0,0,0,0,0,0,0,0.5mm)
+G01 (PosX - (D/2),LY + 10,0,0,7,2)
+G01 (PosX + (D/2),LY + 10,0,0,7,2)
+G01 (posX + (D/2),0,0,0,7,2)
+EP (1,_ANF,0)
+SP (PD / 2 + PosX + Am,0,0,1,1,_ANF,0,0,45,1,0,0,0,0,sqrt(2*((_rz - d) /2)*((_rz - d) /2)),1,0,0,0,0,0,0,0,0.5mm)
+G01 (PD / 2 + PosX + am,0,0,0,7,2)
+EP (0,_ANF,0)
+SP (-PD / 2 + PosX - am,0,0,2,1,_ANF,0,0,315,1,0,0,0,0,sqrt(2*((_rz - d) /2)*((_rz - d) /2)),1,0,0,0,0,0,0,0,0.5mm)
+G01 (-PD / 2 + PosX - am,0,0,0,7,2)
+EP (0,_ANF,0)
+ELSE
+WZF (107,_VE,_V,_VA,_SD,_ANF,'1')
+SP (PosX - (D/2),0,-(( _RZ - d) / 2),2,1,_ANF,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5mm)
+G01 (PosX - (D/2),LY +20,0,0,1,2)
+G01 (PosX + (D/2),LY + 20,0,0,1,2)
+G01 (PosX + (D/2),0,0,0,1,2)
+EP (1,_ANF,0)
+SP (PD / 2  + PosX + am,0,0,1,1,_ANF,0,0,45,1,0,0,0,0,sqrt(2*((_rz - d) /2)*((_rz - d) /2)),1,0,0,0,0,0,0,0,0.5mm)
+G01 (PD / 2 + PosX + am,0,0,0,7,2)
+EP (1,_ANF,0)
+SP (-PD / 2 + PosX - am,0,0,2,1,_ANF,0,0,315,1,0,0,0,0,sqrt(2*((_rz - d) /2)*((_rz - d) /2)),1,0,0,0,0,0,0,0,0.5mm)
+G01 (-PD / 2  + PosX - am,0,0,0,7,2)
+EP (1,_ANF,0)
+END

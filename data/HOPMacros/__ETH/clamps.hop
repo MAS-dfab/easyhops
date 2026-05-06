@@ -1,0 +1,91 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=7.10.0.108[Hops.exe]
+;BILD=CLAMPS.WMF
+;INFO=
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=clamps
+;KOMMENTAR=
+;DX=0.000
+;DY=0.000
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   flip := 0;*VAR*0 = no flip. else = flip 180
+   x1 := 250;*VAR*position clamp 1
+   x2 := 1000;*VAR*position clamp
+   x3 := 1500;*VAR*position clamp
+   am := 2;*VAR*3 clamps = am == 3. else: 2 clamps
+   DX := dx;*VAR*Dimension X
+   DY := dy;*VAR*Dimension Y
+START
+IF flip=0
+;X1
+Ebene1()
+ZRechteck (x1-40,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x1-40+25+30,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x1-40,0,80,-120,1,1842431,1,0,0,1)
+Ebene0()
+ZRechteck (x1-40,dy,80,dy+(300-(2*dy)),1,1842431,1,0,0,1)
+EbeneF (0,0,-125,0,0,1,0,0)
+ZRechteck (x1-(115/2),dy,115,1590-dy-45,1,0,0,0,0,1)
+;X2
+Ebene1()
+ZRechteck (x2-40,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x2-40+25+30,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x2-40,0,80,-120,1,1842431,1,0,0,1)
+Ebene0()
+ZRechteck (x2-40,DY,80,dy+(300-(2*dy)),1,1842431,1,0,0,1)
+EbeneF (0,0,-125,0,0,1,0,0)
+ZRechteck (x2-(115/2),dy,115,1590-dy-45,1,0,0,0,0,1)
+IF am=3
+;X3
+Ebene1()
+ZRechteck (x3-40,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x3-40+25+30,0,25,40,1,1842431,1,0,0,1)
+ZRechteck (x3-40,0,80,-120,1,1842431,1,0,0,1)
+Ebene0()
+ZRechteck (x3-40,DY,80,dy+(300-(2*dy)),1,1842431,1,0,0,1)
+EbeneF (0,0,-125,0,0,1,0,0)
+ZRechteck (x3-(115/2),dy,115,1590-dy-45,1,0,0,0,0,1)
+ELSE
+END
+ELSE
+;X1
+Ebene3()
+ZRechteck (x1-40,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x1-40+25+30,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x1-40,0,80,-120,1,16723740,1,0,0,1)
+Ebene0()
+ZRechteck (x1+40,dy,80,-(dy+(300-(2*dy))),1,16723740,5,0,0,1)
+EbeneF (0,0,-125,0,0,1,0,0)
+/ZRechteck (x1,dy+45,115,-1590,1,0,0,0,0,1)
+;X2
+Ebene3()
+ZRechteck (x2-40,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x2-40+25+30,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x2-40,0,80,-120,1,16723740,1,0,0,1)
+Ebene0()
+ZRechteck (x2+40,dy,80,-(dy+(300-(2*dy))),1,16723740,5,0,0,1)
+/EbeneF (0,0,-125,0,0,1,0,0)
+/ZRechteck (x2+50,dy+45,100,-1590,1,0,0,0,0,1)
+IF am=3
+;X3
+Ebene3()
+ZRechteck (x3-40,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x3-40+25+30,0,25,40,1,16723740,1,0,0,1)
+ZRechteck (x3-40,0,80,-120,1,16723740,1,0,0,1)
+Ebene0()
+ZRechteck (x3+40,dy,80,-(dy+(300-(2*dy))),1,16723740,5,0,0,1)
+/EbeneF (0,0,-125,0,0,1,0,0)
+/ZRechteck (x3-(115/2),dy,115,1590-dy-45,1,0,0,0,0,1)
+ELSE
+END
+END
