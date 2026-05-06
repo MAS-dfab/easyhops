@@ -6,23 +6,51 @@ EasyHops is a Python library for parsing, manipulating, and generating HOPS mach
 
 ---
 
+## Two-Layer Architecture
+
+EasyHops is structured as two distinct layers:
+
+**Layer 1 — Core HOPS Wrapper** (`easyhops/` root modules): Pure parsing and serialization of `.hop` files. No dependency on `compas_timber` or any external geometry library. Can be used standalone.
+
+**Layer 2 — Fabrication Strategies** (`easyhops/strategies/`): Converts `compas_timber` processing objects (e.g. `DoubleCut`, `BirdsMouth`, `JackRafterCut`) into `HOPSMachining` instances. Depends on Layer 1. All `compas_timber` imports are guarded with `TYPE_CHECKING` to remain optional at import time.
+
+---
+
 ## Module Structure
 
-### Core Modules
+### Layer 1 — Core Modules
 
 ```
 easyhops/
 ├── base_commands.py         # Abstract base classes for all HOPS commands
 ├── hop_core.py              # Fundamental HOP file components and enums
-├── hop_job.py               # Complete file parser and container
+├── hop_job.py               # Complete file parser and container (HOPSJob, HOPSMachining)
 ├── machining_commands.py    # Operation types (milling, sawing, drilling, moves)
-├── tool_library.py          # Tool definitions and types
-├── work_planes.py           # Work plane definitions
+├── contour_commands.py      # Contour buffer commands (KB, KG01, KG01ZuKB)
+├── hop_macros.py            # HOPS CALL macro wrappers (FreeFormPocket, etc.)
+├── tool_library.py          # Tool definitions and preset tool instances
+├── work_planes.py           # Work plane definitions (WorkPlane, FreePlane)
 ├── utility_commands.py      # Utility commands (feedrate override, stops, etc.)
-├── btlx_processes.py        # BTLx file processing
-├── parse_btlx.py            # BTLx XML parsing
-├── writehops.py             # Legacy HOP file generation
-└── merge_stock_hops.py      # Stock merging utilities
+└── generate_jlx.py          # JLX layout file generation
+```
+
+### Layer 2 — Strategy Modules
+
+```
+easyhops/strategies/
+├── __init__.py              # Exports all strategy classes
+├── birdsmouth.py            # BirdsMouthStrategies
+├── double_cut.py            # DoubleCutStrategies
+└── jack_rafter_cut.py       # JackRafterCutStrategies
+```
+
+**Legacy / Deprecated** (do not use as reference):
+```
+easyhops/
+├── btlx_processes.py        # Legacy BTLx processing
+├── parse_btlx.py            # Legacy BTLx XML parsing
+├── writehops.py             # Legacy HOP generation
+└── merge_stock_hops.py      # Legacy stock merging
 ```
 
 ---
@@ -41,9 +69,12 @@ All HOPS commands inherit from a unified base class hierarchy that enables:
 HOPSCommand (abstract base)
     │
     ├── OperationCommand (abstract)
-    │   ├── MillingOperation
-    │   ├── SawingOperation
-    │   └── DrillingOperation
+    │   ├── MillingOperation          # SP + moves + EP
+    │   ├── SawingOperation           # SAEGEN
+    │   ├── SawingLengthAngleOperation# SAEGEN with length/angle formula
+    │   ├── DrillingOperation         # BOHRUNG
+    │   ├── OpenPocketOperation       # EbeneF + CALL OpenPocket  (compound)
+    │   └── ContourPocketOperation    # EbeneF + KB/KG01s + CALL _ExecutePocket_V5  (compound)
     │
     ├── MoveCommand (abstract)
     │   ├── StartPoint
@@ -59,23 +90,50 @@ HOPSCommand (abstract base)
     ├── ToolCommand (abstract)
     │   └── MachiningTool
     │
-    └── UtilityCommand (abstract)
-        ├── FeedrateOverride
-        └── MachineStop
+    ├── UtilityCommand (abstract)
+    │   ├── FeedrateOverride
+    │   └── MachineStop
+    │
+    ├── HopsMacroCommand (abstract)   # CALL <macro> ( VAL ...)
+    │   └── FreeFormPocket            # CALL _ExecutePocket_V5
+    │
+    └── ContourCommand (abstract)     # writes to named contour buffer
+        ├── ContourStart              # KB
+        ├── ContourLine               # KG01
+        └── CloseContour              # KG01ZuKB
 ```
+
+**Key distinction**: `HopsMacroCommand` and `ContourCommand` are *low-level* building blocks that emit individual `CALL`/`KB`/`KG01` lines. `OpenPocketOperation` and `ContourPocketOperation` are *high-level* `OperationCommand` subclasses that compose several of these into a complete pocket block — they are what you place inside a `HOPSMachining`.
 
 ### Module Dependencies
 
 Clean dependency hierarchy with no circular imports:
 
 ```
-base_commands.py
-     ↓ (imported by all)
-┌────┴────┬────────────┬─────────────┬──────────────┐
-│         │            │             │              │
-tool_   work_      utility_    machining_      hop_core.py
-library  planes     commands    commands
+base_commands.py  (no dependencies)
+     ↓
+┌────┬──────────┬─────────────┬────────────────┬─────────────────┐
+│    │          │             │                │                 │
+│  work_     utility_     hop_core.py       tool_library    contour_
+│  planes    commands                                       commands
+│                             │                                 │
+│                             └─────────────────────────────────┤
+│                                                               │
+│                                                          hop_macros.py
+│                                                               │
+└─────────────────────────────┬─────────────────────────────────┘
+                              ↓
+                   machining_commands.py
+                              ↓
+                          hop_job.py
+                              ↓
+                   strategies/  (Layer 2 — optional)
 ```
+
+- **`contour_commands.py`**: `ContourStart`, `ContourLine`, `CloseContour` — depends only on `base_commands` + `hop_core`
+- **`hop_macros.py`**: `FreeFormPocket` — depends only on `base_commands`
+- **`machining_commands.py`**: imports from both to compose `OpenPocketOperation` and `ContourPocketOperation`
+- **Circular import avoidance in strategies**: `HOPSMachining` is imported lazily inside each method body; `compas_timber` types are guarded by `TYPE_CHECKING`
 
 ---
 
@@ -100,9 +158,10 @@ library  planes     commands    commands
 │  (Single machining operation with context)                  │
 ├─────────────────────────────────────────────────────────────┤
 │ • tool: MachiningTool                                       │
-│ • work_plane: WorkPlane | FreePlane                         │
+│ • work_plane: WorkPlane | FreePlane | None                  │
 │ • operations: List[MillingOperation | SawingOperation |     │
-│              DrillingOperation]                             │
+│              DrillingOperation | OpenPocketOperation |      │
+│              ContourPocketOperation]                        │
 │ • feedrate_overrides: List[Tuple[...]]                      │
 └──────┬──────────────┬─────────────────┬─────────────────────┘
        │              │                 │
@@ -110,10 +169,24 @@ library  planes     commands    commands
 ┌──────────┐   ┌─────────────┐   ┌──────────────────┐
 │  Tool    │   │ Work Plane  │   │   Operation      │
 │          │   │             │   │                  │
-│ WZF/WZS/ │   │ EBENE0-4    │   │ SP + G01 + EP    │
+│ WZF/WZS/ │   │ EBENE0-5    │   │ SP + G01 + EP    │
 │ WZB      │   │ EBENEF      │   │ SAEGEN           │
-│          │   │             │   │ BOHRUNG          │
+│          │   │ (None for   │   │ BOHRUNG          │
+│          │   │  self-      │   │ OpenPocket       │
+│          │   │  contained) │   │ ContourPocket    │
 └──────────┘   └─────────────┘   └──────────────────┘
+
+                    ▲ created by ▲
+
+┌────────────────────────────────────────────────────────────────┐
+│                  strategies/  (Layer 2)                        │
+├───────────────────┬────────────────────┬───────────────────────┤
+│DoubleCutStrategies│BirdsMouthStrategies│JackRafterCutStrategies│
+│  .milling(...)    │  .milling(...)     │  .sawing(...)         │
+│                   │                    │  .milling(...)        │
+│                   │                    │  .open_pocket(...)    │
+│                   │                    │  .contour_pocket(...) │
+└───────────────────┴────────────────────┴───────────────────────┘
 ```
 
 ---
@@ -491,6 +564,101 @@ Drilling command. Inherits from `OperationCommand`.
 
 **Format**: `BOHRUNG(x,y,z,diameter,depth,drilling_flags,rotation,tilt,easy_snap_xy,easy_snap_z)`
 
+#### **OpenPocketOperation** (`machining_commands.py`)
+A compound `OperationCommand` that emits an `EbeneF` work-plane line followed by `CALL OpenPocket`. The plane origin, rotation, and Z depth expression are baked into the operation itself, so `HOPSMachining.work_plane` should be `None` when using this operation type.
+
+```
+EBENEF({sx},0,{z_expr},0,{rotation_angle},{snap_xy},2,0)
+CALL OpenPocket ( VAL ECKE:={corner},DIM_X:={length},DIM_Y:={width},...)
+```
+
+Used for rectangular open-pocket roughing where the pocket geometry is defined by corner index + length + width HOPS formulas (typically `_RY/SIN(angle)`).
+
+#### **ContourPocketOperation** (`machining_commands.py`)
+A compound `OperationCommand` that emits `EBENEF` + a fixed 4-point rectangle into a named contour buffer + `CALL _ExecutePocket_V5`. Again, `HOPSMachining.work_plane = None`.
+
+```
+EBENEF({sx},{sy},{sz},{tilt_angle},{rotation_angle},{snap_xy},2,0)
+KB ('{name}','',-_WZR,-_WZR,0,'',7,0)
+KG01 ('',0,0,0,'',10,2)
+KG01 ('',-_WZR,-_WZR,0,'',1,2)
+KG01 ('',-_WZR,-_WZR,0,'',3,2)
+KG01 ('',-_WZR,-_WZR,0,'',5,2)
+KG01ZuKB()
+CALL _ExecutePocket_V5 ( VAL NAMEN:='{name}',AA:=-_WZR,...)
+```
+
+Used for finish-quality contour-buffer pocketing of angled cut faces.
+
+---
+
+### 5b. contour_commands.py & hop_macros.py — Low-Level Building Blocks
+
+These two modules contain the individual command classes that compound operations (`OpenPocketOperation`, `ContourPocketOperation`) are built from. You typically do **not** use them directly — use the compound `OperationCommand` subclasses instead.
+
+#### **Contour Buffer Commands** (`contour_commands.py`)
+
+Write geometry into a named HOPS contour buffer rather than moving the spindle.
+
+| Class | HOPS line | Purpose |
+|---|---|---|
+| `ContourStart` | `KB ('K0','',-_WZR,-_WZR,0,'',7,0)` | Open/name a contour buffer |
+| `ContourLine` | `KG01 ('',x,y,z,'',snap_xy,snap_z)` | Add a line segment |
+| `CloseContour` | `KG01ZuKB()` | Close and commit the buffer |
+
+All three inherit from `ContourCommand → HOPSCommand`.
+
+```python
+# Low-level usage (rarely needed directly)
+from easyhops.contour_commands import ContourStart, ContourLine, CloseContour
+
+kb = ContourStart(name="K0", x="-_WZR", y="-_WZR", easy_snap_xy=EasySnapXY.REAR_LEFT)
+kg01 = ContourLine(x=0, y=0, z=0, easy_snap_xy=EasySnapXY.RELATIVE)
+close = CloseContour()
+```
+
+#### **HOPS Macro Commands** (`hop_macros.py`)
+
+Wrap built-in HOPS macro invocations (`CALL <name> ( VAL ...)`). Inherit from `HopsMacroCommand → HOPSCommand`.
+
+| Class | HOPS macro | Purpose |
+|---|---|---|
+| `FreeFormPocket` | `CALL _ExecutePocket_V5 ( VAL ...)` | Execute a contour-buffer pocket |
+
+```python
+# Low-level usage (normally wrapped by ContourPocketOperation)
+from easyhops.hop_macros import FreeFormPocket
+
+pocket = FreeFormPocket(
+    contour_name="K0",
+    distance_to_contour="-_WZR",
+    overlap=10,
+    mode=2,         # Parallel fill
+    max_z="_AT_MAXDEPTH",
+    outside_in=1,
+    flying_plunge=0,
+)
+```
+
+#### Relationship: low-level vs. compound
+
+```
+ContourPocketOperation  (OperationCommand — use this)
+  └─ internally emits:
+       FreePlane / EbeneF line
+       ContourStart    (KB)
+       ContourLine ×4  (KG01)
+       CloseContour    (KG01ZuKB)
+       FreeFormPocket  (CALL _ExecutePocket_V5)
+
+OpenPocketOperation  (OperationCommand — use this)
+  └─ internally emits:
+       FreePlane / EbeneF line
+       CALL OpenPocket ( VAL ...)
+```
+
+The low-level classes exist so that custom contour shapes can be built by composing `ContourStart` + arbitrary `ContourLine` segments + `CloseContour` + `FreeFormPocket` manually, without going through the fixed-rectangle shortcut of `ContourPocketOperation`.
+
 ---
 
 ### 6. hop_job.py - Complete File Parser
@@ -503,11 +671,14 @@ Associates operations with their tool, work plane, and feedrate overrides.
 ```python
 class HOPSMachining:
     tool: MachiningTool
-    work_plane: Union[WorkPlane, FreePlane]
-    operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]]
+    work_plane: Union[WorkPlane, FreePlane, None]  # None for self-contained ops
+    operations: List[Union[MillingOperation, SawingOperation, DrillingOperation,
+                           OpenPocketOperation, ContourPocketOperation]]
     comments: List[str]
     feedrate_overrides: List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]
 ```
+
+**`work_plane=None`**: Used by operations that carry their own plane (e.g. `OpenPocketOperation`, `ContourPocketOperation`). No `EBENEF`/`EBENE` line is emitted at the machining level.
 
 **Feedrate Override Tracking**:
 - Stored as `((operation_idx, command_idx), FeedrateOverride)` tuples
@@ -727,6 +898,105 @@ HOP File (text)
 
 ---
 
+## Layer 2: Fabrication Strategies
+
+The `strategies/` subpackage converts `compas_timber` processing objects into `HOPSMachining` instances. Each strategy class is a namespace of `@staticmethod` methods — pure functions with no instance state.
+
+### Strategy Classes
+
+#### **DoubleCutStrategies** (`strategies/double_cut.py`)
+
+```python
+class DoubleCutStrategies:
+    @staticmethod
+    def milling(double_cut, tool=None, first_cut=True, engagement_ratio=0.5) -> List[HOPSMachining]:
+        ...
+```
+
+Generates multi-pass milling operations for a `DoubleCut` processing. The number of Z-depth passes and X-width passes is computed from the tool's `max_depth` and `diameter` against the step's `riser_length` and `tread_length`, constrained by `engagement_ratio`.
+
+#### **BirdsMouthStrategies** (`strategies/birdsmouth.py`)
+
+```python
+class BirdsMouthStrategies:
+    @staticmethod
+    def milling(birdsmouth, tool=None, first_cut=False, engagement_ratio=0.5) -> List[HOPSMachining]:
+        ...
+```
+
+Generates multi-pass milling operations for a `BirdsMouth` processing. Same pass-count logic as `DoubleCutStrategies.milling`.
+
+#### **JackRafterCutStrategies** (`strategies/jack_rafter_cut.py`)
+
+```python
+class JackRafterCutStrategies:
+    @staticmethod
+    def sawing(jrc) -> List[HOPSMachining]: ...
+    @staticmethod
+    def milling(jrc, tool=None) -> List[HOPSMachining]: ...
+    @staticmethod
+    def open_pocket(jrc, tool=None) -> List[HOPSMachining]: ...
+    @staticmethod
+    def contour_pocket(jrc, machine_ref_side_index, tool=None) -> List[HOPSMachining]: ...
+```
+
+Four machining strategies for a `JackRafterCut`:
+- **`sawing`**: Single `SawingLengthAngleOperation` on `WorkPlane.TOP`
+- **`milling`**: Single `MillingOperation` on a `FreePlane` (contour edge)
+- **`open_pocket`**: Three `OpenPocketOperation` passes (roughing)
+- **`contour_pocket`**: Single `ContourPocketOperation` (finish buffer)
+
+### Strategy Pattern
+
+```python
+# Strategy methods are pure functions
+machinings = DoubleCutStrategies.milling(double_cut, tool=CastorD61())
+machinings = JackRafterCutStrategies.sawing(jrc)
+```
+
+### Circular Import Avoidance
+
+Strategies depend on `HOPSMachining` from `hop_job.py`, which is above them in the module graph. Two techniques avoid circular imports:
+
+1. **Lazy runtime import**: `from ..hop_job import HOPSMachining` is placed inside each method body, not at module level.
+2. **`TYPE_CHECKING` guards**: `compas_timber` types (e.g. `DoubleCut`) are imported only under `if TYPE_CHECKING:` so they affect type checkers but not the Python runtime.
+
+```python
+from __future__ import annotations  # enables string annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from compas_timber.fabrication import DoubleCut
+    from ..hop_job import HOPSMachining
+
+class DoubleCutStrategies:
+    @staticmethod
+    def milling(double_cut: "DoubleCut", ...) -> "List[HOPSMachining]":
+        from ..hop_job import HOPSMachining  # lazy — avoids circular import
+        ...
+```
+
+### Entry Point: `HOPSJob.from_timber_element`
+
+`HOPSJob.from_timber_element(element)` is the integration point between Layer 1 and Layer 2. It iterates `element.features`, dispatches by `PROCESSING_NAME`, and calls the appropriate strategy. Strategy classes are also imported lazily inside the method:
+
+```python
+@classmethod
+def from_timber_element(cls, element) -> "HOPSJob":
+    from .strategies import DoubleCutStrategies, BirdsMouthStrategies, JackRafterCutStrategies
+    from .tool_library import CastorD61, BirdsmouthW41
+
+    for processing in element.features:
+        if processing.PROCESSING_NAME == "DoubleCut":
+            machinings.extend(DoubleCutStrategies.milling(processing, tool=tool))
+        elif processing.PROCESSING_NAME == "BirdsMouth":
+            machinings.extend(BirdsMouthStrategies.milling(processing, tool=tool))
+        elif processing.PROCESSING_NAME == "JackRafterCut":
+            machinings.extend(JackRafterCutStrategies.sawing(processing))
+```
+
+---
+
 ## Key Design Patterns
 
 ### 1. **Hierarchical Command Architecture**
@@ -800,6 +1070,21 @@ WorkPlane.TOP        # → EBENE0
 
 ### 8. **Two-Phase Parsing**
 Separate chunking from parsing for robustness and testability.
+
+### 9. **Strategy Pattern (Layer 2)**
+Stateless strategy classes as namespaces for pure conversion functions.
+
+```python
+# No instantiation — pure static dispatch
+machinings = JackRafterCutStrategies.sawing(jrc)
+machinings = DoubleCutStrategies.milling(dc, tool=CastorD61(), engagement_ratio=0.4)
+```
+
+**Benefits**:
+- Strategies are testable without mocking instances
+- New strategies can be added without touching `HOPSMachining`
+- `compas_timber` dependency is fully contained in `strategies/`
+- Layer 1 remains usable without Layer 2 installed
 
 ---
 
@@ -891,6 +1176,9 @@ Parsing → Serializing → Re-parsing may lose some operations due to limitatio
 ### 4. **Comment Preservation**
 Inline comments and formatting are not fully preserved during round-trip operations.
 
+### 5. **BTLx Integration Not Implemented**
+The planned BTLx workflow (converting BTLx XML to HOPSJob) is not yet implemented. The legacy `parse_btlx.py` and `btlx_processes.py` modules exist but are deprecated and should not be used as reference.
+
 ---
 
 ## Testing Architecture
@@ -899,22 +1187,26 @@ Inline comments and formatting are not fully preserved during round-trip operati
 
 ```
 tests/
-├── test_hop_core.py          # ✅ 36/36 passing
-├── test_hop_job_objects.py   # HOPSJob basic tests
-├── test_machining_commands.py # Operation parsing tests
+├── test_hop_core.py           # Core enums and file structure
+├── test_hop_job_objects.py    # HOPSJob basic tests
+├── test_hop_job_parsing.py    # Complete file parsing (uses data/test.hop)
+├── test_machining_commands.py # Operation parsing and serialization
 ├── test_tool_library.py       # Tool parsing tests
 ├── test_work_planes.py        # Work plane tests
-└── test_*.py                  # Other module tests
+├── test_arc_commands.py       # G02M / G03M arc commands
+├── test_feedrate_overrides.py # Feedrate override tracking
+└── test_merge_stock.py        # Stock merging utilities
 ```
 
 ### Test Coverage
 
-- ✅ **FinishedPart**: All 12 parameters tested
+- ✅ **FinishedPart**: All 12 parameters
 - ✅ **VarsDefinition**: Parsing and serialization
 - ✅ **Tool parsing**: WZF/WZS/WZB commands
 - ✅ **Work planes**: EBENE and EBENEF
-- ✅ **Operations**: Milling, sawing, drilling
-- ⚠️ **Complete file parsing**: Tests need recreation
+- ✅ **Operations**: Milling, sawing, drilling, arcs
+- ✅ **Feedrate overrides**: Inline and per-move tracking
+- ✅ **Complete file parsing**: Integration tests against `data/test.hop`
 
 ---
 
@@ -927,14 +1219,15 @@ tests/
 3. **Comment preservation**: Retain inline comments and formatting
 4. **Validation**: Add semantic validation (e.g., dimension checks)
 5. **Optimization**: Detect and merge redundant operations
-6. **Export formats**: Support export to other CNC formats
+6. **BTLx integration**: New Layer 2 strategies for BTLx XML → HOPSJob conversion (replacing the deprecated legacy modules)
 
 ### Extensibility Points
 
-- **New operation types**: Add new `Operation` subclasses
-- **Custom tools**: Extend `MachiningTool` for custom tools
-- **Preprocessing**: Add hooks in chunking phase
-- **Post-processing**: Transform operations after parsing
+- **New operation types**: Add new `OperationCommand` subclasses in `machining_commands.py`
+- **New processing strategies**: Add new strategy class in `strategies/` — no changes needed to Layer 1
+- **Custom tools**: Extend `MachiningTool` or add preset instances in `tool_library.py`
+- **Preprocessing**: Add hooks in the chunking phase of `_split_lines`
+- **Post-processing**: Transform machinings after parsing in `from_hop_string`
 
 ---
 
@@ -957,7 +1250,33 @@ for i, m in enumerate(job.machinings):
     print(f"\nOperation {i+1}:")
     print(f"  Tool: {m.tool.tool_type.value} position {m.tool.position}")
     print(f"  Plane: {m.work_plane}")
-    print(f"  Type: {type(m.operation).__name__}")
+    for op in m.operations:
+        print(f"  Op type: {type(op).__name__}")
+```
+
+### Using Fabrication Strategies (Layer 2)
+
+```python
+from easyhops.strategies import DoubleCutStrategies, JackRafterCutStrategies
+from easyhops.tool_library import CastorD61
+
+# Convert a compas_timber processing to HOPSMachining objects
+machinings = DoubleCutStrategies.milling(
+    double_cut,
+    tool=CastorD61(),
+    first_cut=True,
+    engagement_ratio=0.5,
+)
+
+# JackRafterCut: choose the right strategy for the required machining type
+saw_machinings = JackRafterCutStrategies.sawing(jrc)
+pocket_machinings = JackRafterCutStrategies.open_pocket(jrc, tool=CastorD61())
+
+# Or use the high-level entry point for a full timber element
+from easyhops.hop_job import HOPSJob
+job = HOPSJob.from_timber_element(element)
+job.to_hop_file("output.hop")
+```
 ```
 
 ### Creating HOP File Programmatically
