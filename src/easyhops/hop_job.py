@@ -33,6 +33,9 @@ from .utility_commands import FeedrateOverride
 from .work_planes import FreePlane
 from .work_planes import WorkPlane
 
+if TYPE_CHECKING:
+    from compas_timber.base import TimberElement
+
 
 class HOPParsingError(Exception):
     """Base exception for HOP file parsing errors."""
@@ -467,7 +470,7 @@ class HOPSJob:
         return cls.from_hop_string("".join(lines), strict=strict)
 
     @classmethod
-    def from_timber_element(cls, element) -> "HOPSJob":
+    def from_timber_element(cls, element: TimberElement) -> "HOPSJob":
         """Create a HOPSJob from a TimberModel element.
 
         This method extracts machining information from the given TimberModel element,
@@ -491,25 +494,33 @@ class HOPSJob:
         >>> job = HOPSJob.from_timber_element(timber_element, tool)
         >>> print(f"Generated HOPSMachining for {len(job.machinings)} operations")
         """
-        from .strategies import BirdsMouthStrategies, DoubleCutStrategies, JackRafterCutStrategies
-        from .tool_library import BirdsmouthW41, CastorD61
+        from .strategies import BirdsMouthStrategies
+        from .strategies import DoubleCutStrategies
+        from .strategies import JackRafterCutStrategies
+        from .tool_library import CastorD61
 
-        vars = VarsDefinition(dx=element.blank_length, dy=element.height, dz=element.width)
+        ref_side_index = element.attributes.get("ref_side_index", 0)
+        width, height = element.get_dimensions_relative_to_side(ref_side_index)
+
+        vars = VarsDefinition(dx=element.blank_length, dy=width, dz=height)
+        vars.add_variable("RSI", str(ref_side_index), "ReferenceSideIndex (0-5)")
         finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
         park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
         machinings = []
 
+        tool = CastorD61()
         for processing in element.features:
             if processing.PROCESSING_NAME == "DoubleCut":
                 if processing.user_attributes == {}:
                     continue  # Skip if necessary attributes are missing
-                tool = CastorD61() if processing.user_attributes["tread_length"] <= CastorD61().diameter else BirdsmouthW41()
-                machinings.extend(DoubleCutStrategies.milling(processing, tool=tool))
+                if processing.user_attributes["strategy"] == "pocketing":
+                    machinings.extend(DoubleCutStrategies.pocketing(processing, tool=tool))
+                else:
+                    machinings.extend(DoubleCutStrategies.milling(processing, tool=tool))
             elif processing.PROCESSING_NAME == "BirdsMouth":
-                tool = CastorD61() if processing.user_attributes["tread_length"] <= CastorD61().diameter else BirdsmouthW41()
                 machinings.extend(BirdsMouthStrategies.milling(processing, tool=tool))
             elif processing.PROCESSING_NAME == "JackRafterCut":
-                machinings.extend(JackRafterCutStrategies.sawing(processing))
+                machinings.extend(JackRafterCutStrategies.contour_pocket(processing, machine_ref_side_index=ref_side_index, tool=tool))
 
         sorted_machinings = cls._sort_machinings_based_on_operation(machinings)
 
