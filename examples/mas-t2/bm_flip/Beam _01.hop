@@ -1,0 +1,61 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=8.9.20.5[Hops.exe]
+;BILD=BEAM _01.WMF
+;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - t2\bm_flip.ewb-04/05/2026-10:52:14
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=Beam _01
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 2026.695;*VAR*Piece Length
+   DY := 200;*VAR*Piece Height
+   DZ := 80;*VAR*Piece Thickness
+START
+FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
+CALL Park_V7 ( VAL MODE:=2,POSX:=0,POSY:=0)
+; ---------------------------------
+;JackRafterCut_Roughping
+; ---------------------------------
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF (0,0,0,89.700,-75.170,7,2,0)
+;----define contour----
+KB ('K0','',-_WZR,-_WZR,0,'',7,0)
+KG01 ('',-_WZR,-_WZR,0,'',1,2)
+KG01 ('',-_WZR,-_WZR,0,'',3,2)
+KG01 ('',-_WZR,-_WZR,0,'',5,2)
+KG01ZuKB()
+;----execute contour as pocket----
+CALL _ExecutePocket_ETH ( VAL NAMEN:='K0',AA:=-_WZR,UEBERLAPPUNG:=15,MODE:=2,ANGLE:=0,TIEFE:=0,ESMD:=0,ANZAHL:=0,MAXZ:=_AT_MAXDEPTH,RD:=0,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=20)
+; ---------------------------------
+;DoubleCut_Milling
+; ---------------------------------
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF (153.85,91.39,0,180-130.46,108.90+180,1,2,0)
+;----define contour----
+KB ('K1','',-_WZR,-_WZR,0,'',7,0)
+KG01 ('L2',TAN(107.521)/_WZR,_WZR,0,'',0,2)
+CALL _KWGerade_V5 ( VAL NAME:='L3',LAENGE:=110.260+_WZD,WINKEL:=-107.521,Z:=0,INFO:='',ESD:=2)
+KG01 ('L4',-_WZR,-_WZR,0,'',1,2)
+KG01ZuKB()
+;----execute contour----
+CALL _ExecutePocket_ETH ( VAL NAMEN:='K1',AA:=0,UEBERLAPPUNG:=60,MODE:=0,ANGLE:=0,TIEFE:=60,ESMD:=0,ANZAHL:=2,MAXZ:=_AT_MAXDEPTH,RD:=0,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=60)
+; ---------------------------------
+;DoubleCut_Finishing
+; ---------------------------------
+EBENEF (153.85,91.39,0,180-130.46,108.90+180,1,2,0)
+KB ('K2','',0,0,0,'',0,0)
+CALL _KWGerade_V5 ( VAL NAME:='L3',LAENGE:=110.260+_WZR,WINKEL:=-107.521,Z:=0,INFO:='',ESD:=2)
+KSP ('???','???',0,2,1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+KonturFraesen ('K2','KSP','KEP',0,0,0,0,0,0,0,0,0,90,0,0.5,0)
+EP (1,_ANF,0)
