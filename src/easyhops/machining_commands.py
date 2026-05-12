@@ -1922,10 +1922,10 @@ class ContourPocketOperation(OperationCommand):
         rotation_angle: Union[float, str] = 0,
         easy_snap_xy: int = EasySnapXY.REAR_LEFT,
         contour_name: str = "K0",
-        overlap: int = 10,
+        overlap: int = 15,
         mode: int = 2,
         max_z: Union[float, str] = "_AT_MAXDEPTH",
-        outside_in: int = 1,
+        outside_in: int = 0,
         flying_plunge: int = 0,
         max_plunge_length: Union[float, str] = 20,
     ):
@@ -1945,10 +1945,7 @@ class ContourPocketOperation(OperationCommand):
         self.max_plunge_length = max_plunge_length
 
     def __repr__(self) -> str:
-        return (
-            f"ContourPocketOperation(sx={self.sx}, tilt={self.tilt_angle}, "
-            f"rot={self.rotation_angle})"
-        )
+        return f"ContourPocketOperation(sx={self.sx}, tilt={self.tilt_angle}, rot={self.rotation_angle})"
 
     @staticmethod
     def _fmt(val) -> str:
@@ -1963,25 +1960,23 @@ class ContourPocketOperation(OperationCommand):
 
     def _to_hop_line(self) -> str:
         f = self._fmt
-        plane = (
-            f"EBENEF ({f(self.sx)},{f(self.sy)},{f(self.sz)},"
-            f"{f(self.tilt_angle)},{f(self.rotation_angle)},{f(self.easy_snap_xy)},2,0)"
-        )
+        plane = f"EBENEF ({f(self.sx)},{f(self.sy)},{f(self.sz)},{f(self.tilt_angle)},{f(self.rotation_angle)},{f(self.easy_snap_xy)},2,0)"
         contour_lines = [
             str(ContourStart(self.contour_name, x="-_WZR", y="-_WZR")),
-            str(ContourLine("", x=0, y=0, z=0, easy_snap_xy=EasySnapXY.RELATIVE, easy_snap_z=EasySnapZ.RELATIVE)),
             str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.FRONT_LEFT, easy_snap_z=EasySnapZ.RELATIVE)),
             str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.FRONT_RIGHT, easy_snap_z=EasySnapZ.RELATIVE)),
             str(ContourLine("", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.REAR_RIGHT, easy_snap_z=EasySnapZ.RELATIVE)),
             str(CloseContour()),
         ]
-        pocket = str(FreeFormPocket(
-            contour_name=self.contour_name,
-            overlap=self.overlap,
-            mode=self.mode,
-            max_z=self.max_z,
-            outside_in=self.outside_in,
-            flying_plunge=self.flying_plunge,
-            max_plunge_length=self.max_plunge_length,
-        ))
+        pocket = str(
+            FreeFormPocket(
+                contour_name=self.contour_name,
+                overlap=self.overlap,
+                mode=self.mode,
+                max_z=self.max_z,
+                outside_in=self.outside_in,
+                flying_plunge=self.flying_plunge,
+                max_plunge_length=self.max_plunge_length,
+            )
+        )
         return "\n".join([plane] + contour_lines + [pocket])
