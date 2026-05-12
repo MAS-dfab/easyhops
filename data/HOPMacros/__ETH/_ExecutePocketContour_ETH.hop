@@ -1,0 +1,33 @@
+;MAKROTYP=1
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;AUTOSCRIPTSTART=0
+VARS
+   KN := '';*VAR*Konturnamen
+   LastTiefe := 0;*VAR*
+   Tiefe := -10;*VAR*Tiefe
+   FliegendEintauchen := 1;*VAR*
+   MaxEintauchLaenge := 20;*VAR*
+   LastCall := 0;*VAR*
+   P0X := 0;
+   P0Y := 0;
+START
+;--
+;-- (c) DiREKT CNC Systeme (original _ExecutePocketContour_V5)
+;-- Modified by ETH Zurich MAS-dfab
+;-- ETH version: always approach from +Y of the FreePlane at the cut depth.
+;--   SP rapids to (first_point_X, first_point_Y + MaxEintauchLaenge, Tiefe)
+;--   then G01 feeds in -Y to contour point 0.
+;-- This guarantees the milling path starts at the contour's defined point 0
+;-- and the approach direction is always from the beam top face (+Y of the FreePlane).
+;--
+P0X := GetKP_X(KN,0)
+P0Y := GetKP_Y(KN,0)
+SP(P0X,P0Y+MaxEintauchLaenge,Tiefe,0,1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G01 (P0X,P0Y,Tiefe,0,0)
+KonturFraesen (KN,'KSP','KEP',0,0,0,0,0,0,0,0)
+EP (0,_ANF,0)
+IF LastCall
+ELSE
+Call GLUEPROCESS_V7 ()
+END

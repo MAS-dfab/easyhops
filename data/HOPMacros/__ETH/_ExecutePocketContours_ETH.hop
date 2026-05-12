@@ -1,0 +1,40 @@
+;MAKROTYP=1
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;AUTOSCRIPTSTART=0
+VARS
+   KN := '';*VAR*Konturnamen
+   Mode := 0;*VAR*
+   LastTiefe := 0;*VAR*
+   Tiefe := -10;*VAR*Tiefe
+   AnzahlP := 0;*VAR*
+   AnzahlOutlineP := 0;*VAR*
+   RD := 0;*VAR*Richtung umkehren
+   FliegendEintauchen := 0;*VAR*
+   MaxEintauchLaenge := 20;*VAR*
+   LastCall := 0;*VAR*
+   i := 0;
+   UseOutline := 0;
+START
+;-- ETH version of _ExecutePocketContours_V5:
+;-- identical logic but calls _ExecutePocketContour_ETH instead of _ExecutePocketContour_V5
+UseOutline := (Mode=2)|(Mode=6)|(Mode=16)
+IF RD=0
+FOR i := 1 TO AnzahlP STEP 1
+CALL _ExecutePocketContour_ETH ( VAL KN:=KN+IntToStr(i-1),LASTTIEFE:=LastTiefe,TIEFE:=Tiefe,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=LastCall & (((~UseOutline) & (i=AnzahlP))|(UseOutline & (i=AnzahlP) & (AnzahlOutlineP=0))))
+END
+IF UseOutline
+FOR i := 1 TO AnzahlOutlineP STEP 1
+CALL _ExecutePocketContour_ETH ( VAL KN:=KN+'_Outline'+IntToStr(i-1),LASTTIEFE:=LastTiefe,TIEFE:=Tiefe,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=LastCall & (i=AnzahlOutlineP))
+END
+END
+ELSE
+IF UseOutline
+FOR i := 1 TO AnzahlOutlineP STEP 1
+CALL _ExecutePocketContour_ETH ( VAL KN:=KN+'_Outline'+IntToStr(i-1),LASTTIEFE:=LastTiefe,TIEFE:=Tiefe,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=LastCall & ((i=AnzahlOutlineP) & (AnzahlP=0)))
+END
+END
+FOR i := 1 TO AnzahlP STEP 1
+CALL _ExecutePocketContour_ETH ( VAL KN:=KN+IntToStr(i-1),LASTTIEFE:=LastTiefe,TIEFE:=Tiefe,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=LastCall & (i=AnzahlP))
+END
+END

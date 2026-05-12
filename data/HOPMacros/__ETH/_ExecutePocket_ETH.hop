@@ -66,16 +66,15 @@ Z_Anzahl := 0
 Z_AktTiefe := 0.1mm
 END
 END
-;-- Change 3: for inside-out (RD=0), force lateral entry (KSP) so the tool does not
-;--           plunge through uncut material at the pocket centre.
-;--           For outside-in (RD=1), the approach point is already at the outer boundary
-;--           so the original flying plunge (helical) is safe and is preserved.
+;-- Change 3: use _ExecutePocketContours_ETH → _ExecutePocketContour_ETH.
+;--           The ETH contour macro approaches from +Y of the FreePlane at cut depth
+;--           and always starts at contour point 0 — consistent direction from beam top face.
 FOR Z_Index := 1 TO Z_Anzahl STEP 1
-CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=Z_AktTiefe-MaxZ,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen*(RD=1),MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=(Z_AktTiefe-MaxZ)=0)
+CALL _ExecutePocketContours_ETH ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=Z_AktTiefe-MaxZ,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=(Z_AktTiefe-MaxZ)=0)
 Z_AktTiefe := Z_AktTiefe-MaxZ
 END
 IF Z_AktTiefe>0
-CALL _ExecutePocketContours_V5 ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=0,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen*(RD=1),MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=1)
+CALL _ExecutePocketContours_ETH ( VAL KN:=PocketKonturName,MODE:=Mode,LASTTIEFE:=Z_AktTiefe,TIEFE:=0,ANZAHLP:=AnzahlP,ANZAHLOUTLINEP:=AnzahlOutlineP,RD:=RD,FLIEGENDEINTAUCHEN:=FliegendEintauchen,MAXEINTAUCHLAENGE:=MaxEintauchLaenge,LASTCALL:=1)
 END
 ELSE
 ;-- Negative depth (original): start from FreePlane surface (Z=0), cut into material
