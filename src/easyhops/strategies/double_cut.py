@@ -5,8 +5,12 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
+from ..contour_commands import CloseContour
+from ..contour_commands import ContourLine
+from ..contour_commands import ContourStart
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
+from ..hop_macros import FreeFormPocket
 from ..machining_commands import G01
 from ..machining_commands import CompensationMode
 from ..machining_commands import EndPoint
@@ -25,6 +29,117 @@ if TYPE_CHECKING:
 
 class DoubleCutStrategies:
     @staticmethod
+    def pocketing(
+        double_cut: "DoubleCut",
+        tool: Optional[MachiningTool] = None,
+        first_cut: bool = True,
+        overlap: int = 60,
+    ) -> "List[HOPSMachining]":
+        """Create a HOPSMachining for a DoubleCut pocket operation.
+
+        Produces a single EbeneF + KB / KG01 / _KWGerade_V5 / KG01 / KG01ZuKB
+        + CALL _ExecutePocket_ETH block — mirroring the hand-written hop files.
+
+        Parameters:
+        -----------
+        double_cut : DoubleCut
+            The DoubleCut processing containing the geometric information.
+        tool : MachiningTool, optional
+            Defaults to CastorD61 (WZF503).
+        first_cut : bool
+            True = first cut face (angle_1/inclination_1), False = second (angle_2/inclination_2).
+        overlap : int
+            Pocket path overlap as % of tool diameter.  Default 60.
+
+        Returns:
+        --------
+        List[HOPSMachining]
+            A single HOPSMachining instance.
+        """
+        from ..hop_job import HOPSMachining
+
+        tool = tool or CastorD61()
+
+        if first_cut:
+            angle = double_cut.angle_1
+            inclination = double_cut.inclination_1
+        else:
+            angle = double_cut.angle_2
+            inclination = double_cut.inclination_2
+
+        angle = 0.0 if angle == 0.1 else angle  # BTLx export hack for 90-degree cuts
+
+        ridge_length = double_cut.user_attributes["ridge_length"]
+        ridge_angle = double_cut.user_attributes["ridge_angle"]
+        # Auto-calculate passes: how many tool.max_depth increments fit in ridge_length
+        n_z_passes = max(1, math.ceil(ridge_length / tool.max_depth))
+
+        if double_cut.ref_side_index == 1:
+            easy_snap_xy = EasySnapXY.REAR_LEFT
+            rotation_angle = -angle if double_cut.orientation == "start" else angle
+            # KG01 approach: x = -TAN(ridge_angle)/_WZR (towards REAR), y = _WZR
+            kg01_x = f"-TAN({ridge_angle:.3f})/_WZR"
+        elif double_cut.ref_side_index == 3:
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            rotation_angle = 180 + angle if double_cut.orientation == "start" else 180 - angle
+            # KG01 approach: x = +TAN(supplement)/_WZR, y = _WZR
+            supplement = 180 - ridge_angle
+            kg01_x = f"TAN({supplement:.3f})/_WZR"
+        else:
+            raise NotImplementedError(f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut. Expected 1 or 3.")
+
+        # The angled line length covers the ridge + one tool diameter of clearance
+        kw_length = f"{ridge_length:.3f}+_WZD"
+        kw_angle = f"-{ridge_angle:.3f}"
+
+        contour_name = "K1"
+
+        class _DoubleCutPocketOp:
+            """Serialises as: KB + KG01 + _KWGerade_V5 + KG01 + KG01ZuKB + _ExecutePocket_ETH."""
+
+            def __str__(self_op):
+                lines = [
+                    str(ContourStart(contour_name, x="-_WZR", y="-_WZR", easy_snap_xy=EasySnapXY.REAR_LEFT)),
+                    str(ContourLine("L_start", x=kg01_x, y="_WZR", z=0, easy_snap_xy=EasySnapXY.RELATIVE)),
+                    f"CALL _KWGerade_V5 ( VAL NAME:='L_main',LAENGE:={kw_length},WINKEL:={kw_angle},Z:=0,INFO:='',ESD:=2)",
+                    str(ContourLine("L_end", x="-_WZR", y="-_WZR", z=0, easy_snap_xy=EasySnapXY.FRONT_LEFT)),
+                    str(CloseContour()),
+                    str(
+                        FreeFormPocket(
+                            contour_name=contour_name,
+                            distance_to_contour=0,
+                            overlap=overlap,
+                            mode=0,
+                            depth=ridge_length,
+                            count=n_z_passes,
+                            outside_in=0,
+                            flying_plunge=0,
+                            max_plunge_length=60,
+                        )
+                    ),
+                ]
+                return "\n".join(lines)
+
+        work_plane = FreePlane(
+            x=double_cut.start_x,
+            y=double_cut.start_y,
+            z=0.0,
+            rotation_angle=rotation_angle,
+            tilt_angle=inclination,
+            easy_snap_xy=easy_snap_xy,
+            easy_snap_z=EasySnapZ.RELATIVE,
+            offset_z=0.0,
+        )
+
+        machining = HOPSMachining(
+            tool=tool,
+            work_plane=work_plane,
+            operations=[_DoubleCutPocketOp()],
+            comments=["; ###### DoubleCut ######"],
+        )
+        return [machining]
+
+    @staticmethod
     def milling(
         double_cut: "DoubleCut",
         tool: Optional[MachiningTool] = None,
@@ -36,7 +151,7 @@ class DoubleCutStrategies:
         When the required riser depth exceeds the tool's max depth, multiple passes are generated,
         each as a separate HOPSMachining with an incrementally deeper work plane offset.
         An additional area-based constraint ensures the triangular step cross-section never exceeds
-        engagement_ratio of the tool's rectangular chip area (diameter × max_depth) per pass.
+        engagement_ratio of the tool's rectangular chip area (diameter x max_depth) per pass.
 
         Parameters:
         -----------
