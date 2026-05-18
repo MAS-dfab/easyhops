@@ -100,7 +100,8 @@ class BirdsMouthStrategies:
         n_passes = n_z_passes
         result = []
         for i in range(n_passes):
-            comment = f"; ###### BirdsMouth (Pass {i + 1}/{n_passes}) ######" if n_passes > 1 else "; ###### BirdsMouth ######"
+            comment_label = f"BirdsMouth_Milling (Pass {i + 1}/{n_passes})" if n_passes > 1 else "BirdsMouth_Milling"
+            comment = "\n".join(["; ---------------------------------", f";{comment_label}", "; ---------------------------------"])
             work_plane = FreePlane(
                 x=birdsmouth.start_x,
                 y=birdsmouth.start_depth,
