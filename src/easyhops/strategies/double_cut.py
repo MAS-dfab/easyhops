@@ -31,8 +31,9 @@ class DoubleCutStrategies:
     @staticmethod
     def pocketing(
         double_cut: "DoubleCut",
+        machine_ref_side_index: int,
         tool: Optional[MachiningTool] = None,
-        first_cut: bool = True,
+        first_cut: bool = False,
         overlap: int = 60,
     ) -> "List[HOPSMachining]":
         """Create a HOPSMachining for a DoubleCut pocket operation.
@@ -44,6 +45,8 @@ class DoubleCutStrategies:
         -----------
         double_cut : DoubleCut
             The DoubleCut processing containing the geometric information.
+        machine_ref_side_index : int
+            The reference side index of the machine setup, used to determine the correct work plane orientation.
         tool : MachiningTool, optional
             Defaults to CastorD61 (WZF503).
         first_cut : bool
@@ -74,19 +77,21 @@ class DoubleCutStrategies:
         # Auto-calculate passes: how many tool.max_depth increments fit in ridge_length
         n_z_passes = max(1, math.ceil(ridge_length / tool.max_depth))
 
-        if double_cut.ref_side_index == 1:
+        if double_cut.ref_side_index == machine_ref_side_index:
             easy_snap_xy = EasySnapXY.REAR_LEFT
             rotation_angle = -angle if double_cut.orientation == "start" else angle
             # KG01 approach: x = -TAN(ridge_angle)/_WZR (towards REAR), y = _WZR
             kg01_x = f"-TAN({ridge_angle:.3f})/_WZR"
-        elif double_cut.ref_side_index == 3:
+        elif double_cut.ref_side_index == (machine_ref_side_index + 2) % 4:  # Opposite side
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             rotation_angle = 180 + angle if double_cut.orientation == "start" else 180 - angle
             # KG01 approach: x = +TAN(supplement)/_WZR, y = _WZR
             supplement = 180 - ridge_angle
             kg01_x = f"TAN({supplement:.3f})/_WZR"
         else:
-            raise NotImplementedError(f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut. Expected 1 or 3.")
+            raise NotImplementedError(
+                f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut. Expected {machine_ref_side_index} or {(machine_ref_side_index + 2) % 4}."
+            )  # noqa: E501
 
         # The angled line length covers the ridge + one tool diameter of clearance
         kw_length = f"{ridge_length:.3f}+_WZD"
@@ -94,11 +99,14 @@ class DoubleCutStrategies:
 
         contour_name = "K1"
 
+        finishing_contour_name = "K2"
+
         class _DoubleCutPocketOp:
-            """Serialises as: KB + KG01 + _KWGerade_V5 + KG01 + KG01ZuKB + _ExecutePocket_ETH."""
+            """Serialises as: pocket contour + _ExecutePocket_ETH, then finishing EBENEF + ridge contour."""
 
             def __str__(self_op):
                 lines = [
+                    # ---- roughing pocket ----
                     str(ContourStart(contour_name, x="-_WZR", y="-_WZR", easy_snap_xy=EasySnapXY.REAR_LEFT)),
                     str(ContourLine("L_start", x=kg01_x, y="_WZR", z=0, easy_snap_xy=EasySnapXY.RELATIVE)),
                     f"CALL _KWGerade_V5 ( VAL NAME:='L_main',LAENGE:={kw_length},WINKEL:={kw_angle},Z:=0,INFO:='',ESD:=2)",
@@ -117,6 +125,16 @@ class DoubleCutStrategies:
                             max_plunge_length=60,
                         )
                     ),
+                    # ---- finishing pass (same work plane, no new tool call) ----
+                    "; ---------------------------------",
+                    ";DoubleCut_Finishing",
+                    "; ---------------------------------",
+                    str(work_plane),  # repeat EBENEF without WZF
+                    str(ContourStart(finishing_contour_name, x=0, y=0, z=0, easy_snap_xy=EasySnapXY.DISABLED)),
+                    f"CALL _KWGerade_V5 ( VAL NAME:='',LAENGE:={kw_length},WINKEL:={kw_angle},Z:=0,INFO:='',ESD:=2)",
+                    "KSP ('???','???',0,2,1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)",
+                    f"KonturFraesen ('{finishing_contour_name}','KSP','KEP',0,0,0,0,0,0,0,0,0,90,0,0.5,0)",
+                    "EP (1,_ANF,0)",
                 ]
                 return "\n".join(lines)
 
@@ -135,7 +153,7 @@ class DoubleCutStrategies:
             tool=tool,
             work_plane=work_plane,
             operations=[_DoubleCutPocketOp()],
-            comments=["; ###### DoubleCut ######"],
+            comments=["; ---------------------------------", ";DoubleCut_Pocketing", "; ---------------------------------"],
         )
         return [machining]
 
@@ -224,7 +242,8 @@ class DoubleCutStrategies:
         n_passes = n_z_passes
         result = []
         for i in range(n_passes):
-            comment = f"; ###### DoubleCut (Pass {i + 1}/{n_passes}) ######" if n_passes > 1 else "; ###### DoubleCut ######"
+            comment_label = f"DoubleCut_Milling (Pass {i + 1}/{n_passes})" if n_passes > 1 else "DoubleCut_Milling"
+            comment = "\n".join(["; ---------------------------------", f";{comment_label}", "; ---------------------------------"])
             work_plane = FreePlane(
                 x=double_cut.start_x,
                 y=double_cut.start_y,
