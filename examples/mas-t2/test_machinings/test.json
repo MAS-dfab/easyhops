@@ -1,0 +1,196 @@
+{
+    "data": {
+        "elements": {
+            "b65fd8ea-ec0f-445b-ba56-ddec137d196e": {
+                "data": {
+                    "category": "tertiary",
+                    "features": [],
+                    "frame": {
+                        "data": {
+                            "point": [
+                                1108.9424835361715,
+                                -2366.6808813423704,
+                                2925.1833588673144
+                            ],
+                            "xaxis": [
+                                -0.3692797349855554,
+                                -0.8710628676424298,
+                                0.323854840852418
+                            ],
+                            "yaxis": [
+                                0.9206813487100043,
+                                -0.3903150703438539,
+                                2.7755575615628914e-17
+                            ]
+                        },
+                        "dtype": "compas.geometry/Frame",
+                        "guid": "a53e5ff2-4e9a-4a3b-87d0-06c7a0014406"
+                    },
+                    "height": 200.0,
+                    "length": 2000.0000000000002,
+                    "ref_side_index": 1,
+                    "rhino_guid": null,
+                    "width": 80.0
+                },
+                "dtype": "compas_timber.elements/Beam",
+                "guid": "b65fd8ea-ec0f-445b-ba56-ddec137d196e"
+            },
+            "e0ce6948-4197-492b-8b78-19b030a3c1db": {
+                "data": {
+                    "category": "main",
+                    "features": [],
+                    "frame": {
+                        "data": {
+                            "point": [
+                                970.6693043205596,
+                                -2097.8633670685886,
+                                2751.0064000051607
+                            ],
+                            "xaxis": [
+                                0.42646211151270974,
+                                -0.8529242230254103,
+                                0.3010819443616996
+                            ],
+                            "yaxis": [
+                                0.894427190999914,
+                                0.4472135954999618,
+                                -2.7755575615628914e-17
+                            ]
+                        },
+                        "dtype": "compas.geometry/Frame",
+                        "guid": "aa79c4d3-a058-4040-b4db-304b65664476"
+                    },
+                    "height": 240.0,
+                    "length": 2000.0000000000005,
+                    "rhino_guid": null,
+                    "width": 120.0
+                },
+                "dtype": "compas_timber.elements/Beam",
+                "guid": "e0ce6948-4197-492b-8b78-19b030a3c1db"
+            },
+            "fe29934d-720d-4591-9a3d-ff6890b0a7c3": {
+                "data": {
+                    "category": "tertiary",
+                    "features": [],
+                    "frame": {
+                        "data": {
+                            "point": [
+                                1108.9424835361715,
+                                -2366.6808813423704,
+                                2925.1833588673144
+                            ],
+                            "xaxis": [
+                                0.39275471776954884,
+                                0.9004768188432253,
+                                0.18677588280007493
+                            ],
+                            "yaxis": [
+                                -0.9166067607854267,
+                                0.39979000247936153,
+                                1.3877787807814457e-17
+                            ]
+                        },
+                        "dtype": "compas.geometry/Frame",
+                        "guid": "0104cc43-21a2-4169-9b1b-48979640705b"
+                    },
+                    "height": 200.0,
+                    "length": 1999.9999999999995,
+                    "ref_side_index": 1,
+                    "rhino_guid": null,
+                    "width": 80.0
+                },
+                "dtype": "compas_timber.elements/Beam",
+                "guid": "fe29934d-720d-4591-9a3d-ff6890b0a7c3"
+            }
+        },
+        "graph": {
+            "attributes": {},
+            "default_edge_attributes": {
+                "candidates": null,
+                "contacts": null,
+                "joints": null,
+                "modifiers": null,
+                "structural_segments": null
+            },
+            "default_node_attributes": {
+                "element": null,
+                "structural_segments": null,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "edge": {
+                "0": {
+                    "1": {
+                        "joints": "2adf060d-d94e-4fd0-90f3-c1f074278ca5"
+                    },
+                    "2": {
+                        "joints": "2adf060d-d94e-4fd0-90f3-c1f074278ca5"
+                    }
+                },
+                "1": {
+                    "2": {
+                        "joints": "2adf060d-d94e-4fd0-90f3-c1f074278ca5"
+                    }
+                },
+                "2": {}
+            },
+            "max_node": 2,
+            "node": {
+                "0": {
+                    "element": "e0ce6948-4197-492b-8b78-19b030a3c1db"
+                },
+                "1": {
+                    "element": "fe29934d-720d-4591-9a3d-ff6890b0a7c3"
+                },
+                "2": {
+                    "element": "b65fd8ea-ec0f-445b-ba56-ddec137d196e"
+                }
+            }
+        },
+        "joints": {
+            "2adf060d-d94e-4fd0-90f3-c1f074278ca5": {
+                "data": {
+                    "element_guids": [
+                        "e0ce6948-4197-492b-8b78-19b030a3c1db",
+                        "fe29934d-720d-4591-9a3d-ff6890b0a7c3",
+                        "b65fd8ea-ec0f-445b-ba56-ddec137d196e"
+                    ],
+                    "location": null,
+                    "mill_depth": null,
+                    "name": "KBirdsmouthJoint",
+                    "topology": 0
+                },
+                "dtype": "compas_timber.connections/KBirdsmouthJoint",
+                "guid": "2adf060d-d94e-4fd0-90f3-c1f074278ca5"
+            }
+        },
+        "materials": {},
+        "transformation": null,
+        "tree": {
+            "attributes": {},
+            "root": {
+                "children": [
+                    {
+                        "element": "e0ce6948-4197-492b-8b78-19b030a3c1db",
+                        "name": "ElementNode"
+                    },
+                    {
+                        "element": "fe29934d-720d-4591-9a3d-ff6890b0a7c3",
+                        "name": "ElementNode"
+                    },
+                    {
+                        "element": "b65fd8ea-ec0f-445b-ba56-ddec137d196e",
+                        "name": "ElementNode"
+                    }
+                ],
+                "name": "root"
+            }
+        }
+    },
+    "dtype": "compas_timber.model/TimberModel",
+    "guid": "71350cef-1457-4100-b454-c47a5f657fbe",
+    "inheritance": [
+        "compas_model.models/Model"
+    ]
+}

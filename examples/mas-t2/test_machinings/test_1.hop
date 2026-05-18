@@ -1,0 +1,10 @@
+VARS
+   DX := 2000.0000000000005;*VAR* Piece Length
+   DY := 120.0;*VAR* Piece Height
+   DZ := 240.0;*VAR* Piece Thickness
+   RSI := 0;*VAR* ReferenceSideIndex (0-5)
+START
+
+FERTIGTEIL(2000.0000000000005,240.0,120.0,0,0,0.000,0.000,0.000,'',0,0,0)
+
+CALL Park_V7 ( VAL MODE:=8,POSX:=0,POSY:=0)

@@ -1,0 +1,36 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=8.9.20.5[Hops.exe]
+;BILD=BEAM _02.WMF
+;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - t2\shoe_detail\shoe_\shoe_.ewb-13/05/2026-17:39:10
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=Beam _02
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 2528.973;*VAR*Piece Length
+   DY := 120;*VAR*Piece Height
+   DZ := 125;*VAR*Piece Thickness
+START
+FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
+CALL Park_V7 ( VAL MODE:=2,POSX:=0,POSY:=0)
+; ---------------------------------
+; Beam _02,C_Castor_D61
+; ---------------------------------
+WZF (503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF(2561.519,-5.652,132.624,80,180,0,0)
+SP (0,-32.546,0,1,1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5)
+G01(32.546,-32.546,0,0,0,2)
+G01(2561.519,-32.546,0,0,0,2)
+G01(2594.065,-32.546,0,0,0,2)
+EP (1,_ANF,0)

@@ -1,0 +1,41 @@
+;BILD=Beam _00.wmf
+;INFO=DDX EasyWOOD PostProc for Holz-Her 1.0.6 - t2\shoe_detail\shoe_\shoe_0178.ewb-14/05/2026-10:11:50
+;WZGV=7135C_116
+;MASCHINE=HOLZHER
+;NCNAME=Beam _00
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 916.364;*VAR* Piece Length
+   DY := 200;*VAR* Piece Height
+   DZ := 120;*VAR* Piece Thickness
+START
+; Piece Definition
+FERTIGTEIL(DX,DY,DZ,0,0,0,0,0,'',0,0,0)
+; Definition of Park Mode
+CALL Park_V7 ( VAL MODE:=2,POSX:=0,POSY:=0)
+; ---------------------------------
+; Beam _00,C_Castor_D61_1
+; ---------------------------------
+WZF(503,2000,2000,10000,_SD,_ANF,'1')
+; Work Plane Definition: Generic View
+EBENEF(910.91,212.084,152.546,90,99.663,0,0)
+; Compensation (Par4): 0 = Tool Center - 1 = SX - 2 = DX
+; Type LeadIn  (Par5): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+CALL _Tvorschub_v5(VAL VORSCHUB:=2000)
+SP(-32.546,0,0,1,3,1.065,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+G01(-32.546,-32.546,0,0,0,2)
+G01(-32.546,-152.546,0,0,0,2)
+CALL _Tvorschub_v5(VAL VORSCHUB:=10000)
+G01(-32.546,-185.092,0,0,0,2)
+; ######## END MACH TYPE = 2
+; Type LeadOut (Par1): 0 = None - 1 = Linear - 2 = Tangent - 3 = Lateral
+EP(3,1.065,0)
+EBENE0()

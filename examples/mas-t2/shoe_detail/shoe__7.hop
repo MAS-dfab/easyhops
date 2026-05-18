@@ -1,0 +1,76 @@
+;MAKROTYP=0
+;INSTVERSION=
+;EXEVERSION=8.9.20.5[Hops.exe]
+;BILD=SHOE__7.WMF
+;INFO=shoe__7
+;WZGV=7235C_219
+;WZGVCONFIG=
+;MASCHINE=HH7
+;NCNAME=
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.Dll
+;DIALOGPROC=StandardFormAnzeigen
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   DX := 1923.3003845783537;*VAR*Piece Length
+   DY := 200;*VAR*Piece Height
+   DZ := 80;*VAR*Piece Thickness
+   RSI := 1;*VAR*ReferenceSideIndex (0-5)
+START
+FERTIGTEIL(1923.3003845783537,200,80,0,0,0.000,0.000,0.000,'',0,0,0)
+CALL Park_V7 ( VAL MODE:=8,POSX:=0,POSY:=0)
+; ---------------------------------
+;JackRafterCut_ContourPocket
+; ---------------------------------
+/WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+/EBENEF (2018.034,0,0,90.000,136.665,1,2,0)
+/KB ('K0','',-_WZR,-_WZR,0,'',7,0)
+/KG01 ('',-_WZR,-_WZR,0,'',1,2)
+/KG01 ('',-_WZR,-_WZR,0,'',3,2)
+/KG01 ('',-_WZR,-_WZR,0,'',5,2)
+/KG01ZuKB()
+/CALL _ExecutePocket_ETH ( VAL NAMEN:='K0',AA:=-_WZR,UEBERLAPPUNG:=20,MODE:=2,ANGLE:=0,TIEFE:=80,ESMD:=0,ANZAHL:=2,MAXZ:=_AT_MAXDEPTH,RD:=1,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=20)
+; ---------------------------------
+;JackRafterCut_ContourPocket
+; ---------------------------------
+/Ebene2()
+/CALL Kontur_Rechteck ( VAL KONTURNAME:='RE1',MX:=0,MY:=0,Z:=-143.2,LAENGE:=200,BREITE:=120,RADIUS:=0,DW:=0,ABST:=0,CW_CCW:=1,LAYER:='',INFO:='',ESXY:=9,ESZ:=0)
+/CALL _ExecutePocket_ETH ( VAL NAMEN:='RE1',AA:=-_WZR,UEBERLAPPUNG:=30,MODE:=2,ANGLE:=0,TIEFE:=-143.2,ESMD:=0,ANZAHL:=3,MAXZ:=_AT_MAXDEPTH,RD:=1,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=20)
+; ---------------------------------
+;DoubleCut_Pocketing
+; ---------------------------------
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+EBENEF (266.080,65.478,0,180-139.96,46.67+180,1,2,0)
+/EBENEF (266.080,65.478,0,52.585,-95.204,1,2,0)
+KB ('K1','',-_WZD,-_WZR,0,'',5,0)
+KG01 ('L_start',TAN(34.516)/_WZR + _WZD,_WZR,0,'',0,2)
+CALL _KWGerade_V5 ( VAL NAME:='L_main',LAENGE:=157.926+_WZD*2,WINKEL:=34.516+180,Z:=0,INFO:='',ESD:=2)
+KG01 ('L_end',-_WZD,-_WZD,0,'',3,2)
+KG01ZuKB()
+CALL _ExecutePocket_ETH ( VAL NAMEN:='K1',AA:=0,UEBERLAPPUNG:=60,MODE:=0,ANGLE:=0,TIEFE:=157.926,ESMD:=0,ANZAHL:=4,MAXZ:=_AT_MAXDEPTH,RD:=1,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=60)
+; ---------------------------------
+;DoubleCut_Finishing
+; ---------------------------------
+WZF(503,_VE,_V,_VA,_SD,_ANF,'1')
+/EBENEF (266.080,65.478,0,52.585,-95.204,1,2,0)
+KB ('K2','',0,0,0,'',0,0)
+CALL _KWGerade_V5 ( VAL NAME:='',LAENGE:=157.926+_WZD,WINKEL:=34.516+180,Z:=0,INFO:='',ESD:=2)
+KSP ('???','???',0,1,1,_ANF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+KonturFraesen ('K2','KSP','KEP',0,0,0,0,0,0,0,0,0,90,0,0.5,0)
+EP (1,_ANF,0)
+; ---------------------------------
+;JackRafterCut_ContourPocket
+; ---------------------------------
+/EbeneF (95.20,0,0,49.12,46.66+180,1,2,0)
+/KB ('K-1','',0,0,0,'',7,0)
+/KG01 ('',0,0,0,'',1,2)
+/KG01 ('',+200,0,0,'',3,2)
+/KG01 ('',+200,0,0,'',5,2)
+/KG01ZuKB()
+/CALL _ExecutePocket_ETH ( VAL NAMEN:='K-1',AA:=-_WZR,UEBERLAPPUNG:=30,MODE:=2,ANGLE:=0,TIEFE:=50,ESMD:=0,ANZAHL:=2,MAXZ:=_AT_MAXDEPTH,RD:=1,FLIEGENDEINTAUCHEN:=0,MAXEINTAUCHLAENGE:=20)

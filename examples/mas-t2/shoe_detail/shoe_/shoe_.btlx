@@ -1,0 +1,1112 @@
+<?xml version="1.0" ?>
+<BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+   <FileHistory>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.15.1" ComputerName="PAPACHAP" UserName="kapso" FileName="Large Objects - Meters.3dm" Date="2026-05-13" Time="17:34:55" Comment=""/>
+   </FileHistory>
+   <Project Name="COMPAS Timber Project">
+      <Parts>
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1628.221" Height="200.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="9863" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{9863156a-11c2-4662-8f09-e677bf89450d}">
+                  <Position>
+                     <ReferencePoint X="8757.506" Y="11.331" Z="3490.549"/>
+                     <XVector X="-0.660" Y="-0.643" Z="0.388"/>
+                     <YVector X="0.278" Y="0.270" Z="0.922"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="ridge_angle" Value="60.931023649358494" Type="string"/>
+                     <UserAttribute Name="ridge_length" Value="191.32004978254298" Type="string"/>
+                     <UserAttribute Name="strategy" Value="pocketing" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>166.460</StartX>
+                  <StartY>67.879</StartY>
+                  <Angle1>44.519</Angle1>
+                  <Inclination1>109.815</Inclination1>
+                  <Angle2>112.806</Angle2>
+                  <Inclination2>44.243</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>46.855</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1084.301</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>19.325</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <StepJoint Name="StepJoint" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>453.561</StartX>
+                  <StrutInclination>160.675</StrutInclination>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StepShape>double</StepShape>
+                  <Tenon>no</Tenon>
+                  <TenonWidth>40.000</TenonWidth>
+                  <TenonHeight>40.000</TenonHeight>
+               </StepJoint>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 -1 3 4 2 1 5 -1 6 7 5 3 -1 8 4 2 0 9 -1 8 9 10 11 -1 9 0 1 5 7 12 13 10 -1 13 14 11 10 -1 15 14 16 17 -1 13 12 18 19 -1 19 18 17 16 -1 6 3 4 8 11 14 15 -1 12 7 6 15 17 18 -1 13 19 16 14 -1 ">
+                  <Coordinate point="110.906 0.000 0.000 166.460 132.121 0.000 240.859 0.000 116.671 114.700 122.377 120.000 239.148 0.000 120.000 144.278 153.935 0.000 187.454 200.000 120.000 187.454 200.000 0.000 1023.865 0.000 120.000 1023.865 0.000 0.000 1027.270 20.000 0.000 1027.270 20.000 120.000 434.945 200.000 0.000 574.432 157.612 0.000 574.432 157.612 120.000 434.945 200.000 120.000 574.432 178.806 120.000 513.997 200.000 120.000 513.997 200.000 0.000 574.432 178.806 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1125.343" Height="200.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="8dba" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{8dbadaea-4351-4e12-9ea7-a6e3fdea4c80}">
+                  <Position>
+                     <ReferencePoint X="8665.843" Y="89.566" Z="3520.440"/>
+                     <XVector X="0.657" Y="0.640" Z="0.398"/>
+                     <YVector X="-0.285" Y="-0.278" Z="0.917"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="ridge_angle" Value="119.06897635064134" Type="string"/>
+                     <UserAttribute Name="ridge_length" Value="196.77962448632601" Type="string"/>
+                     <UserAttribute Name="strategy" Value="pocketing" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>12.580</StartX>
+                  <StartY>64.510</StartY>
+                  <Angle1>1.736</Angle1>
+                  <Inclination1>70.185</Inclination1>
+                  <Angle2>113.449</Angle2>
+                  <Inclination2>44.243</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>86.890</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>727.902</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>26.930</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <StepJoint Name="StepJoint" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>290.026</StartX>
+                  <StrutInclination>153.070</StrutInclination>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StepShape>double</StepShape>
+                  <Tenon>no</Tenon>
+                  <TenonWidth>40.000</TenonWidth>
+                  <TenonHeight>40.000</TenonHeight>
+               </StepJoint>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 2 1 5 6 -1 7 6 4 -1 8 9 3 0 -1 10 5 6 7 11 -1 10 11 12 13 -1 11 7 4 2 3 9 14 15 12 -1 15 16 13 12 -1 17 16 18 19 -1 15 14 20 21 -1 21 20 19 18 -1 8 0 1 5 10 13 16 17 -1 14 9 8 17 19 20 -1 15 21 18 16 -1 ">
+                  <Coordinate point="9.716 178.835 120.000 163.663 174.171 120.000 12.580 135.490 0.000 7.369 135.648 0.000 6.613 121.734 0.000 88.114 0.000 120.000 0.000 0.000 41.271 0.000 0.000 0.000 10.865 200.000 120.000 10.865 200.000 0.000 683.742 0.000 120.000 683.742 0.000 0.000 688.530 20.000 0.000 688.530 20.000 120.000 275.365 200.000 0.000 378.346 155.135 0.000 378.346 155.135 120.000 275.365 200.000 120.000 378.346 177.567 120.000 334.186 200.000 120.000 334.186 200.000 0.000 378.346 177.567 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2528.973" Height="200.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6908" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{6908057c-26ba-4318-b603-1bd8ce89ef7a}">
+                  <Position>
+                     <ReferencePoint X="10020.403" Y="-60.000" Z="3953.571"/>
+                     <XVector X="-0.996" Y="-0.000" Z="-0.087"/>
+                     <YVector X="-0.087" Y="-0.000" Z="0.996"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <StepJointNotch Name="StepJointNotch" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>998.748</StartX>
+                  <StartY>0.000</StartY>
+                  <StrutInclination>155.931</StrutInclination>
+                  <NotchLimited>no</NotchLimited>
+                  <NotchWidth>120.000</NotchWidth>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StrutHeight>240.000</StrutHeight>
+                  <StepShape>double</StepShape>
+                  <Mortise>no</Mortise>
+                  <MortiseWidth>40.000</MortiseWidth>
+                  <MortiseHeight>40.000</MortiseHeight>
+               </StepJointNotch>
+               <StepJointNotch Name="StepJointNotch" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1845.857</StartX>
+                  <StartY>0.000</StartY>
+                  <StrutInclination>124.246</StrutInclination>
+                  <NotchLimited>no</NotchLimited>
+                  <NotchWidth>120.000</NotchWidth>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StrutHeight>240.000</StrutHeight>
+                  <StepShape>double</StepShape>
+                  <Mortise>no</Mortise>
+                  <MortiseWidth>40.000</MortiseWidth>
+                  <MortiseHeight>40.000</MortiseHeight>
+               </StepJointNotch>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1341.242</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>44.134</Angle>
+                  <Inclination>86.514</Inclination>
+                  <Slope>-3.586</Slope>
+                  <Length>120.000</Length>
+                  <Width>120.000</Width>
+                  <Depth>55.611</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <LongitudinalCut Name="LongitudinalCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4" ToolPosition="left">
+                  <StartX>0.000</StartX>
+                  <StartY>100.572</StartY>
+                  <Inclination>-80.000</Inclination>
+                  <StartLimited>no</StartLimited>
+                  <EndLimited>no</EndLimited>
+                  <Length>2528.973</Length>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <AngleStart>90.000</AngleStart>
+                  <AngleEnd>90.000</AngleEnd>
+               </LongitudinalCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 7 -1 4 7 8 9 -1 10 11 12 13 -1 14 0 1 15 -1 15 9 8 14 -1 16 17 18 19 -1 16 19 20 21 -1 22 23 5 6 -1 24 10 11 25 -1 20 24 25 21 -1 26 27 28 29 -1 23 26 29 22 -1 30 31 28 27 -1 30 31 17 18 -1 1 15 9 4 5 23 26 27 30 18 19 20 24 10 13 32 33 2 -1 12 34 32 13 -1 11 25 21 16 17 31 28 29 22 6 7 8 14 0 3 35 34 12 -1 2 33 35 3 -1 33 32 34 35 -1 ">
+                  <Coordinate point="410.277 0.000 0.000 410.277 0.000 120.000 0.000 0.000 120.000 0.000 0.000 0.000 909.197 40.000 120.000 998.748 0.000 120.000 998.748 0.000 0.000 909.197 40.000 0.000 891.330 0.000 0.000 891.330 0.000 120.000 2136.194 0.000 120.000 2136.194 0.000 0.000 2528.973 0.000 0.000 2528.973 0.000 120.000 414.541 20.000 0.000 414.541 20.000 120.000 1873.088 40.000 0.000 1845.857 0.000 0.000 1845.857 0.000 120.000 1873.088 40.000 120.000 1931.844 0.000 120.000 1931.844 0.000 0.000 1341.242 0.000 0.000 1217.558 0.000 120.000 2125.615 20.000 120.000 2125.615 20.000 0.000 1213.632 44.872 120.000 1384.970 59.863 120.000 1507.714 70.601 0.000 1336.376 55.611 0.000 1390.208 0.000 120.000 1513.891 0.000 0.000 2528.973 100.572 120.000 0.000 100.572 120.000 2528.973 121.731 0.000 0.000 121.731 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="3" AssemblyNumber="" OrderNumber="3" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2364.377" Height="200.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="4f8f" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{4f8f372f-b7f9-4675-81a6-3cd0559765d4}">
+                  <Position>
+                     <ReferencePoint X="9481.141" Y="716.098" Z="3768.569"/>
+                     <XVector X="-0.715" Y="-0.696" Z="0.061"/>
+                     <YVector X="0.043" Y="0.042" Z="0.998"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <StepJointNotch Name="StepJointNotch" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1353.200</StartX>
+                  <StartY>0.000</StartY>
+                  <StrutInclination>160.675</StrutInclination>
+                  <NotchLimited>no</NotchLimited>
+                  <NotchWidth>120.000</NotchWidth>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StrutHeight>200.000</StrutHeight>
+                  <StepShape>double</StepShape>
+                  <Mortise>no</Mortise>
+                  <MortiseWidth>40.000</MortiseWidth>
+                  <MortiseHeight>40.000</MortiseHeight>
+               </StepJointNotch>
+               <StepJointNotch Name="StepJointNotch" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>836.259</StartX>
+                  <StartY>0.000</StartY>
+                  <StrutInclination>153.070</StrutInclination>
+                  <NotchLimited>no</NotchLimited>
+                  <NotchWidth>120.000</NotchWidth>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StrutHeight>200.000</StrutHeight>
+                  <StepShape>double</StepShape>
+                  <Mortise>no</Mortise>
+                  <MortiseWidth>40.000</MortiseWidth>
+                  <MortiseHeight>40.000</MortiseHeight>
+               </StepJointNotch>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>1077.707</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>44.190</Angle>
+                  <Inclination>87.572</Inclination>
+                  <Slope>-2.495</Slope>
+                  <Length>120.000</Length>
+                  <Width>120.000</Width>
+                  <Depth>140.866</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <LongitudinalCut Name="LongitudinalCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4" ToolPosition="left">
+                  <StartX>0.000</StartX>
+                  <StartY>99.923</StartY>
+                  <Inclination>-79.381</Inclination>
+                  <StartLimited>no</StartLimited>
+                  <EndLimited>no</EndLimited>
+                  <Length>2364.377</Length>
+                  <DepthLimited>no</DepthLimited>
+                  <Depth>0.000</Depth>
+                  <AngleStart>90.000</AngleStart>
+                  <AngleEnd>90.000</AngleEnd>
+               </LongitudinalCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 7 -1 4 7 8 9 -1 10 11 12 13 -1 14 0 1 15 -1 8 14 15 9 -1 16 17 18 19 -1 16 19 20 21 -1 17 18 5 6 -1 22 10 11 23 -1 23 21 20 22 -1 24 25 26 27 -1 11 23 21 16 17 6 7 8 14 0 3 28 29 24 25 30 31 12 -1 2 32 28 3 -1 1 15 9 4 5 18 19 20 22 10 13 33 34 26 27 35 32 2 -1 12 31 33 13 -1 34 26 25 30 -1 29 24 27 35 -1 28 32 35 29 -1 33 31 30 34 -1 ">
+                  <Coordinate point="1957.556 0.000 120.000 1957.556 0.000 0.000 2364.377 0.000 0.000 2364.377 0.000 120.000 1467.261 40.000 0.000 1353.200 0.000 0.000 1353.200 0.000 120.000 1467.261 40.000 120.000 1481.288 0.000 120.000 1481.288 0.000 0.000 394.657 0.000 0.000 394.657 0.000 120.000 0.000 0.000 120.000 0.000 0.000 0.000 1954.151 20.000 120.000 1954.151 20.000 0.000 757.516 40.000 120.000 836.259 0.000 120.000 836.259 0.000 0.000 757.516 40.000 0.000 737.197 0.000 0.000 737.197 0.000 120.000 399.446 20.000 0.000 399.446 20.000 120.000 1240.815 48.693 120.000 1069.140 59.134 120.000 946.154 66.614 0.000 1117.829 56.173 0.000 2364.377 99.923 120.000 1243.930 99.923 120.000 1071.620 99.923 120.000 0.000 99.923 120.000 2364.377 122.423 0.000 0.000 122.423 0.000 949.548 122.423 0.000 1121.858 122.423 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="4" AssemblyNumber="" OrderNumber="4" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2019.894" Height="240.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="bcff" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{bcffe6c8-c484-4c48-9fb2-a15d9513497a}">
+                  <Position>
+                     <ReferencePoint X="7963.052" Y="60.000" Z="2074.042"/>
+                     <XVector X="0.595" Y="0.000" Z="0.804"/>
+                     <YVector X="-0.804" Y="0.000" Z="0.595"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>2019.894</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>24.403</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1961.803</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>102.201</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>2542.712</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>12.201</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1856.001</StartX>
+                  <StartY>48.000</StartY>
+                  <Angle1>12.201</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>102.201</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1750.198</StartX>
+                  <StartY>96.000</StartY>
+                  <Angle1>12.201</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>102.201</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1644.396</StartX>
+                  <StartY>144.000</StartY>
+                  <Angle1>12.201</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>102.201</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1538.593</StartX>
+                  <StartY>192.000</StartY>
+                  <Angle1>12.201</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>102.201</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1128.218</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>52.113</Inclination1>
+                  <Inclination2>142.113</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1177.736</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>52.113</Inclination1>
+                  <Inclination2>142.113</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1227.254</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>52.113</Inclination1>
+                  <Inclination2>142.113</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1276.773</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>52.113</Inclination1>
+                  <Inclination2>142.113</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>end</Orientation>
+                  <StartX>1326.291</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>52.113</Inclination1>
+                  <Inclination2>142.113</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>98.498</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>126.528</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 7 -1 8 9 10 11 -1 4 7 11 10 -1 2 3 12 13 -1 14 15 13 12 -1 16 17 18 19 -1 14 19 18 15 -1 8 9 20 21 -1 16 8 21 -1 20 9 17 17 -1 16 21 20 17 -1 22 6 5 23 -1 0 24 25 1 -1 24 0 3 12 14 19 16 8 21 -1 23 5 4 10 9 20 -1 22 23 25 24 -1 ">
+                  <Coordinate point="1961.803 0.000 120.000 1961.803 0.000 0.000 1966.993 24.000 0.000 1966.993 24.000 120.000 1432.791 240.000 0.000 0.000 240.000 0.000 0.000 240.000 120.000 1432.791 240.000 120.000 1649.585 168.000 120.000 1649.585 168.000 0.000 1543.783 216.000 0.000 1543.783 216.000 120.000 1856.001 48.000 120.000 1856.001 48.000 0.000 1861.190 72.000 120.000 1861.190 72.000 0.000 1755.388 120.000 120.000 1755.388 120.000 0.000 1750.198 96.000 0.000 1750.198 96.000 120.000 1644.396 144.000 0.000 1644.396 144.000 120.000 0.000 132.974 120.000 0.000 132.974 0.000 98.498 0.000 120.000 98.498 0.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="5" AssemblyNumber="" OrderNumber="5" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1840.337" Height="240.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="79e8" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{79e82df5-07c9-4efe-9087-34186986b25b}">
+                  <Position>
+                     <ReferencePoint X="8431.788" Y="60.000" Z="3261.926"/>
+                     <XVector X="0.874" Y="0.000" Z="0.486"/>
+                     <YVector X="-0.486" Y="0.000" Z="0.874"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>76.819</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>79.822</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>101.202</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>129.911</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>-142.634</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>39.911</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>109.820</StartX>
+                  <StartY>48.000</StartY>
+                  <Angle1>39.911</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>129.911</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>118.437</StartX>
+                  <StartY>96.000</StartY>
+                  <Angle1>39.911</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>129.911</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>127.054</StartX>
+                  <StartY>144.000</StartY>
+                  <Angle1>39.911</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>129.911</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>135.671</StartX>
+                  <StartY>192.000</StartY>
+                  <Angle1>39.911</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>129.911</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>794.516</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>77.799</Inclination1>
+                  <Inclination2>167.799</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>678.334</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>77.799</Inclination1>
+                  <Inclination2>167.799</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>562.152</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>77.799</Inclination1>
+                  <Inclination2>167.799</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>445.971</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>77.799</Inclination1>
+                  <Inclination2>167.799</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="24.554663852464266" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="113.55723962261051" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>329.789</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>77.799</Inclination1>
+                  <Inclination2>167.799</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1398.984</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>24.069</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <StepJoint Name="StepJoint" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>812.637</StartX>
+                  <StrutInclination>155.931</StrutInclination>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StepShape>double</StepShape>
+                  <Tenon>no</Tenon>
+                  <TenonWidth>40.000</TenonWidth>
+                  <TenonHeight>40.000</TenonHeight>
+               </StepJoint>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 5 6 7 -1 3 0 8 9 -1 10 11 9 8 -1 12 13 14 15 -1 10 15 14 11 -1 16 17 18 19 -1 12 19 18 13 -1 6 7 20 21 -1 16 21 20 17 -1 22 23 24 25 -1 26 27 22 25 -1 28 29 5 4 -1 30 31 32 33 -1 30 33 24 23 -1 34 35 36 37 -1 34 37 32 31 -1 38 39 40 41 -1 38 41 36 35 -1 42 28 29 43 -1 42 43 40 39 -1 44 2 1 45 -1 27 46 47 26 -1 1 0 8 10 15 12 19 16 21 6 5 29 43 40 41 36 37 32 33 24 25 26 47 48 45 -1 46 27 22 23 30 31 34 35 38 39 42 28 4 7 20 17 18 13 14 11 9 3 2 44 49 -1 49 44 45 48 -1 47 46 49 48 -1 ">
+                  <Coordinate point="81.127 216.000 120.000 101.202 240.000 120.000 101.202 240.000 0.000 81.127 216.000 0.000 144.288 0.000 0.000 144.288 0.000 120.000 115.596 24.000 120.000 115.596 24.000 0.000 109.820 192.000 120.000 109.820 192.000 0.000 89.744 168.000 120.000 89.744 168.000 0.000 98.362 120.000 120.000 98.362 120.000 0.000 118.437 144.000 0.000 118.437 144.000 120.000 106.979 72.000 120.000 106.979 72.000 0.000 127.054 96.000 0.000 127.054 96.000 120.000 135.671 48.000 0.000 135.671 48.000 120.000 794.516 24.000 0.000 683.523 0.000 0.000 683.523 0.000 120.000 794.516 24.000 120.000 799.705 0.000 120.000 799.705 0.000 0.000 218.797 0.000 0.000 218.797 0.000 120.000 678.334 24.000 0.000 567.342 0.000 0.000 567.342 0.000 120.000 678.334 24.000 120.000 562.152 24.000 0.000 451.160 0.000 0.000 451.160 0.000 120.000 562.152 24.000 120.000 445.971 24.000 0.000 334.978 0.000 0.000 334.978 0.000 120.000 445.971 24.000 120.000 329.789 24.000 0.000 329.789 24.000 120.000 861.677 240.000 0.000 861.677 240.000 120.000 1349.944 0.000 0.000 1349.944 0.000 120.000 1354.208 20.000 120.000 1354.208 20.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="6" AssemblyNumber="" OrderNumber="6" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1186.151" Height="240.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="fc95" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{fc957335-f395-48e4-bba9-511fb6b084fd}">
+                  <Position>
+                     <ReferencePoint X="8489.695" Y="-60.000" Z="3036.169"/>
+                     <XVector X="-0.633" Y="0.000" Z="0.774"/>
+                     <YVector X="0.774" Y="-0.000" Z="0.633"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>409.735</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>50.089</Inclination1>
+                  <Inclination2>140.089</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>360.968</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>50.089</Inclination1>
+                  <Inclination2>140.089</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>312.200</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>50.089</Inclination1>
+                  <Inclination2>140.089</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>263.433</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>50.089</Inclination1>
+                  <Inclination2>140.089</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <BirdsMouth Name="BirdsMouth" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="31.289142753452893" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="37.40647207184078" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>214.665</StartX>
+                  <StartY>-0.000</StartY>
+                  <StartDepth>24.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination1>50.089</Inclination1>
+                  <Inclination2>140.089</Inclination2>
+                  <Depth>24.000</Depth>
+                  <Width>120.000</Width>
+                  <WidthCounterPartLimited>no</WidthCounterPartLimited>
+                  <WidthCounterPart>120.000</WidthCounterPart>
+                  <HeightCounterPartLimited>no</HeightCounterPartLimited>
+                  <HeightCounterPart>120.000</HeightCounterPart>
+                  <FaceLimitedFront>no</FaceLimitedFront>
+                  <FaceLimitedBack>no</FaceLimitedBack>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <RafterNailHole>no</RafterNailHole>
+               </BirdsMouth>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>968.398</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>55.754</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <StepJoint Name="StepJoint" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>780.814</StartX>
+                  <StrutInclination>124.246</StrutInclination>
+                  <StepDepth>20.000</StepDepth>
+                  <HeelDepth>40.000</HeelDepth>
+                  <StepShape>double</StepShape>
+                  <Tenon>no</Tenon>
+                  <TenonWidth>40.000</TenonWidth>
+                  <TenonHeight>40.000</TenonHeight>
+               </StepJoint>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>68.616</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>75.775</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>93.375</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>127.887</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>-154.217</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>37.887</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>105.543</StartX>
+                  <StartY>48.000</StartY>
+                  <Angle1>37.887</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>127.887</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>117.712</StartX>
+                  <StartY>96.000</StartY>
+                  <Angle1>37.887</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>127.887</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>129.880</StartX>
+                  <StartY>144.000</StartY>
+                  <Angle1>37.887</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>127.887</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="riser_length" Value="30.409821979407717" Type="string"/>
+                     <UserAttribute Name="tread_length" Value="39.08080339107977" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>142.048</StartX>
+                  <StartY>192.000</StartY>
+                  <Angle1>37.887</Angle1>
+                  <Inclination1>90.000</Inclination1>
+                  <Angle2>127.887</Angle2>
+                  <Inclination2>90.000</Inclination2>
+               </DoubleCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 0 3 5 -1 6 7 8 9 -1 6 9 2 1 -1 10 11 12 13 -1 10 13 8 7 -1 14 15 16 17 -1 14 17 12 11 -1 18 19 20 21 -1 18 21 16 15 -1 22 23 24 25 -1 26 27 22 25 -1 28 27 29 30 -1 26 31 32 33 -1 33 32 30 29 -1 31 5 4 28 30 32 -1 26 33 29 27 -1 23 34 35 24 -1 35 34 36 37 -1 38 19 20 39 -1 40 41 42 43 44 45 46 47 36 34 23 22 27 28 4 0 1 6 7 10 11 14 15 18 19 38 -1 48 49 39 20 21 16 17 12 13 8 9 2 3 5 31 26 25 24 35 37 50 51 52 53 54 55 -1 38 39 49 40 -1 36 37 50 47 -1 51 46 47 50 -1 53 44 45 52 -1 51 52 45 46 -1 55 42 43 54 -1 53 54 43 44 -1 49 40 41 48 -1 55 48 41 42 -1 ">
+                  <Coordinate point="409.735 216.000 120.000 381.043 240.000 120.000 381.043 240.000 0.000 409.735 216.000 0.000 429.810 240.000 120.000 429.810 240.000 0.000 360.968 216.000 120.000 332.275 240.000 120.000 332.275 240.000 0.000 360.968 216.000 0.000 312.200 216.000 120.000 283.508 240.000 120.000 283.508 240.000 0.000 312.200 216.000 0.000 263.433 216.000 120.000 234.741 240.000 120.000 234.741 240.000 0.000 263.433 216.000 0.000 214.665 216.000 120.000 185.973 240.000 120.000 185.973 240.000 0.000 214.665 216.000 0.000 954.782 20.000 120.000 944.203 0.000 120.000 944.203 0.000 0.000 954.782 20.000 0.000 829.204 168.921 0.000 829.204 168.921 120.000 769.266 240.000 120.000 829.204 204.461 120.000 805.009 240.000 120.000 769.266 240.000 0.000 805.009 240.000 0.000 829.204 204.461 0.000 93.375 0.000 120.000 93.375 0.000 0.000 74.700 24.000 120.000 74.700 24.000 0.000 154.217 240.000 120.000 154.217 240.000 0.000 123.373 216.000 120.000 142.048 192.000 120.000 111.205 168.000 120.000 129.880 144.000 120.000 99.037 120.000 120.000 117.712 96.000 120.000 86.868 72.000 120.000 105.543 48.000 120.000 142.048 192.000 0.000 123.373 216.000 0.000 105.543 48.000 0.000 86.868 72.000 0.000 117.712 96.000 0.000 99.037 120.000 0.000 129.880 144.000 0.000 111.205 168.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="7" AssemblyNumber="" OrderNumber="7" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1923.300" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="3266" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{32668d86-c8e4-482d-8d87-70eeb2a7ecec}">
+                  <Position>
+                     <ReferencePoint X="8689.911" Y="156.134" Z="3392.630"/>
+                     <XVector X="0.476" Y="-0.550" Z="-0.686"/>
+                     <YVector X="0.449" Y="-0.519" Z="0.727"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <UserAttributes>
+                     <UserAttribute Name="ridge_angle" Value="34.51558373841622" Type="string"/>
+                     <UserAttribute Name="ridge_length" Value="157.92634870570066" Type="string"/>
+                     <UserAttribute Name="strategy" Value="pocketing" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>266.080</StartX>
+                  <StartY>65.478</StartY>
+                  <Angle1>46.665</Angle1>
+                  <Inclination1>130.878</Inclination1>
+                  <Angle2>95.204</Angle2>
+                  <Inclination2>52.585</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>188.703</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>133.335</Angle>
+                  <Inclination>49.122</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2018.034</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>43.335</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 4 0 1 5 6 -1 7 4 6 8 -1 9 8 7 -1 10 2 1 5 11 -1 12 3 2 10 -1 13 9 7 4 0 3 12 -1 6 8 9 13 11 5 -1 10 11 13 12 -1 ">
+                  <Coordinate point="204.300 200.000 0.000 109.100 200.000 80.000 1923.300 200.000 80.000 1923.300 200.000 0.000 266.080 134.522 0.000 297.803 0.000 80.000 308.424 0.000 71.075 256.476 29.069 0.000 265.626 0.000 15.359 283.903 0.000 0.000 1923.300 110.617 80.000 1806.061 0.000 80.000 1923.300 110.617 0.000 1806.061 0.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="8" AssemblyNumber="" OrderNumber="8" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1923.300" Height="200.000" Width="80.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6943" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{6943c0dc-7f7f-4c1d-a41b-2523a259d218}">
+                  <Position>
+                     <ReferencePoint X="8629.423" Y="-103.778" Z="3392.630"/>
+                     <XVector X="0.476" Y="0.550" Z="-0.686"/>
+                     <YVector X="0.449" Y="0.519" Z="0.727"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <DoubleCut Name="DoubleCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <UserAttributes>
+                     <UserAttribute Name="ridge_angle" Value="143.47159814887732" Type="string"/>
+                     <UserAttribute Name="ridge_length" Value="157.92634870570282" Type="string"/>
+                     <UserAttribute Name="strategy" Value="pocketing" Type="string"/>
+                  </UserAttributes>
+                  <Orientation>start</Orientation>
+                  <StartX>266.080</StartX>
+                  <StartY>134.522</StartY>
+                  <Angle1>84.796</Angle1>
+                  <Inclination1>52.585</Inclination1>
+                  <Angle2>133.335</Angle2>
+                  <Inclination2>130.878</Inclination2>
+               </DoubleCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>283.903</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>133.335</Angle>
+                  <Inclination>130.878</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1806.061</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>136.665</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 1 4 5 6 0 -1 7 5 4 8 -1 9 8 7 -1 10 3 2 11 -1 12 6 0 3 10 -1 11 2 1 4 8 9 13 -1 7 5 6 12 13 9 -1 10 11 13 12 -1 ">
+                  <Coordinate point="109.100 200.000 0.000 204.300 200.000 80.000 1923.300 200.000 80.000 1923.300 200.000 0.000 266.080 134.522 80.000 308.424 0.000 8.925 297.803 0.000 0.000 265.626 0.000 64.641 256.476 29.069 80.000 283.903 0.000 80.000 1923.300 110.617 0.000 1923.300 110.617 80.000 1806.061 0.000 0.000 1806.061 0.000 80.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+      </Parts>
+   </Project>
+</BTLx>
