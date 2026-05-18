@@ -47,7 +47,7 @@ class JackRafterCutStrategies:
             raise NotImplementedError(f"JRC ref_side_index={jrc_rsi} with machine_ref_side_index={machine_ref_side_index} is not yet supported.")
 
     @staticmethod
-    def sawing(jack_rafter_cut: "JackRafterCut") -> "List[HOPSMachining]":
+    def sawing(jack_rafter_cut: "JackRafterCut", machine_ref_side_index: int = None, tool: Optional[MachiningTool] = None) -> "List[HOPSMachining]":
         """Create HOPSMachining instances for a sawing operation derived from a JackRafterCut processing.
 
         Parameters:
@@ -62,11 +62,11 @@ class JackRafterCutStrategies:
         """
         from ..hop_job import HOPSMachining
 
-        tool = SaegeD350()
+        tool = tool or SaegeD350()
         work_plane = WorkPlane.TOP
         ref_side_index = jack_rafter_cut.ref_side_index
 
-        if ref_side_index == 3:
+        if ref_side_index == machine_ref_side_index:
             sx = jack_rafter_cut.start_x
             sy = jack_rafter_cut.start_y
             sz = jack_rafter_cut.start_depth
@@ -76,7 +76,9 @@ class JackRafterCutStrategies:
             length = f"_RY/SIN({angle})"
             tilt_angle = jack_rafter_cut.inclination % 90
         else:
-            raise NotImplementedError(f"Unsupported ref_side_index {ref_side_index} for JackRafterCut processing. Expected 3.")
+            raise NotImplementedError(
+                f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."
+            )  # noqa: E501
 
         sawing_operation = SawingLengthAngleOperation(
             sx=sx,
@@ -95,13 +97,14 @@ class JackRafterCutStrategies:
                 tool=tool,
                 work_plane=work_plane,
                 operations=[sawing_operation],
-                comments=["; ###### JackRafterCut ######"],
+                comments=["; ---------------------------------", ";JackRafterCut_Sawing", "; ---------------------------------"],
             )
         ]
 
     @staticmethod
     def milling(
         jack_rafter_cut: "JackRafterCut",
+        machine_ref_side_index: int = None,
         tool: Optional[MachiningTool] = None,
     ) -> "List[HOPSMachining]":
         """Create a HOPSMachining instance for a contour milling operation derived from a JackRafterCut.
@@ -165,13 +168,14 @@ class JackRafterCutStrategies:
                 tool=tool,
                 work_plane=work_plane,
                 operations=[milling_operation],
-                comments=["; ###### JackRafterCut ######"],
+                comments=["; ---------------------------------", ";JackRafterCut_Milling", "; ---------------------------------"],
             )
         ]
 
     @staticmethod
     def open_pocket(
         jack_rafter_cut: "JackRafterCut",
+        machine_ref_side_index: int = None,
         tool: Optional[MachiningTool] = None,
     ) -> "List[HOPSMachining]":
         """Create a HOPSMachining instance for an open pocket roughing operation.
@@ -222,7 +226,7 @@ class JackRafterCutStrategies:
                 tool=tool,
                 work_plane=None,
                 operations=operations,
-                comments=["; ###### JackRafterCut ######"],
+                comments=["; ---------------------------------", ";JackRafterCut_OpenPocket", "; ---------------------------------"],
             )
         ]
 
@@ -252,8 +256,10 @@ class JackRafterCutStrategies:
         """
         from ..hop_job import HOPSMachining
 
-        if jack_rafter_cut.ref_side_index not in (1, 3):
-            raise NotImplementedError(f"Unsupported ref_side_index {jack_rafter_cut.ref_side_index} for JackRafterCut contour pocket. Expected 1 or 3.")
+        if jack_rafter_cut.ref_side_index != machine_ref_side_index:
+            raise NotImplementedError(
+                f"JackRafterCut contour pocketing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={jack_rafter_cut.ref_side_index} and machine_ref_side_index={machine_ref_side_index}."  # noqa: E501
+            )
 
         tool = tool or CastorD61()
         rotation_angle = JackRafterCutStrategies._rotation_angle(jack_rafter_cut, machine_ref_side_index)
@@ -272,6 +278,6 @@ class JackRafterCutStrategies:
                 tool=tool,
                 work_plane=None,
                 operations=[operation],
-                comments=["; ###### JackRafterCut (ContourPocket) ######"],
+                comments=["; ---------------------------------", ";JackRafterCut_ContourPocket", "; ---------------------------------"],
             )
         ]
