@@ -1,0 +1,726 @@
+<?xml version="1.0" ?>
+<BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
+   <FileHistory>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.15.1" ComputerName="PAPACHAP" UserName="kapso" FileName="" Date="2026-05-18" Time="18:49:47" Comment=""/>
+   </FileHistory>
+   <Project Name="COMPAS Timber Project">
+      <Parts>
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="770.436" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="b732" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{b732483f-cda4-4766-b1a8-825957e14378}">
+                  <Position>
+                     <ReferencePoint X="932.960" Y="3843.246" Z="228.605"/>
+                     <XVector X="0.516" Y="0.845" Z="0.140"/>
+                     <YVector X="0.150" Y="0.072" Z="-0.986"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>72.419</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>92.731</Angle>
+                  <Inclination>86.232</Inclination>
+                  <Slope>0.180</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.362</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>289.626</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>88.551</Angle>
+                  <Inclination>91.918</Inclination>
+                  <Slope>0.049</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>23.523</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>424.870</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>87.144</Angle>
+                  <Inclination>88.434</Inclination>
+                  <Slope>-0.078</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.822</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>631.119</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>92.167</Angle>
+                  <Inclination>95.732</Inclination>
+                  <Slope>-0.216</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>27.315</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 28 13 12 29 -1 6 35 34 7 -1 4 5 36 37 -1 5 6 35 36 -1 38 3 4 37 -1 24 19 18 21 -1 10 11 30 31 -1 11 12 29 30 -1 32 9 10 31 -1 32 9 8 33 -1 14 15 26 27 -1 13 14 27 28 -1 16 25 26 15 -1 16 25 20 17 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="693.639 38.650 60.000 633.837 32.643 60.000 631.089 60.000 60.000 132.648 60.000 60.000 130.976 34.646 60.000 70.978 38.602 60.000 72.389 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 288.078 0.000 60.000 288.869 23.612 60.000 348.915 21.600 60.000 348.191 0.000 60.000 421.846 0.000 60.000 421.250 21.776 60.000 481.362 23.422 60.000 482.003 0.000 60.000 770.436 0.000 60.000 770.436 60.000 60.000 691.494 60.000 60.000 770.436 0.000 0.000 770.436 60.000 0.000 636.084 32.869 0.000 695.886 38.876 0.000 693.764 60.000 0.000 484.997 0.000 0.000 484.353 23.504 0.000 424.241 21.858 0.000 424.840 0.000 0.000 349.709 0.000 0.000 350.431 21.549 0.000 290.386 23.561 0.000 289.596 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 75.252 60.000 0.000 73.829 38.414 0.000 133.826 34.458 0.000 135.510 60.000 0.000 633.359 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="789.629" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="d4e1" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{d4e1ed1c-0a01-4cda-986b-cd16eeb93b99}">
+                  <Position>
+                     <ReferencePoint X="962.753" Y="4154.342" Z="279.938"/>
+                     <XVector X="0.869" Y="-0.494" Z="-0.020"/>
+                     <YVector X="0.067" Y="0.158" Z="-0.985"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>84.212</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>88.542</Angle>
+                  <Inclination>83.398</Inclination>
+                  <Slope>-0.168</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.798</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>287.429</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>91.737</Angle>
+                  <Inclination>90.691</Inclination>
+                  <Slope>-0.021</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.481</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>441.235</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>92.109</Angle>
+                  <Inclination>89.052</Inclination>
+                  <Slope>0.035</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>20.290</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>650.633</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>88.382</Angle>
+                  <Inclination>95.663</Inclination>
+                  <Slope>0.160</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>27.856</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 28 13 12 29 -1 24 19 18 21 -1 4 5 36 37 -1 3 4 37 38 -1 6 35 36 5 -1 6 35 34 7 -1 10 11 30 31 -1 11 12 29 30 -1 32 9 10 31 -1 32 9 8 33 -1 14 15 26 27 -1 13 14 27 28 -1 16 25 26 15 -1 16 25 20 17 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="713.160 38.035 60.000 653.370 32.104 60.000 650.602 60.000 60.000 144.662 60.000 60.000 141.334 31.258 60.000 81.654 38.168 60.000 84.182 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 289.218 0.000 60.000 289.490 22.497 60.000 349.573 21.772 60.000 349.310 0.000 60.000 443.415 0.000 60.000 443.078 20.365 60.000 503.170 21.360 60.000 503.524 0.000 60.000 789.629 0.000 60.000 789.629 60.000 60.000 710.981 60.000 60.000 789.629 0.000 0.000 789.629 60.000 0.000 651.691 31.937 0.000 711.482 37.869 0.000 709.286 60.000 0.000 501.314 0.000 0.000 500.961 21.323 0.000 440.869 20.328 0.000 441.205 0.000 0.000 347.491 0.000 0.000 347.754 21.794 0.000 287.670 22.519 0.000 287.399 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 82.654 60.000 0.000 80.147 38.342 0.000 139.827 31.433 0.000 143.135 60.000 0.000 648.908 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="765.519" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="8fd0" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{8fd06b7d-24bb-4e04-a2bf-349972069571}">
+                  <Position>
+                     <ReferencePoint X="933.021" Y="4244.128" Z="276.929"/>
+                     <XVector X="0.520" Y="0.854" Z="0.015"/>
+                     <YVector X="0.148" Y="-0.072" Z="-0.986"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>73.960</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>91.734</Angle>
+                  <Inclination>84.282</Inclination>
+                  <Slope>0.173</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.521</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>286.454</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>88.663</Angle>
+                  <Inclination>91.515</Inclination>
+                  <Slope>0.035</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.478</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>419.271</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>88.402</Angle>
+                  <Inclination>88.950</Inclination>
+                  <Slope>-0.029</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.295</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>625.671</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>91.984</Angle>
+                  <Inclination>96.650</Inclination>
+                  <Slope>-0.230</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>28.426</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 16 25 20 17 -1 6 35 34 7 -1 4 5 36 37 -1 5 6 35 36 -1 38 3 4 37 -1 24 19 18 21 -1 10 11 30 31 -1 11 12 29 30 -1 32 9 10 31 -1 32 9 8 33 -1 14 15 26 27 -1 15 16 25 26 -1 28 13 14 27 -1 28 13 12 29 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="688.653 38.496 60.000 628.962 31.532 60.000 625.641 60.000 60.000 134.318 60.000 60.000 131.558 32.454 60.000 71.770 38.444 60.000 73.930 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 285.024 0.000 60.000 285.621 22.553 60.000 345.676 20.965 60.000 345.121 0.000 60.000 417.568 0.000 60.000 417.159 22.301 60.000 477.232 23.402 60.000 477.661 0.000 60.000 765.519 0.000 60.000 765.519 60.000 60.000 686.144 60.000 60.000 765.519 0.000 0.000 765.519 60.000 0.000 631.013 31.771 0.000 690.704 38.735 0.000 688.223 60.000 0.000 479.335 0.000 0.000 478.905 23.433 0.000 418.832 22.331 0.000 419.241 0.000 0.000 346.522 0.000 0.000 347.075 20.928 0.000 287.020 22.516 0.000 286.424 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 75.746 60.000 0.000 73.568 38.264 0.000 133.356 32.274 0.000 136.134 60.000 0.000 627.720 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="3" AssemblyNumber="" OrderNumber="3" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="792.355" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="3f5d" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{3f5dea3b-f1a6-4811-a95b-39406cdc4752}">
+                  <Position>
+                     <ReferencePoint X="962.977" Y="4556.839" Z="282.889"/>
+                     <XVector X="0.865" Y="-0.498" Z="0.067"/>
+                     <YVector X="0.077" Y="-0.001" Z="-0.997"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>82.789</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>88.657</Angle>
+                  <Inclination>84.354</Inclination>
+                  <Slope>-0.132</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.104</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>288.410</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>92.156</Angle>
+                  <Inclination>91.357</Inclination>
+                  <Slope>-0.051</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.381</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>443.687</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>91.619</Angle>
+                  <Inclination>88.647</Inclination>
+                  <Slope>0.038</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>20.223</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>650.517</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>88.188</Angle>
+                  <Inclination>96.213</Inclination>
+                  <Slope>0.196</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>27.400</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 32 9 8 33 -1 24 19 18 21 -1 4 5 36 37 -1 3 4 37 38 -1 6 35 36 5 -1 6 35 34 7 -1 10 11 30 31 -1 9 10 31 32 -1 12 29 30 11 -1 28 13 12 29 -1 14 15 26 27 -1 13 14 27 28 -1 16 25 26 15 -1 16 25 20 17 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="713.212 39.065 60.000 653.476 32.559 60.000 650.487 60.000 60.000 143.129 60.000 60.000 140.454 32.949 60.000 80.669 38.861 60.000 82.759 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 290.639 0.000 60.000 291.169 22.365 60.000 351.255 20.941 60.000 350.759 0.000 60.000 445.353 0.000 60.000 444.873 20.301 60.000 504.940 21.720 60.000 505.454 0.000 60.000 792.355 0.000 60.000 792.355 60.000 60.000 710.932 60.000 60.000 792.355 0.000 0.000 792.355 60.000 0.000 651.600 32.354 0.000 711.336 38.861 0.000 709.034 60.000 0.000 503.758 0.000 0.000 503.246 21.680 0.000 443.178 20.261 0.000 443.657 0.000 0.000 348.499 0.000 0.000 348.997 20.995 0.000 288.911 22.419 0.000 288.380 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 81.353 60.000 0.000 79.276 38.999 0.000 139.060 33.087 0.000 141.722 60.000 0.000 648.589 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="4" AssemblyNumber="" OrderNumber="4" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="769.764" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="dc43" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{dc431618-03d3-4e8d-8ab3-5634b81c12a7}">
+                  <Position>
+                     <ReferencePoint X="934.119" Y="4647.785" Z="271.757"/>
+                     <XVector X="0.518" Y="0.846" Z="-0.128"/>
+                     <YVector X="0.110" Y="-0.214" Z="-0.971"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>76.670</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>90.050</Angle>
+                  <Inclination>82.925</Inclination>
+                  <Slope>0.006</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.533</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>283.239</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>89.344</Angle>
+                  <Inclination>91.494</Inclination>
+                  <Slope>0.017</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>23.409</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>422.744</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>89.653</Angle>
+                  <Inclination>88.907</Inclination>
+                  <Slope>-0.007</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>24.238</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>630.210</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>91.287</Angle>
+                  <Inclination>96.800</Inclination>
+                  <Slope>-0.152</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>29.448</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 32 9 8 33 -1 2 39 38 3 -1 4 5 36 37 -1 3 4 37 38 -1 6 35 36 5 -1 6 35 34 7 -1 10 11 30 31 -1 9 10 31 32 -1 12 29 30 11 -1 28 13 12 29 -1 14 15 26 27 -1 13 14 27 28 -1 16 25 26 15 -1 16 25 20 17 -1 0 1 22 23 -1 1 2 39 22 -1 24 19 0 23 -1 24 19 18 21 -1 ">
+                  <Coordinate point="693.349 37.626 60.000 633.697 30.510 60.000 630.180 60.000 60.000 137.161 60.000 60.000 133.442 30.035 60.000 73.839 37.433 60.000 76.640 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 282.522 0.000 60.000 283.134 23.465 60.000 343.177 21.898 60.000 342.606 0.000 60.000 422.351 0.000 60.000 421.888 24.266 60.000 481.938 25.412 60.000 482.423 0.000 60.000 769.764 0.000 60.000 769.764 60.000 60.000 690.680 60.000 60.000 769.764 0.000 0.000 769.764 60.000 0.000 635.026 30.669 0.000 694.678 37.784 0.000 692.028 60.000 0.000 482.786 0.000 0.000 482.301 25.419 0.000 422.251 24.273 0.000 422.714 0.000 0.000 343.293 0.000 0.000 343.864 21.881 0.000 283.820 23.447 0.000 283.209 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 76.692 60.000 0.000 73.891 37.427 0.000 133.493 30.029 0.000 137.213 60.000 0.000 631.527 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="5" AssemblyNumber="" OrderNumber="5" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="794.634" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="9c51" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{9c51e2f9-71a2-420e-8ad1-430d53391e5b}">
+                  <Position>
+                     <ReferencePoint X="963.615" Y="4955.432" Z="227.578"/>
+                     <XVector X="0.861" Y="-0.490" Z="0.138"/>
+                     <YVector X="0.067" Y="-0.160" Z="-0.985"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>78.999</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>89.343</Angle>
+                  <Inclination>86.261</Inclination>
+                  <Slope>-0.043</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.930</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>289.351</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>91.971</Angle>
+                  <Inclination>91.286</Inclination>
+                  <Slope>-0.044</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.371</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>446.099</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>90.445</Angle>
+                  <Inclination>88.988</Inclination>
+                  <Slope>0.008</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>21.205</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>652.052</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>88.741</Angle>
+                  <Inclination>95.682</Inclination>
+                  <Slope>0.125</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>27.499</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 32 9 8 33 -1 6 35 34 7 -1 4 5 36 37 -1 5 6 35 36 -1 38 3 4 37 -1 24 19 18 21 -1 10 11 30 31 -1 9 10 31 32 -1 12 29 30 11 -1 28 13 12 29 -1 14 15 26 27 -1 13 14 27 28 -1 16 25 26 15 -1 16 25 20 17 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="714.542 38.410 60.000 654.763 32.460 60.000 652.022 60.000 60.000 139.161 60.000 60.000 137.469 34.117 60.000 77.533 38.034 60.000 78.969 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 291.386 0.000 60.000 291.888 22.363 60.000 351.969 21.013 60.000 351.497 0.000 60.000 446.535 0.000 60.000 446.160 21.250 60.000 506.212 22.311 60.000 506.606 0.000 60.000 794.634 0.000 60.000 794.634 60.000 60.000 712.393 60.000 60.000 794.634 0.000 0.000 794.634 60.000 0.000 653.457 32.330 0.000 713.236 38.280 0.000 711.074 60.000 0.000 506.140 0.000 0.000 505.746 22.303 0.000 445.694 21.242 0.000 446.069 0.000 0.000 349.431 0.000 0.000 349.905 21.060 0.000 289.824 22.409 0.000 289.321 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 78.280 60.000 0.000 76.848 38.079 0.000 136.784 34.161 0.000 138.473 60.000 0.000 650.703 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="6" AssemblyNumber="" OrderNumber="6" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="649.028" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="2c6d" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{2c6dbf6c-1fcf-48e0-adb6-5b85782e5256}">
+                  <Position>
+                     <ReferencePoint X="932.105" Y="5046.026" Z="214.569"/>
+                     <XVector X="0.504" Y="0.818" Z="-0.279"/>
+                     <YVector X="0.038" Y="-0.344" Z="-0.938"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>89.023</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>88.640</Angle>
+                  <Inclination>82.383</Inclination>
+                  <Slope>-0.180</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>24.274</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>292.431</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>90.379</Angle>
+                  <Inclination>91.916</Inclination>
+                  <Slope>-0.013</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>26.378</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>613.808</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>60.522</Angle>
+                  <Inclination>110.099</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="7" AssemblyNumber="" OrderNumber="7" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="794.698" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="5054" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{50540558-d5bd-42e8-a49d-32f99caa9586}">
+                  <Position>
+                     <ReferencePoint X="964.363" Y="5350.695" Z="115.543"/>
+                     <XVector X="0.860" Y="-0.473" Z="0.189"/>
+                     <YVector X="0.040" Y="-0.308" Z="-0.951"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>73.825</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>90.378</Angle>
+                  <Inclination>89.008</Inclination>
+                  <Slope>0.007</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>24.344</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>289.533</StartX>
+                  <StartY>0.000</StartY>
+                  <Angle>91.278</Angle>
+                  <Inclination>90.525</Inclination>
+                  <Slope>-0.012</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>22.478</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>446.923</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>89.094</Angle>
+                  <Inclination>90.075</Inclination>
+                  <Slope>0.001</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>23.016</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>654.247</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>89.616</Angle>
+                  <Inclination>94.146</Inclination>
+                  <Slope>0.028</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>28.120</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+            </Processings>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 -1 17 20 21 18 -1 22 23 24 21 20 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 -1 33 8 7 34 -1 16 25 20 17 -1 6 35 34 7 -1 4 5 36 37 -1 5 6 35 36 -1 38 3 4 37 -1 24 19 18 21 -1 10 11 30 31 -1 11 12 29 30 -1 32 9 10 31 -1 32 9 8 33 -1 14 15 26 27 -1 15 16 25 26 -1 28 13 14 27 -1 28 13 12 29 -1 0 1 22 23 -1 19 0 23 24 -1 2 39 22 1 -1 2 39 38 3 -1 ">
+                  <Coordinate point="716.162 36.184 60.000 656.258 31.842 60.000 654.216 60.000 60.000 133.866 60.000 60.000 133.426 34.582 60.000 73.373 35.621 60.000 73.795 60.000 60.000 0.000 60.000 60.000 0.000 0.000 60.000 290.842 0.000 60.000 291.048 22.503 60.000 351.121 21.952 60.000 350.919 0.000 60.000 445.945 0.000 60.000 445.975 23.053 60.000 506.043 22.974 60.000 506.012 0.000 60.000 794.698 0.000 60.000 794.698 60.000 60.000 714.435 60.000 60.000 794.698 0.000 0.000 794.698 60.000 0.000 655.858 31.813 0.000 715.762 36.155 0.000 714.034 60.000 0.000 506.961 0.000 0.000 506.991 22.973 0.000 446.923 23.051 0.000 446.893 0.000 0.000 349.581 0.000 0.000 349.782 21.964 0.000 289.710 22.515 0.000 289.503 0.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 74.192 60.000 0.000 73.770 35.615 0.000 133.822 34.575 0.000 134.262 60.000 0.000 653.815 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="8" AssemblyNumber="" OrderNumber="8" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="425.681" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="431c" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{431c547a-b88e-414e-9f50-5b761a2def91}">
+                  <Position>
+                     <ReferencePoint X="1109.869" Y="5607.833" Z="-30.000"/>
+                     <XVector X="1.000" Y="0.000" Z="0.000"/>
+                     <YVector X="-0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Shape>
+               <IndexedFaceSet convex="false" coordIndex="0 1 2 3 -1 1 4 5 2 -1 4 6 7 5 -1 6 0 3 7 -1 4 1 0 6 -1 3 2 5 7 -1 ">
+                  <Coordinate point="0.000 0.000 60.000 425.681 0.000 60.000 425.681 60.000 60.000 0.000 60.000 60.000 425.681 0.000 0.000 425.681 60.000 0.000 0.000 0.000 0.000 0.000 60.000 0.000 "/>
+               </IndexedFaceSet>
+            </Shape>
+         </Part>
+         <Part SingleMemberNumber="9" AssemblyNumber="" OrderNumber="9" Designation="Beam" Annotation="Beam" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="659.871" Height="60.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="4de9" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{4de9b2ff-4870-4a9d-8c45-a4a4fd644e43}">
+                  <Position>
+                     <ReferencePoint X="1436.464" Y="3164.620" Z="20.756"/>
+                     <XVector X="0.496" Y="0.802" Z="0.334"/>
+                     <YVector X="0.004" Y="0.382" Z="-0.924"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>305.853</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>89.584</Angle>
+                  <Inclination>86.987</Inclination>
+                  <Slope>-0.022</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>24.558</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <Lap Name="Lap" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>512.513</StartX>
+                  <StartY>-0.000</StartY>
+                  <Angle>89.091</Angle>
+                  <Inclination>95.172</Inclination>
+                  <Slope>0.082</Slope>
+                  <Length>60.000</Length>
+                  <Width>60.000</Width>
+                  <Depth>28.498</Depth>
+                  <LeadAngleParallel>yes</LeadAngleParallel>
+                  <LeadAngle>90.000</LeadAngle>
+                  <LeadInclinationParallel>yes</LeadInclinationParallel>
+                  <LeadInclination>90.000</LeadInclination>
+                  <MachiningLimits FaceLimitedStart="yes" FaceLimitedEnd="yes" FaceLimitedFront="no" FaceLimitedBack="no" FaceLimitedTop="no" FaceLimitedBottom="yes"/>
+               </Lap>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>73.012</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>119.820</Angle>
+                  <Inclination>112.483</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+      </Parts>
+   </Project>
+</BTLx>
