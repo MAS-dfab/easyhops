@@ -15,6 +15,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from easyhops.strategies import StrategyConfig
+
 from .generate_jlx import JLXGenerator
 from .hop_core import FinishedPart
 from .hop_core import ParkMode
@@ -114,7 +116,7 @@ class HOPSMachining:
         self,
         tool: MachiningTool,
         work_plane: Optional[Union[WorkPlane, FreePlane]],
-        operations: List[Union[MillingOperation, SawingOperation, DrillingOperation, OpenPocketOperation]],
+        operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]],
         comments: Optional[List[str]] = None,
         feedrate_overrides: Optional[List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]] = None,
     ):
@@ -470,7 +472,7 @@ class HOPSJob:
         return cls.from_hop_string("".join(lines), strict=strict)
 
     @classmethod
-    def from_timber_element(cls, element: TimberElement) -> "HOPSJob":
+    def from_timber_element(cls, element: "TimberElement", config: Optional["StrategyConfig"] = None) -> "HOPSJob":
         """Create a HOPSJob from a TimberModel element.
 
         This method extracts machining information from the given TimberModel element,
@@ -480,47 +482,60 @@ class HOPSJob:
         Parameters:
         -----------
         element : TimberElement
-            The TimberModel element containing machining information
-        tool : MachiningTool
-            The tool to assign to all generated machining operations
+            The TimberModel element containing machining information.
+        config : StrategyConfig, optional
+            Per-processing-type strategy overrides.  Each field is a callable
+            ``(processing, ref_side_index: int) -> List[HOPSMachining]``.  When
+            ``None`` (the default) all built-in default strategies are used.
 
         Returns:
         --------
         HOPSJob
-            A HOPSJob instance representing the machining operations for the given element
+            A HOPSJob instance representing the machining operations for the given element.
 
         Example:
         --------
-        >>> job = HOPSJob.from_timber_element(timber_element, tool)
-        >>> print(f"Generated HOPSMachining for {len(job.machinings)} operations")
+        >>> # Default behaviour
+        >>> job = HOPSJob.from_timber_element(element)
+
+        >>> # Override a single processing type
+        >>> from easyhops.strategies import StrategyConfig, DoubleCutStrategies
+        >>> config = StrategyConfig(
+        ...     double_cut=lambda p, rsi: DoubleCutStrategies.pocketing(p, machine_ref_side_index=rsi, overlap=80),
+        ... )
+        >>> job = HOPSJob.from_timber_element(element, config=config)
         """
-        from .strategies import BirdsMouthStrategies
-        from .strategies import DoubleCutStrategies
-        from .strategies import JackRafterCutStrategies
-        from .tool_library import CastorD61
+        from .strategies import StrategyConfig
+
+        if config is None:
+            config = StrategyConfig()
 
         ref_side_index = element.attributes.get("ref_side_index", 0)
         width, height = element.get_dimensions_relative_to_side(ref_side_index)
 
         vars = VarsDefinition(dx=element.blank_length, dy=width, dz=height)
         vars.add_variable("RSI", str(ref_side_index), "ReferenceSideIndex (0-5)")
+
         finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
         park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
         machinings = []
 
-        tool = CastorD61()
         for processing in element.features:
-            if processing.PROCESSING_NAME == "DoubleCut":
+            name = processing.PROCESSING_NAME
+
+            if name == "DoubleCut":
                 if processing.user_attributes == {}:
                     continue  # Skip if necessary attributes are missing
-                if processing.user_attributes["strategy"] == "pocketing":
-                    machinings.extend(DoubleCutStrategies.pocketing(processing, tool=tool))
-                else:
-                    machinings.extend(DoubleCutStrategies.milling(processing, tool=tool))
-            elif processing.PROCESSING_NAME == "BirdsMouth":
-                machinings.extend(BirdsMouthStrategies.milling(processing, tool=tool))
-            elif processing.PROCESSING_NAME == "JackRafterCut":
-                machinings.extend(JackRafterCutStrategies.contour_pocket(processing, machine_ref_side_index=ref_side_index, tool=tool))
+                machinings.extend(config.double_cut(processing, ref_side_index))
+
+            elif name == "BirdsMouth":
+                machinings.extend(config.birdsmouth(processing, ref_side_index))
+
+            elif name == "JackRafterCut":
+                machinings.extend(config.jack_rafter_cut(processing, ref_side_index))
+
+            elif name == "Lap":
+                machinings.extend(config.lap(processing, ref_side_index))
 
         sorted_machinings = cls._sort_machinings_based_on_operation(machinings)
 
