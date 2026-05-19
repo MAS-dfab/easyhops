@@ -70,6 +70,9 @@ class HopsSystemVars(str, Enum):
     TOOL_DIAMETER = "_WZD"  # Current tool diameter (tool manager)
     TOOL_RADIUS = "_WZR"  # Current tool radius (tool manager)
     SAW_WIDTH = "_SBB"  # Current saw blade width (tool manager)
+    X_DIM = "_RX"  # Part X dimension (beam length)
+    Y_DIM = "_RY"  # Part Y dimension (beam width)
+    Z_DIM = "_RZ"  # Part Z dimension (beam thickness)
 
     def __str__(self):
         return self.value
