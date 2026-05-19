@@ -18,11 +18,16 @@ import os
 
 from compas_timber.btlx import BTLxReader
 
+from easyhops.hop_core import HopsSystemVars
 from easyhops.hop_job import HOPSJob
+from easyhops.hop_job import HOPSMachining
+from easyhops.machining_commands import CompensationMode
+from easyhops.machining_commands import SawYOperation
 from easyhops.strategies import LapStrategies
 from easyhops.strategies.jack_rafter_cut import JackRafterCutStrategies
 from easyhops.tool_library import SaegeD350
 from easyhops.utility_commands import MachineStop
+from easyhops.work_planes import WorkPlane
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -68,6 +73,19 @@ def element_to_job(element):
         elif name == "JackRafterCut":
             assert processing.ref_side_index in (rsi, opp_rsi), f"Unexpected ref_side_index {processing.ref_side_index} for JackRafterCut"
             post_flip.extend(JackRafterCutStrategies.sawing(processing, machine_ref_side_index=rsi, tool=SaegeD350()))
+
+    # Add cuts at the start and end of the part at the post-flip stage.
+    cut_start = SawYOperation()
+    cut_end = SawYOperation(sx=HopsSystemVars.X_DIM, radius_compensation=CompensationMode.RIGHT)
+    for sawing_operation in (cut_start, cut_end):
+        post_flip.append(
+            HOPSMachining(
+                tool=SaegeD350(),
+                work_plane=WorkPlane.TOP,
+                operations=[sawing_operation],
+                comments=["; ---------------------------------", ";ENDCut_Sawing", "; ---------------------------------"],
+            )
+        )
 
     # Sort post-flip: milling before sawing
     post_flip.sort(key=lambda m: {"MILLING": 0, "SAWING": 1}.get(getattr(m, "OPERATION_TYPE", ""), 2))
