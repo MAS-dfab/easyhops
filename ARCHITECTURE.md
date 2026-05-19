@@ -38,10 +38,11 @@ easyhops/
 
 ```
 easyhops/strategies/
-├── __init__.py              # Exports all strategy classes
+├── __init__.py              # Re-exports all strategy classes
 ├── birdsmouth.py            # BirdsMouthStrategies
 ├── double_cut.py            # DoubleCutStrategies
-└── jack_rafter_cut.py       # JackRafterCutStrategies
+├── jack_rafter_cut.py       # JackRafterCutStrategies
+└── lap.py                   # LapStrategies
 ```
 
 **Legacy / Deprecated** (do not use as reference):
@@ -178,15 +179,16 @@ base_commands.py  (no dependencies)
 
                     ▲ created by ▲
 
-┌────────────────────────────────────────────────────────────────┐
-│                  strategies/  (Layer 2)                        │
-├───────────────────┬────────────────────┬───────────────────────┤
-│DoubleCutStrategies│BirdsMouthStrategies│JackRafterCutStrategies│
-│  .milling(...)    │  .milling(...)     │  .sawing(...)         │
-│                   │                    │  .milling(...)        │
-│                   │                    │  .open_pocket(...)    │
-│                   │                    │  .contour_pocket(...) │
-└───────────────────┴────────────────────┴───────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                      strategies/  (Layer 2)                           │
+├────────────────┬────────────────────┬──────────────────┬──────────────┤
+│DoubleCut       │BirdsMouth          │JackRafterCut     │Lap           │
+│Strategies      │Strategies          │Strategies        │Strategies    │
+│  .milling(...) │  .milling(...)     │  .sawing(...)    │  .milling(…) │
+│                │                    │  .milling(...)   │              │
+│                │                    │  .open_pocket(..)│              │
+│                │                    │  .contour_pocket │              │
+└────────────────┴────────────────────┴──────────────────┴──────────────┘
 ```
 
 ---
@@ -704,30 +706,47 @@ class HOPSJob:
     park_mode: ParkMode
     machinings: List[HOPSMachining]
     header: Optional[List[str]]
+    ref_side_index: int  # reference side used when building from a TimberElement
 ```
 
-**Usage**:
+**Entry points**:
 ```python
 # Parse from file
 job = HOPSJob.from_hop_file("part.hop")
 
-# Access components
-print(f"Dimensions: {job.vars.dx} x {job.vars.dy} x {job.vars.dz}")
-print(f"Operations: {len(job.machinings)}")
+# Build from a compas_timber TimberElement (shell — no machinings yet)
+job = HOPSJob.from_element(element)
 
-# Iterate through machinings
-for machining in job.machinings:
-    print(f"Tool: {machining.tool.tool_type.value}@{machining.tool.position}")
-    print(f"Plane: {machining.work_plane}")
-    print(f"Operations: {len(machining.operations)}")
-    
-    # Access feedrate overrides
-    for (op_idx, cmd_idx), override in machining.feedrate_overrides:
-        if cmd_idx is None:
-            print(f"  Feedrate {override.feedrate} before operation {op_idx}")
+# Add machinings explicitly
+rsi = job.ref_side_index
+opp_rsi = (rsi + 2) % 4
+
+pre_flip, post_flip = [], []
+for processing in element.features:
+    if processing.PROCESSING_NAME == "Lap":
+        ms = LapStrategies.milling(processing)
+        if processing.ref_side_index == opp_rsi:
+            pre_flip.extend(ms)
         else:
-            print(f"  Feedrate {override.feedrate} at op {op_idx}, command {cmd_idx}")
+            post_flip.extend(ms)
+    elif processing.PROCESSING_NAME == "JackRafterCut":
+        post_flip.extend(JackRafterCutStrategies.sawing(processing, machine_ref_side_index=rsi))
+
+# Sort milling before sawing, sawing before drilling
+post_flip = HOPSJob.sort_machinings(post_flip)
+
+if pre_flip:
+    job.add(pre_flip)
+    job.add(MachineStop("flip beam 180deg"))
+job.add(post_flip)
 ```
+
+**Key methods**:
+- `from_hop_file(path)` / `from_hop_string(text)` — parse an existing HOP file
+- `from_element(element)` — create an empty shell from a `TimberElement` (fills `vars`, `finished_part`, `park_mode`, `ref_side_index`)
+- `add(machinings)` — append one `HOPSMachining` or a list of them
+- `sort_machinings(machinings)` — static utility: sort MILLING → SAWING → DRILLING
+- `to_hop_file(path)` / `__str__()` — serialize back to HOP text
 
 ---
 
@@ -946,54 +965,45 @@ Four machining strategies for a `JackRafterCut`:
 - **`open_pocket`**: Three `OpenPocketOperation` passes (roughing)
 - **`contour_pocket`**: Single `ContourPocketOperation` (finish buffer)
 
-### Strategy Pattern
+#### **LapStrategies** (`strategies/lap.py`)
 
 ```python
-# Strategy methods are pure functions
-machinings = DoubleCutStrategies.milling(double_cut, tool=CastorD61())
-machinings = JackRafterCutStrategies.sawing(jrc)
-```
-
-### Circular Import Avoidance
-
-Strategies depend on `HOPSMachining` from `hop_job.py`, which is above them in the module graph. Two techniques avoid circular imports:
-
-1. **Lazy runtime import**: `from ..hop_job import HOPSMachining` is placed inside each method body, not at module level.
-2. **`TYPE_CHECKING` guards**: `compas_timber` types (e.g. `DoubleCut`) are imported only under `if TYPE_CHECKING:` so they affect type checkers but not the Python runtime.
-
-```python
-from __future__ import annotations  # enables string annotations
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from compas_timber.fabrication import DoubleCut
-    from ..hop_job import HOPSMachining
-
-class DoubleCutStrategies:
+class LapStrategies:
     @staticmethod
-    def milling(double_cut: "DoubleCut", ...) -> "List[HOPSMachining]":
-        from ..hop_job import HOPSMachining  # lazy — avoids circular import
-        ...
+    def milling(lap, tool=None) -> List[HOPSMachining]: ...
 ```
 
-### Entry Point: `HOPSJob.from_timber_element`
+Multi-pass contour milling for a `Lap` processing. The number of passes is `ceil(lap.width / tool.diameter)`. Each pass is a full-width `G01` sweep with `EasySnapXY.RELATIVE` so only the `SP` origin shifts; the `G01` delta stays constant across all passes. Handles negative tilt angles (opposite-face Laps) by flipping the rotation 180° and negating the X vector.
 
-`HOPSJob.from_timber_element(element)` is the integration point between Layer 1 and Layer 2. It iterates `element.features`, dispatches by `PROCESSING_NAME`, and calls the appropriate strategy. Strategy classes are also imported lazily inside the method:
+### Explicit Workflow: `HOPSJob.from_element()` + `.add()`
+
+The integration point between Layer 1 and Layer 2 is explicit developer-controlled code:
 
 ```python
-@classmethod
-def from_timber_element(cls, element) -> "HOPSJob":
-    from .strategies import DoubleCutStrategies, BirdsMouthStrategies, JackRafterCutStrategies
-    from .tool_library import CastorD61, BirdsmouthW41
+job = HOPSJob.from_element(element)          # create shell
+rsi = job.ref_side_index
+opp_rsi = (rsi + 2) % 4
 
-    for processing in element.features:
-        if processing.PROCESSING_NAME == "DoubleCut":
-            machinings.extend(DoubleCutStrategies.milling(processing, tool=tool))
-        elif processing.PROCESSING_NAME == "BirdsMouth":
-            machinings.extend(BirdsMouthStrategies.milling(processing, tool=tool))
-        elif processing.PROCESSING_NAME == "JackRafterCut":
-            machinings.extend(JackRafterCutStrategies.sawing(processing))
+pre_flip, post_flip = [], []
+for processing in element.features:
+    name = processing.PROCESSING_NAME
+    if name == "Lap":
+        ms = LapStrategies.milling(processing)
+        (pre_flip if processing.ref_side_index == opp_rsi else post_flip).extend(ms)
+    elif name == "JackRafterCut":
+        post_flip.extend(JackRafterCutStrategies.sawing(processing, machine_ref_side_index=rsi))
+
+post_flip = HOPSJob.sort_machinings(post_flip)
+if pre_flip:
+    job.add(pre_flip)
+    job.add(MachineStop("flip beam 180deg"))
+job.add(post_flip)
 ```
+
+This keeps the orchestration logic (flip, sort, dispatch) fully visible and easy to customise per project, while strategy classes encapsulate the geometry-to-HOPS translation.
+
+> **TODO**: A `StrategyConfig` / pipeline approach (config dataclass of per-type callables that drives dispatch, flip, and sorting automatically) was considered and may be added as a convenience layer in the future. See git history for a previous implementation.
+
 
 ---
 
@@ -1076,8 +1086,9 @@ Stateless strategy classes as namespaces for pure conversion functions.
 
 ```python
 # No instantiation — pure static dispatch
-machinings = JackRafterCutStrategies.sawing(jrc)
+machinings = JackRafterCutStrategies.sawing(jrc, machine_ref_side_index=rsi)
 machinings = DoubleCutStrategies.milling(dc, tool=CastorD61(), engagement_ratio=0.4)
+machinings = LapStrategies.milling(lap)
 ```
 
 **Benefits**:

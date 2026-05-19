@@ -15,8 +15,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from easyhops.strategies import StrategyConfig
-
 from .generate_jlx import JLXGenerator
 from .hop_core import FinishedPart
 from .hop_core import ParkMode
@@ -253,12 +251,14 @@ class HOPSJob:
         park_mode: ParkMode,
         machinings: List[HOPSMachining],
         header: Optional[List[str]] = None,
+        ref_side_index: int = 0,
     ):
         self.vars = vars
         self.finished_part = finished_part
         self.park_mode = park_mode
         self.machinings = machinings
         self.header = header
+        self.ref_side_index = ref_side_index
 
     def __repr__(self) -> str:
         """Return string representation."""
@@ -284,6 +284,62 @@ class HOPSJob:
         """
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(str(self))
+
+    def add(self, machinings):
+        """Append one or more machinings to this job.
+
+        Parameters
+        ----------
+        machinings : HOPSMachining | MachineStop | list
+            A single machining/stop or a list of them.
+        """
+        if isinstance(machinings, list):
+            self.machinings.extend(machinings)
+        else:
+            self.machinings.append(machinings)
+
+    @classmethod
+    def from_element(cls, element: "TimberElement") -> "HOPSJob":
+        """Create a HOPSJob shell from a TimberElement with no machinings.
+
+        Sets up variables, finished part, and park mode from the element geometry.
+        Use :meth:`add` to append machinings and :attr:`ref_side_index` to access
+        the machine reference side.
+
+        # TODO: Consider a StrategyConfig / pipeline-based API as an alternative to the explicit
+        # TODO: workflow, where a config dataclass of callables drives dispatch, flip logic, and sorting
+        # TODO: automatically. See git history for a previous implementation.
+
+        Parameters
+        ----------
+        element : TimberElement
+            The element to create the job for.
+
+        Example
+        -------
+        >>> job = HOPSJob.from_element(element)
+        >>> for processing in element.features:
+        ...     if processing.PROCESSING_NAME == "Lap":
+        ...         job.add(LapStrategies.milling(processing))
+        ...     elif processing.PROCESSING_NAME == "JackRafterCut":
+        ...         job.add(JackRafterCutStrategies.sawing(processing, machine_ref_side_index=job.ref_side_index))
+        """
+        rsi = element.attributes.get("ref_side_index", 0)
+        width, height = element.get_dimensions_relative_to_side(rsi)
+
+        vars = VarsDefinition(dx=element.blank_length, dy=width, dz=height)
+        vars.add_variable("RSI", str(rsi), "ReferenceSideIndex (0-5)")
+
+        finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
+        park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
+
+        return cls(
+            vars=vars,
+            finished_part=finished_part,
+            park_mode=park_mode,
+            machinings=[],
+            ref_side_index=rsi,
+        )
 
     def to_layout_file(
         self,
@@ -471,94 +527,38 @@ class HOPSJob:
 
         return cls.from_hop_string("".join(lines), strict=strict)
 
-    @classmethod
-    def from_timber_element(cls, element: "TimberElement", config: Optional["StrategyConfig"] = None) -> "HOPSJob":
-        """Create a HOPSJob from a TimberModel element.
+    @staticmethod
+    def sort_machinings(machinings: "List[HOPSMachining]", key=None) -> "List[HOPSMachining]":
+        """Sort machinings by operation type.
 
-        This method extracts machining information from the given TimberModel element,
-        including its reference planes and associated machining operations, and constructs
-        a HOPSJob with appropriate VarsDefinition, FinishedPart, ParkMode, and HOPSMachining instances.
+        Parameters
+        ----------
+        machinings : list
+            The machinings to sort.
+        key : callable, optional
+            Custom sort key function (same semantics as the built-in ``sorted``).
+            When omitted the default order is applied: milling first, then sawing,
+            then drilling.
 
-        Parameters:
-        -----------
-        element : TimberElement
-            The TimberModel element containing machining information.
-        config : StrategyConfig, optional
-            Per-processing-type strategy overrides.  Each field is a callable
-            ``(processing, ref_side_index: int) -> List[HOPSMachining]``.  When
-            ``None`` (the default) all built-in default strategies are used.
-
-        Returns:
+        Examples
         --------
-        HOPSJob
-            A HOPSJob instance representing the machining operations for the given element.
+        Default order (milling → sawing → drilling)::
 
-        Example:
-        --------
-        >>> # Default behaviour
-        >>> job = HOPSJob.from_timber_element(element)
+            post_flip = HOPSJob.sort_machinings(post_flip)
 
-        >>> # Override a single processing type
-        >>> from easyhops.strategies import StrategyConfig, DoubleCutStrategies
-        >>> config = StrategyConfig(
-        ...     double_cut=lambda p, rsi: DoubleCutStrategies.pocketing(p, machine_ref_side_index=rsi, overlap=80),
-        ... )
-        >>> job = HOPSJob.from_timber_element(element, config=config)
+        Custom order — sawing first::
+
+            order = {"SAWING": 0, "MILLING": 1, "DRILLING": 2}
+            post_flip = HOPSJob.sort_machinings(post_flip, key=lambda m: order.get(getattr(m, "OPERATION_TYPE", ""), 3))
         """
-        from .strategies import StrategyConfig
-
-        if config is None:
-            config = StrategyConfig()
-
-        ref_side_index = element.attributes.get("ref_side_index", 0)
-        width, height = element.get_dimensions_relative_to_side(ref_side_index)
-
-        vars = VarsDefinition(dx=element.blank_length, dy=width, dz=height)
-        vars.add_variable("RSI", str(ref_side_index), "ReferenceSideIndex (0-5)")
-
-        finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
-        park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
-        machinings = []
-
-        for processing in element.features:
-            name = processing.PROCESSING_NAME
-
-            if name == "DoubleCut":
-                if processing.user_attributes == {}:
-                    continue  # Skip if necessary attributes are missing
-                machinings.extend(config.double_cut(processing, ref_side_index))
-
-            elif name == "BirdsMouth":
-                machinings.extend(config.birdsmouth(processing, ref_side_index))
-
-            elif name == "JackRafterCut":
-                machinings.extend(config.jack_rafter_cut(processing, ref_side_index))
-
-            elif name == "Lap":
-                machinings.extend(config.lap(processing, ref_side_index))
-
-        sorted_machinings = cls._sort_machinings_based_on_operation(machinings)
-
-        return cls(vars=vars, finished_part=finished_part, park_mode=park_mode, machinings=sorted_machinings)
+        if key is None:
+            _order = {"MILLING": 0, "SAWING": 1, "DRILLING": 2}
+            key = lambda m: _order.get(getattr(m, "OPERATION_TYPE", "UNKNOWN"), 3)  # noqa: E731
+        return sorted(machinings, key=key)
 
     @staticmethod
-    def _sort_machinings_based_on_operation(machinings: List[HOPSMachining]) -> List[HOPSMachining]:
-        """Sort machinings based on machining operation type.
-        The sorting order is:
-            1. Sawing operations (SAWING)
-            2. Milling operations (MILLING)
-            3. Drilling operations (DRILLING)
-        """
-        # ordering of machining types
-        machining_order = {
-            "SAWING": 0,
-            "MILLING": 1,
-            "DRILLING": 2,
-        }
-
-        # Sort the machinings using the defined key
-        sorted_machinings = sorted(machinings, key=lambda m: machining_order.get(getattr(m, "OPERATION_TYPE", "UNKNOWN"), 3))
-        return sorted_machinings
+    def _sort_machinings_based_on_operation(machinings: "List[HOPSMachining]") -> "List[HOPSMachining]":
+        return HOPSJob.sort_machinings(machinings)
 
     @staticmethod
     def _extract_header_lines(lines: List[str], start_idx: int) -> Tuple[Optional[HOPChunk], int]:
