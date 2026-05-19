@@ -24,6 +24,10 @@ wheels/
 *.egg
 MANIFEST
 
+# IDE / editor
+.vscode/
+.idea/
+
 # Vendor CNC macro library — local copy only, not committed (DiREKT CNC Systeme IP)
 # Source: C:\Campus_V8\Data\Hops\HOPMacros\
 # __ETH/ contains institution/project custom macros and IS committed
