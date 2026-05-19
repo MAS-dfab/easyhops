@@ -1,7 +1,5 @@
 import os
 
-import compas
-
 __version__ = "0.1.0"
 
 HERE = os.path.dirname(__file__)
@@ -12,7 +10,7 @@ DATA = os.path.abspath(os.path.join(HOME, "data"))
 # Check if easyhops is installed from git
 # If that's the case, try to append the current head's hash to __version__
 try:
-    git_head_file = compas._os.absjoin(HOME, ".git", "HEAD")
+    git_head_file = os.path.join(HOME, ".git", "HEAD")
 
     if os.path.exists(git_head_file):
         # git head file contains one line that looks like this:
@@ -21,7 +19,7 @@ try:
             _, ref_path = git_head.read().strip().split(" ")
             ref_path = ref_path.split("/")
 
-            git_head_refs_file = compas._os.absjoin(HOME, ".git", *ref_path)
+            git_head_refs_file = os.path.join(HOME, ".git", *ref_path)
 
         if os.path.exists(git_head_refs_file):
             with open(git_head_refs_file, "r") as git_head_ref:
