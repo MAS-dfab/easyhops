@@ -20,6 +20,7 @@ from .hop_core import FinishedPart
 from .hop_core import ParkMode
 from .hop_core import ParkPosition
 from .hop_core import VarsDefinition
+from .hop_core import HopsSystemVars
 from .machining_commands import G01
 from .machining_commands import G02M
 from .machining_commands import G03M
@@ -299,7 +300,7 @@ class HOPSJob:
             self.machinings.append(machinings)
 
     @classmethod
-    def from_element(cls, element: "TimberElement") -> "HOPSJob":
+    def from_element(cls, element: "TimberElement", scale_factor: Optional[float] = 1.0) -> "HOPSJob":
         """Create a HOPSJob shell from a TimberElement with no machinings.
 
         Sets up variables, finished part, and park mode from the element geometry.
@@ -314,6 +315,8 @@ class HOPSJob:
         ----------
         element : TimberElement
             The element to create the job for.
+        scale_factor : Optional[float]
+            Optional scale factor to apply to dimensions (default 1.0).
 
         Example
         -------
@@ -327,10 +330,10 @@ class HOPSJob:
         rsi = element.attributes.get("ref_side_index", 0)
         width, height = element.get_dimensions_relative_to_side(rsi)
 
-        vars = VarsDefinition(dx=element.blank_length, dy=width, dz=height)
+        vars = VarsDefinition(dx=element.blank_length * scale_factor, dy=width * scale_factor, dz=height * scale_factor)
         vars.add_variable("RSI", str(rsi), "ReferenceSideIndex (0-5)")
 
-        finished_part = FinishedPart(dx=element.blank_length, dy=element.height, dz=element.width)
+        finished_part = FinishedPart(dx=HopsSystemVars.X_DIM, dy=HopsSystemVars.Y_DIM, dz=HopsSystemVars.Z_DIM)
         park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
 
         return cls(
