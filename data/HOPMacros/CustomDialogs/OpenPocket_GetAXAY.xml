@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<main>
+	<settings>
+		<multi>0</multi>
+		<repeater>0</repeater>
+		<condition>0</condition>
+		<tool selection="0"/>
+		<button name="Clear" visible="1"/>
+		<button name="FillVars" visible="1"/>
+	</settings>
+	<languages>
+		<source id="0" file="Moduls\Dialogs\InterDialogs" section="Language"/>
+		<source id="1" file="DLLDialoge" section="FOKCancelAddInsertDefaultButtonFrame_pas"/>
+	</languages>
+	<gui>
+		<editc name="AX" text="AX - More in X"/>
+		<editc name="AY" text="AY - More in Y"/>
+		<editc name="Ecke" text="Ecke - 0=LU / 1=U / 2=RU......."/>
+		<editc name="Dim_X" text="Dim_X - Länge in X"/>
+		<editc name="Dim_Y" text="Dim_Y - Länge in Y"/>
+		<editc name="Angle_Switch" text="Angle_Switch - 0=0 / 1=90"/>
+	</gui>
+	<macro>
+		<call>OpenPocket_GetAXAY</call>
+		<system>0</system>
+		<var name="AX" ui="AX"/>
+		<var name="AY" ui="AY"/>
+		<var name="Ecke" ui="Ecke"/>
+		<var name="Dim_X" ui="Dim_X"/>
+		<var name="Dim_Y" ui="Dim_Y"/>
+		<var name="Angle_Switch" ui="Angle_Switch"/>
+	</macro>
+</main>

@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<main>
+	<settings>
+		<multi>0</multi>
+		<repeater>0</repeater>
+		<condition>0</condition>
+		<tool selection="0"/>
+		<button name="Clear" visible="1"/>
+		<button name="FillVars" visible="1"/>
+	</settings>
+	<languages>
+		<source id="0" file="Moduls\Dialogs\InterDialogs" section="Language"/>
+		<source id="1" file="DLLDialoge" section="FOKCancelAddInsertDefaultButtonFrame_pas"/>
+	</languages>
+	<gui>
+		<editc name="KN" text="KN - Konturnamen"/>
+		<editc name="Mode" text="Mode"/>
+		<editc name="LastTiefe" text="LastTiefe"/>
+		<editc name="Tiefe" text="Tiefe - Tiefe"/>
+		<editc name="AnzahlP" text="AnzahlP"/>
+		<editc name="AnzahlOutlineP" text="AnzahlOutlineP"/>
+		<editc name="RD" text="RD - Richtung umkehren"/>
+		<editc name="FliegendEintauchen" text="FliegendEintauchen"/>
+		<editc name="MaxEintauchLaenge" text="MaxEintauchLaenge"/>
+		<editc name="LastCall" text="LastCall"/>
+	</gui>
+	<macro>
+		<call>_ExecutePocketContours_V5</call>
+		<system>0</system>
+		<var name="KN" ui="KN" IsString="1"/>
+		<var name="Mode" ui="Mode"/>
+		<var name="LastTiefe" ui="LastTiefe"/>
+		<var name="Tiefe" ui="Tiefe"/>
+		<var name="AnzahlP" ui="AnzahlP"/>
+		<var name="AnzahlOutlineP" ui="AnzahlOutlineP"/>
+		<var name="RD" ui="RD"/>
+		<var name="FliegendEintauchen" ui="FliegendEintauchen"/>
+		<var name="MaxEintauchLaenge" ui="MaxEintauchLaenge"/>
+		<var name="LastCall" ui="LastCall"/>
+	</macro>
+</main>

@@ -1,0 +1,302 @@
+;MAKROTYP=1
+;INSTVERSION=
+;EXEVERSION=7.0.2.1[Hops.exe]
+;BILD=E_KLINKEN.WMF
+;INFO=
+;WZGV=7225K_105
+;WZGVCONFIG=
+;MASCHINE=HOLZHER
+;NCNAME=E_klinken
+;KOMMENTAR=
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=DialogBA_5.Dll
+;DIALOGPROC=ShowTE_Klinken_FDialog
+;DIALOGKIND=0
+;AUTOSCRIPTSTART=1
+;BUTTONBILD=
+;DIMENSION_UNIT=0
+VARS
+   WKZ_Fold := 1114;*VAR*Ausklinkwerkzeug
+   ESXY1 := 7;Easy Snap links hinten
+   ESXY2 := 1;Easy Snap links vorne
+   ESXY3 := 5;Easy Snap rechts hinten
+   ESXY4 := 3;Easy Snap rechts vorne
+   EX1 := 50;*VAR*; X Wert P1
+   EY1 := 50;*VAR*; Y Wert P1
+   EX2 := 50;*VAR*; X Wert P2
+   EY2 := 50;*VAR*; Y Wert P2
+   EX3 := 50;*VAR*; X Wert P3
+   EY3 := 50;*VAR*; Y Wert P3
+   EX4 := 50;*VAR*; X Wert P4
+   EY4 := 50;*VAR*; Y Wert P4
+   KP1 := 1;*VAR*Klinkung Li Hi  0= kein / 1= Aussen/ 2= Innen
+   KP2 := 0;*VAR*Klinkung Li Vo  0= kein / 1= Aussen/ 2= Innen
+   KP3 := 1;*VAR*Klinkung Re Hi  0= kein / 1= Aussen/ 2= Innen
+   KP4 := 0;*VAR*Klinkung Re Vo  0= kein / 1= Aussen/ 2= Innen
+   Tiefe_U := -20;*VAR*Eintauchtiefe unten
+   Tiefe_O := 15;*VAR*Austauchtiefe oben
+   Falz_B := 15;*VAR*Falzbreite
+   Falz_H := 20;*VAR*Falzhöhe von unten
+   Falz_Ab := 0;*VAR*Einfräsung in Falz
+   Falz_Akt := -1;*VAR*Falz Ja oder nein
+   Schneidewinkel := 60;*VAR*Schneidewinkel 45 oder 60°
+   Drehung := 270;Winkel links vorne
+   Neigung := 45;Winkel vorne rechts
+   Spezial := -1;*VAR*Ecke speziell ausfräsen
+   Drehung1 := 45;Drehung  Nibbeln
+   Nib_Anf := 50.00;*VAR*Anfahrweg beim Nibbeln
+    := -999999;
+START
+Fertigteil (1000,1000,20,0,0,0,0,0,'',0,0,0)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+IF Schneidewinkel = 60
+Neigung := 45
+ELSE
+Neigung := 32.5
+END
+;Bei nibbeln
+IF Spezial= -1
+Falz_Ab := 0
+END
+IF KP1 = 1
+;Links hinten aussen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX1-10,EY1-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+Else
+SP (EX1 - Falz_B-10,EY1 - Falz_B-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1 - Falz_B,EY1 - Falz_B,0,0,ESXY1,2)
+G01 (EX1-Falz_B,EY1-Falz_B,Falz_H,0,ESXY1,1)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1, -Falz_AB,0,ESXY1,2)
+END
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+; Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+Drehung1 := Drehung -45
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+SP (EX1- Nib_Anf,EY1,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung + 45
+SP (EX1,EY1-Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+END
+END
+IF KP1 = 2
+;Links hinten innen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX1+10,EY1+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+ELSE
+SP (EX1 + Falz_B+10,EY1+ Falz_B+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1+Falz_B,EY1+Falz_B,0,0,ESXY1,2)
+G01 (EX1 + Falz_B,EY1 + Falz_B,Falz_H,0,ESXY1,1)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1, -Falz_AB,0,ESXY1,2)
+END
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+; Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+Drehung1 := Drehung -45
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+SP (EX1+ Nib_Anf,EY1,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung + 45
+SP (EX1,EY1+ Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY1,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX1,EY1,0,0,ESXY1,2)
+G01 (EX1,EY1,Tiefe_O,0,ESXY1,0)
+EP (0,_ANF,0)
+END
+END
+IF KP2 = 1
+;Links vorne aussen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX2-10,EY2-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+ELSE
+SP (EX2 - Falz_B-10,EY2- Falz_B-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2 - Falz_B,EY2 - Falz_B,0,0,ESXY2,2)
+G01 (EX2 - Falz_B,EY2 - Falz_B,Falz_H,0,ESXY2,1)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2,- Falz_AB,0,ESXY2,2)
+END
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung + 45
+SP (EX2- Nib_Anf,EY2,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung - 45
+SP (EX2,EY2-Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+END
+END
+IF KP2 = 2
+;Links vorne innen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX2+10,EY2+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+ELSE
+SP (EX2+Falz_B+10,EY2+ Falz_B+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2+Falz_B,EY2+Falz_B,0,0,ESXY2,2)
+G01 (EX2 + Falz_B,EY2 + Falz_B,Falz_H,0,ESXY2,1)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2, -Falz_AB,0,ESXY2,2)
+END
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung + 45
+SP (EX2+ Nib_Anf,EY2,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung - 45
+SP (EX2,EY2+Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY2,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY2,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY2,0)
+EP (0,_ANF,0)
+END
+END
+IF KP3=1
+;Rechts  hinten aussen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX3-10,EY3-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+ELSE
+SP (EX3-Falz_B-10,EY3-Falz_B-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3 - Falz_B,EY3 - Falz_B,0,0,ESXY3,2)
+G01 (EX3 - Falz_B,EY3 - Falz_B,Falz_H,0,ESXY3,1)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3,- Falz_AB,0,ESXY3,2)
+END
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung +45
+SP (EX3- Nib_Anf,EY3,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung -45
+SP (EX3,EY3-Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+END
+END
+IF KP3=2
+;Rechts  hinten innen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX3+10,EY3+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+ELSE
+SP (EX3+Falz_B+10,EY3+ Falz_B+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3+Falz_B,EY3+Falz_B,0,0,ESXY3,2)
+G01 (EX3 + Falz_B,EY3 + Falz_B,Falz_H,0,ESXY3,1)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3, -Falz_AB,0,ESXY3,2)
+END
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung + 45
+SP (EX3+ Nib_Anf,EY3,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung - 45
+SP (EX3,EY3+Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY3,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX3,EY3,0,0,ESXY3,2)
+G01 (EX3,EY3,Tiefe_O,0,ESXY3,0)
+EP (0,_ANF,0)
+END
+END
+IF KP4=1
+;Rechts  vorne aussen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX4-10,EY4-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4,EY4,0,0,ESXY4,2)
+ELSE
+SP (EX4-Falz_B-10,EY4-Falz_B-10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4 - Falz_B,EY4 - Falz_B,0,0,ESXY4,2)
+G01 (EX4 - Falz_B,EY4 - Falz_B,Falz_H,0,ESXY4,1)
+G01 (EX4,EY4,0,0,ESXY4,2)
+G01 (EX4,EY4,- Falz_AB,0,ESXY4,2)
+END
+G01 (EX4,EY4,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung -45
+SP (EX2- Nib_Anf,EY2,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY4,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung +45
+SP (EX2,EY2-Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX2,EY2,0,0,ESXY4,2)
+G01 (EX2,EY2,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+END
+END
+IF KP4=2
+;Rechts  vorne innen
+Drehung := 270
+IF Falz_Akt = 0
+SP (EX4+10,EY4+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4,EY4,0,0,ESXY4,2)
+ELSE
+SP (EX4+Falz_B+10,EY4+ Falz_B+10,Tiefe_U,0,0,_ANF,0,Drehung,Neigung,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4+Falz_B,EY4+Falz_B,0,0,ESXY4,2)
+G01 (EX4 + Falz_B,EY4 + Falz_B,Falz_H,0,ESXY4,1)
+G01 (EX4,EY4,0,0,ESXY4,2)
+G01 (EX4,EY4, -Falz_AB,0,ESXY4,2)
+END
+G01 (EX4,EY4,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+;Ecken abnibbeln
+IF (Spezial = -1) & (Falz_Akt= -1)
+WZF (WKZ_Fold,_VE,_V,_VA,_SD,_ANF,'1')
+Drehung1 := Drehung -45
+SP (EX4+ Nib_Anf,EY4,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4,EY4,0,0,ESXY4,2)
+G01 (EX4,EY4,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+Drehung1 := Drehung + 45
+SP (EX4,EY4+Nib_Anf,Falz_H,0,0,_ANF,0,Drehung1,SchneideWinkel,ESXY4,1,0,0,0,0,1,0,0,0,0,0,0,0)
+G01 (EX4,EY4,0,0,ESXY4,2)
+G01 (EX4,EY4,Tiefe_O,0,ESXY4,0)
+EP (0,_ANF,0)
+END
+END

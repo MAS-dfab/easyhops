@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<main>
+	<settings>
+		<multi>0</multi>
+		<repeater>0</repeater>
+		<condition>0</condition>
+		<tool selection="0"/>
+		<button name="Clear" visible="1"/>
+		<button name="FillVars" visible="1"/>
+	</settings>
+	<languages>
+		<source id="0" file="Moduls\Dialogs\InterDialogs" section="Language"/>
+		<source id="1" file="DLLDialoge" section="FOKCancelAddInsertDefaultButtonFrame_pas"/>
+	</languages>
+	<gui>
+		<editc name="Ecke" text="Ecke - 0=LU / 1=U / 2=RU......."/>
+		<editc name="Angle_Switch" text="Angle_Switch - 0=0 / 1=90"/>
+		<editc name="PocketKonturName" text="PocketKonturName"/>
+		<editc name="Lines" text="Lines"/>
+		<editc name="Direct" text="Direct - switch direction"/>
+	</gui>
+	<macro>
+		<call>OpenPocket_SortCont</call>
+		<system>0</system>
+		<var name="Ecke" ui="Ecke"/>
+		<var name="Angle_Switch" ui="Angle_Switch"/>
+		<var name="PocketKonturName" ui="PocketKonturName" IsString="1"/>
+		<var name="Lines" ui="Lines"/>
+		<var name="Direct" ui="Direct"/>
+	</macro>
+</main>

@@ -1,0 +1,1155 @@
+\\Ab Campus V7.6.8.49 inkl. ExtsetupV7.exe (V7.21.6)														 
+<Para>
+Ext=hop
+Sort=0
+LR=0
+Offset=1
+\\LogFile=HH_WAREHOUSE
+
+\\Bei negativem Winkel wird ein 2 CNC Programm für Clamex erzeugt. MitrePositiv=1 
+\\MitrePositiv=1		   
+</Para>
+
+\\WZGV & MASCHINE anpassen
+<Header>
+;BILD=$cncName$.WMF
+;INFO=$cncName$
+;WZGV=DIREKT_DEMO
+;MASCHINE=DIREKT_DEMO
+;NCNAME=TrunCAD20XX
+;DX=0
+;DY=0
+;DZ=0
+;DIALOGDLL=Dialoge.DLL
+;DIALOGPROC=StandardFormAnzeigen
+VARS
+_wl := $WL$;winkel links
+_wr := $WR$;winkel rechts
+_wv := $WV$;winkel vorn
+_wh := $WH$;winkel hinten
+_Material := '$MAT$';Material
+_Werkstoff := '$MATTYP$';P=Platte, M=Massiv, Z=Sonstiges
+_KanteDickeRechts := $KRD$;Kantedicke rechts
+_KanteDickeLinks := $KLD$;Kantedicke links
+_KanteDickeVorne := $KVD$;Kantedicke vorne
+_KanteDickeHinten := $KHD$;Kantedicke hinten
+_KanteRechts := '$KR$';Kante rechts
+_KanteLinks := '$KL$';Kante links
+_KanteVorne := '$KV$';Kante vorne
+_KanteHinten := '$KH$';Kante hinten
+_Teiletyp := '$NAME$';Name des Bauteils
+_Anschlag := $NOCHNICHTDA$;Anschlag
+_FrontTeilGedreht := $NOCHNICHTDA$;Frontteil gedreht
+_TeilGedreht := $NOCHNICHTDA$;Teil gedreht
+_lx := $PL$;Länge
+_ly := $PB$;Breite
+_lz := $PD$;Dicke
+_ZugabeL := $LPlus$;Zugabemass Länge
+_ZugabeB := $BPlus$;Zugabemass Breite
+_Format := $NOCHNICHTDA$;Formatiert j/n
+_Name := '$NOCHNICHTDA$';eindeutiger Teilename
+_BereichName := '$NOCHNICHTDA$';BereichName
+_nest := $NOCHNICHTDA$;Nesting 1/0
+_NCNAME := '$cncName$';NCName
+DX := $PL$;*VAR*Dimension X
+DY := $PB$;*VAR*Dimension Y
+DZ := $PD$;*VAR*Dimension Z
+_hhdata_Material := '$MAT$';*VAR*Part material / Werkstückmaterialbezeichnung
+_HHDATA_EDGEDIMRIGHT := $KRD$;*VAR*edge thickness right / Kantenstärke rechts
+_HHDATA_EDGEDIMLEFT := $KLD$;*VAR*edge thickness left / Kantenstärke links
+_HHDATA_EDGEDIMFRONT := $KVD$;*VAR*edge thickness front / Kantenstärke vorne
+_HHDATA_EDGEDIMBACK := $KHD$;*VAR*edge thickness back / Kantenstärke hinten
+_HHDATA_EDGEMATRIGHT := '$KR$';*VAR*edge type right / Kantentyp rechts
+_HHDATA_EDGEMATLEFT := '$KL$';*VAR*edge type left / Kantentyp links
+_HHDATA_EDGEMATFRONT := '$KV$';*VAR*edge type front / Kantentyp vorne
+_HHDATA_EDGEMATBACK := '$KH$';*VAR*edge type back / Kantentyp hinten
+_HHDATA_EDGEPRGRIGHT := $NOCHNICHTDA$;*VAR*edge program right / Kantenprogramm rechts
+_HHDATA_EDGEPRGLEFT := $NOCHNICHTDA$;*VAR*edge program left / Kantenprogramm links
+_HHDATA_EDGEPRGFRONT := $NOCHNICHTDA$;*VAR*edge program front / Kantenprogramm vorne
+_HHDATA_EDGEPRGBACK := $NOCHNICHTDA$;*VAR*edge program back / Kantenprogramm hinten
+_HHDATA_NESTGRAINDIRECTION := $MATGRAIN$;Grain direction / Faserrichtung
+_HHDATA_NESTMIRROR := $NOCHNICHTDA$;Mirror / Spiegeln
+_hhdata_NestStepAngle := $MATROT$;StepAngle / Schrittwinkel
+_HHDATA_NESTRECTANGLE := $NOCHNICHTDA$;Rectangle / Rechteckig
+_HHDATA_NESTTOPBOTTOMSIDE := $NOCHNICHTDA$;Top/Bottom Side / OberUnterSeite
+_HHDATA_ORDERTEXT1 := '$NOCHNICHTDA$';*VAR*Commission / Kommission
+_HHDATA_ORDERTEXT2 := '$NOCHNICHTDA$';*VAR*Customername / Kundenname
+_HHDATA_INFO := '$NOCHNICHTDA$';*VAR*Infos / Infos
+_HHDATA_FREETEXT1 := '$NOCHNICHTDA$';*VAR*Korpusname / Korpusname
+_HHDATA_TYPE := '$NAME$';*VAR*Partname / Teilname
+_HHDATA_TYPE := '$CNCNAME$';*VAR*Filename / Dateiname
+_format01 := '$NOCHNICHTDA$';*VAR*Formated / Formatiert
+_Horizontal := '$NOCHNICHTDA$';*VAR*Horizontal / Horizontal
+_ClamexBohrung := '$NOCHNICHTDA$';*VAR*Clamexbohrung j/n / Hole for Clamex y/n
+_HOPFile2 := '$NOCHNICHTDA$';*VAR*Zweite hop-Datei/second hop-file
+_HHDATA_Bitmuster :=$HHBITMUSTER$ 
+START
+</Header>
+
+<Part>
+\\HH_Version_2020.1
+CALL PART_HH ( VAL L:=$PL$,B:=$PB$,D:=$PD$)
+</Part>
+
+<StartCNC>
+
+
+</StartCNC>
+
+<StartPart>
+
+</StartPart>
+
+<EndPart>
+CALL ENDE_HH ()
+</EndPart>
+
+<EndCNC>
+</EndCNC>
+
+<Routing>
+</Routing>
+
+<Startcontour>
+KB ('$KID$_Kontur','',$X$,$Y$,-2,'',1,1)
+</Startcontour>
+
+<Line>
+KG01 ('',$X$,$Y$,-2,'',1,1)
+</Line>
+
+<ArcCW>
+KG02M('',$X$,$Y$,-2,$CRX$,$CRY$,'',1,2,1)
+</ArcCW>
+
+<ArcCWmax>
+KG02M('',$X$,$Y$,-2,$CRX$,$CRY$,'',1,2,1)
+</ArcCWmax>
+
+<ArcCCW>
+KG03M('',$X$,$Y$,-2,$CRX$,$CRY$,'',1,2,1)
+</ArcCCW>
+
+<ArcCCWmax>
+KG03M('',$X$,$Y$,-2,$CRX$,$CRY$,'',1,2,1)
+</ArcCCWmax>
+
+<Line>
+</Line>
+
+<ArcCW>
+</ArcCW>
+
+<ArcCWmax>
+</ArcCWmax>
+
+<ArcCCW>
+</ArcCCW>
+
+<ArcCCWmax>
+</ArcCCWmax>
+
+<CloseContour>
+</CloseContour>
+
+\\Steuerung der Tiefe
+<Endcontour>
+CALL CONTURMILLING_HH ()
+if  $WL$<>0 | $WR$<>0
+;Angel SAW links rechts
+CALL ANGLE_SAW_HH ()
+
+\\ noch keine Funktion---------------
+elseif $WV$<>0 | $WH$<>0
+;Angel SAW vorne hinten
+CALL ANGLE_SAW_HH ()
+else
+</Endcontour>
+
+<PocketFreeStartContour>
+</PocketFreeStartContour>
+
+<PocketFree>
+</PocketFree>
+
+
+<HoleV>
+\\Lochreihe in x+
+if $LRX$=1 & $LRAN$>1
+WZB (501,_VE,_V,_VA,_SD,_ANF,'1')
+CALL _Rbohx_einpass_V5 ( VAL EINPASSEN:=0,SPX:=$X$,SPY:=$Y$,SPY2:=$Y$,RASTER:=$LRAB$,EPX:=$X$+(($LRAN$-1)*$LRAB$),T:=-$T$,D:=$DIA$,TLF:=30,ESXY:=1,ESX:=1,ESY:=3,ESD:=0,USE2:=0)
+
+\\Lochreihe in x-
+elseif $LRX$=-1 & $LRAN$>1
+WZB (501,_VE,_V,_VA,_SD,_ANF,'1')
+CALL _Rbohx_einpass_V5 ( VAL EINPASSEN:=0,SPX:=$X$,SPY:=$Y$,SPY2:=$Y$,RASTER:=-$LRAB$,EPX:=$X$+(($LRAN$-1)*-$LRAB$),T:=-$T$,D:=$DIA$,TLF:=10,ESXY:=1,ESX:=1,ESY:=3,ESD:=0,USE2:=0)
+
+elseif $DIA$=15
+\\bohren 15mm Topfbandbohrer
+;15mm
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=30,AXISDW:=0)
+
+elseif $DIA$=35
+\\bohren 35mm Topfbandbohrer
+;35mm
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=30,AXISDW:=0)
+
+
+else
+\\bohren
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=10,AXISDW:=0)
+</HoleV>
+
+
+
+\\HH_Cabineo Standart Bohren oder Fräsen
+<HoleV_HH_Cabineo>
+if $DIA$=5
+\\bohren
+;Cabineo 5mm
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=10,AXISDW:=0)
+
+elseif $DIA$=15.1
+\\ 15.1 Löschen
+
+elseif $CLAMEXWV$=0
+;HH_Cabineo FLAECHE kante2 LI
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=2,TYP:=0,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=90
+;HH_Cabineo FLAECHE kante1 VO
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=1,TYP:=0,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=180
+;HH_Cabineo FLAECHE kante4 Re
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=4,TYP:=0,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=270
+;HH_Cabineo FLAECHE kante3 HI
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=3,TYP:=0,WINKEL:=0,FLAECHE:=0)
+
+else
+;HH_Cabineo FLAECHE rotation
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=1,TYP:=0,WINKEL:=0,FLAECHE:=0)
+</HoleV_HH_Cabineo>
+
+\\HH_Cabineo versenkt Bohren oder Fräsen
+<HoleV_HH_Cabineo_FB>
+if $DIA$=5
+\\bohren
+;Cabineo_FB 5mm
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=10,AXISDW:=0)
+
+elseif $DIA$=15.1
+\\ 15.1 Löschen
+
+
+
+elseif $CLAMEXWV$=0
+;HH_Cabineo_FB FLAECHE kante2 LI
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=2,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=90
+;HH_Cabineo_FB FLAECHE kante1 VO
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=1,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=180
+;HH_Cabineo_FB FLAECHE kante4 Re
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=4,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=270
+;HH_Cabineo_FB FLAECHE kante3 HI
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=3,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+else
+;HH_Cabineo_FB FLAECHE rotation
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=1,TYP:=1,WINKEL:=0,FLAECHE:=0)
+</HoleV_HH_Cabineo_FB>
+
+
+
+
+\\HH_Cabineo versenkt Bohren oder Fräsen
+<HoleV_HH_Cabineo_AB>
+if $DIA$=5
+\\bohren
+;Cabineo_AB 5mm
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=10,AXISDW:=0)
+
+elseif $DIA$=15.1
+\\ 15.1 Löschen
+
+elseif $CLAMEXWV$=0
+;HH_Cabineo_AB FLAECHE kante2 LI
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=2,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=90
+;HH_Cabineo_AB FLAECHE kante1 VO
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=1,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=180
+;HH_Cabineo_AB FLAECHE kante4 Re
+CALL CABINEO_HH ( VAL POS_X:=0,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=4,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+elseif $CLAMEXWV$=270
+;HH_Cabineo_AB FLAECHE kante3 HI
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=0,TIEFE:=-$T$,SEITE:=3,TYP:=1,WINKEL:=0,FLAECHE:=0)
+
+else
+;HH_Cabineo_AB FLAECHE rotation
+CALL CABINEO_HH ( VAL POS_X:=$X$,POS_Y:=$Y$,TIEFE:=-$T$,SEITE:=1,TYP:=1,WINKEL:=0,FLAECHE:=0)
+</HoleV_HH_Cabineo_AB>
+
+
+
+
+
+
+
+\\HH_Clamex_P10
+<HoleV_HH_Clamex_P10>
+
+if $CLAMEXWV$=0
+;HH_Clamex_P10 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90
+;HH_Clamex_P10 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90
+;HH_Clamex_P10 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180
+;HH_Clamex_P10 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180
+;HH_Clamex_P10 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=270 
+;HH_Clamex_P10 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=-270
+;HH_Clamex_P10 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0
+;HH_Clamex_P10 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+else
+
+;HH_Clamex_P10 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+</HoleV_HH_Clamex_P10>
+
+
+
+<HoleLeft_HH_Clamex_P10>
+;HH_Clamex_P10 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Clamex_P10>
+
+<HoleRight_HH_Clamex_P10>
+;HH_Clamex_P10 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Clamex_P10>
+
+<HoleFront_HH_Clamex_P10>
+;HH_Clamex_P10 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Clamex_P10>
+
+<HoleBack_HH_Clamex_P10>
+;HH_Clamex_P10 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Clamex_P10>
+
+
+\\HH_Clamex_P14
+<HoleV_HH_Clamex_P14>
+if $CLAMEXWV$=0 & $T$=14
+;HH_Clamex_P14 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=0 & $T$=10
+;HH_Clamex_P10 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90 & $T$=14
+;HH_Clamex_P14 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=90 & $T$=10
+;HH_Clamex_P10 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90 & $T$=14
+;HH_Clamex_P14 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90 & $T$=10
+;HH_Clamex_P10 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180 & $T$=14
+;HH_Clamex_P14 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=180 & $T$=10
+;HH_Clamex_P10 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180 & $T$=14
+;HH_Clamex_P14 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180 & $T$=10
+;HH_Clamex_P10 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=270 & $T$=14 
+;HH_Clamex_P14 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=270 & $T$=10 
+;HH_Clamex_P10 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=-270 & $T$=14
+;HH_Clamex_P14 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=-270 & $T$=10
+;HH_Clamex_P10 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0 & $T$=14
+;HH_Clamex_P14 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0 & $T$=10
+;HH_Clamex_P10 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=0,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$>0 & $T$=14
+;HH_Clamex_P14 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$>0 & $T$=10
+;HH_Clamex_P10 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+else
+
+</HoleV_HH_Clamex_P14>
+
+
+
+
+
+<HoleLeft_HH_Clamex_P14>
+;HH_Clamex_P14 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Clamex_P14>
+
+<HoleRight_HH_Clamex_P14>
+;HH_Clamex_P14 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Clamex_P14>
+
+
+<HoleFront_HH_Clamex_P14>
+;HH_Clamex_P14 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Clamex_P14>
+
+<HoleBack_HH_Clamex_P14>
+;HH_Clamex_P14 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=1,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Clamex_P14>
+
+
+
+
+
+
+\\HH_Medius_14_10
+<HoleV_HH_Medius_14_10>
+
+if $CLAMEXWV$=0
+;HH_Medius_14_10 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90
+;HH_Medius_14_10 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90
+;HH_Medius_14_10 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180
+;HH_Medius_14_10 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180
+;HH_Medius_14_10 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=270 
+;HH_Medius_14_10 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=-270
+;HH_Medius_14_10 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0
+;HH_Medius_14_10 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+else
+;HH_Medius_14_10 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+</HoleV_HH_Medius_14_10>
+
+
+
+
+<HoleLeft_HH_Medius_14_10>
+;HH_Medius_14_10 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Medius_14_10>
+
+<HoleRight_HH_Medius_14_10>
+;HH_Medius_14_10 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Medius_14_10>
+
+<HoleFront_HH_Medius_14_10>
+;HH_HH_Medius_14_10 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Medius_14_10>
+
+<HoleBack_HH_Medius_14_10>
+;HH_Medius_14_10 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=6,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Medius_14_10>
+
+
+
+
+
+
+
+\\HH_Tenso_14
+<HoleV_HH_Tenso_14>
+if $CLAMEXWV$=0
+;HH_Tenso_14 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90
+;HH_Tenso_14 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90
+;HH_Tenso_14 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180
+;HH_Tenso_14 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180
+;HH_Tenso_14 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=270 
+;HH_Tenso_14 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=-270
+;HH_Tenso_14 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0
+;HH_Tenso_14 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+else
+;HH_Tenso_14 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+</HoleV_HH_Tenso_14>
+
+
+
+<HoleLeft_HH_Tenso_14>
+;HH_Tenso_14 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Tenso_14>
+
+<HoleRight_HH_Tenso_14>
+;HH_Tenso_14 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Tenso_14>
+
+<HoleFront_HH_Tenso_14>
+;HH_Tenso_14 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Tenso_14>
+
+<HoleBack_HH_Tenso_14>
+;HH_Tenso_14 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=2,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Tenso_14>
+
+
+
+\\HH_Tenso_10
+<HoleV_HH_Tenso_10>
+if $CLAMEXWV$=0
+;HH_Tenso_10 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90
+;HH_Tenso_10 FLAECHE kante1 VO 90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=-90
+;HH_Tenso_10 FLAECHE kante1 VO -90
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180
+;HH_Tenso_10 FLAECHE kante4 Re 180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=-180
+;HH_Tenso_10 FLAECHE kante4 Re -180
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+elseif $CLAMEXWV$=270 
+;HH_Tenso_10 FLAECHE kante3 HI 270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+elseif $CLAMEXWV$=-270
+;HH_Tenso_10 FLAECHE kante3 HI -270
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$<0
+;HH_Tenso_10 FLAECHE rotation <0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=180+$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+else
+;HH_Tenso_10 FLAECHE rotation >0
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=-$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+</HoleV_HH_Tenso_10>
+
+
+
+
+<HoleLeft_HH_Tenso_10>
+;HH_Tenso_10 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Tenso_10>
+
+<HoleRight_HH_Tenso_10>
+;HH_Tenso_10 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Tenso_10>
+
+<HoleFront_HH_Tenso_10>
+;HH_Tenso_10 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Tenso_10>
+
+<HoleBack_HH_Tenso_10>
+;HH_Tenso_10 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=8,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Tenso_10>
+
+
+
+
+\\HH_Divario_14
+<HoleV_HH_Divario_14>
+if $CLAMEXWV$=0
+;HH_Divario_14 FLAECHE kante2 LI
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=1,KANTE:=2)
+
+elseif $CLAMEXWV$=90
+;HH_Divario_14 FLAECHE kante1 VO
+CALL Lamello_HH ( VAL X:=$X$,Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=1,KANTE:=1)
+
+elseif $CLAMEXWV$=180
+;HH_Divario_14 FLAECHE kante4 Re
+CALL Lamello_HH ( VAL X:=Eval($PL$-$X$),Y:=$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=1,KANTE:=4)
+
+
+elseif $CLAMEXWV$=270
+;HH_Divario_14 FLAECHE kante3 HI
+CALL Lamello_HH ( VAL X:=$X$,Y:=Eval($PB$-$Y$),Z:=0,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=1,KANTE:=3)
+
+else
+;HH_Divario_14 FLAECHE rotation
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=10,AXISDW:=0)
+\\CALL Lamello_HH ( VAL X:=$X$,Y:=$PB$-$Y$,Z:=0,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=$CLAMEXWV$,FLAECHE:=1,KANTE:=2)
+</HoleV_HH_Divario_14>
+
+
+
+<HoleLeft_HH_Divario_14>
+;HH_Divario_14 left
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=0,KANTE:=2)
+</HoleLeft_HH_Divario_14>
+
+<HoleRight_HH_Divario_14>
+;HH_Divario_14 Right
+CALL Lamello_HH ( VAL X:=0,Y:=$Y$,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=0,KANTE:=4)
+</HoleRight_HH_Divario_14>
+
+<HoleFront_HH_Divario_14>
+;HH_Divario_14 Front
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=0,KANTE:=1)
+</HoleFront_HH_Divario_14>
+
+<HoleBack_HH_Divario_14>
+;HH_Divario_14 Back
+CALL Lamello_HH ( VAL X:=$X$,Y:=0,Z:=$Z$,D:=6,TIEFE:=-$T$,TYP:=5,WINKEL:=0,FLAECHE:=0,KANTE:=3)
+</HoleBack_HH_Divario_14>
+
+
+
+
+;neu 29_3_2021 HB IF Verbinder ANFANG
+
+\\HH_PEANUT_1
+<HoleV_HH_PEANUT_1>
+
+if $DIA$=8.1
+CALL PEANUT_NUT_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=0
+
+;HH_PEANUT_1 FLAECHE kante2 LI
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=90
+;HH_PEANUT_1 FLAECHE kante1 VO 90
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=-90
+;HH_PEANUT_1 FLAECHE kante1 VO -90
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=180
+;HH_PEANUT_1 FLAECHE kante4 Re 180
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=-180
+;HH_PEANUT_1 FLAECHE kante4 Re -180
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=270 
+;HH_PEANUT_1 FLAECHE kante3 HI 270
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+elseif $CLAMEXWV$=-270
+;HH_PEANUT_1 FLAECHE kante3 HI -270
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+elseif $CLAMEXWV$<0
+;HH_PEANUT_1 FLAECHE rotation <0
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+
+else
+;HH_PEANUT_1 FLAECHE rotation >0
+CALL PEANUT_1_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+</HoleV_HH_PEANUT_1>
+
+
+
+
+<HoleLeft_HH_PEANUT_1>
+;HH_PEANUT_1 left
+
+</HoleLeft_HH_PEANUT_1>
+
+
+
+<HoleRight_HH_PEANUT_1>
+;HH_PEANUT_1 Right
+
+</HoleRight_HH_PEANUT_1>
+
+
+
+<HoleFront_HH_PEANUT_1>
+;HH_PEANUT_1 Front
+
+</HoleFront_HH_PEANUT_1>
+
+
+
+<HoleBack_HH_PEANUT_1>
+;HH_PEANUT_1 Back
+
+</HoleBack_HH_PEANUT_1>
+
+
+\\HH_PEANUT_2
+<HoleV_HH_PEANUT_2>
+
+if $DIA$=8.1
+;HH_PEANUT_2
+CALL PEANUT_NUT_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+else
+
+</HoleV_HH_PEANUT_2>
+
+
+
+\\HH_PEANUT_3
+<HoleV_HH_PEANUT_3>
+if $DIA$=8.1
+;HH_PEANUT_3
+CALL PEANUT_NUT_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=0,AXISDW:=0)
+else
+
+</HoleV_HH_PEANUT_3>
+
+
+
+
+
+
+;neu 29_3_2021 HB IF Verbinder ENDE
+
+
+
+
+
+
+;neu 13_01_2023 HB IF Verbinder PIN JET
+
+\\HH_Holzdübel 8x40 PIN
+
+<HoleLeft_HH_Holzdübel 8x40 PIN>
+;HH_Holzdübel 8x40 PIN left
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=0,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=40,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleLeft_HH_Holzdübel 8x40 PIN>
+
+<HoleRight_HH_Holzdübel 8x40 PIN>
+;HH_Holzdübel 8x40 PIN Right
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=1,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=40,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleRight_HH_Holzdübel 8x40 PIN>
+
+
+\\HH_Holzdübel 8x35 PIN
+
+<HoleLeft_HH_Holzdübel 8x35 PIN>
+;HH_Holzdübel 8x35 PIN left
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=0,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=35,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleLeft_HH_Holzdübel 8x35 PIN>
+
+<HoleRight_HH_Holzdübel 8x35 PIN>
+;HH_Holzdübel 8x35 PIN Right
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=1,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=35,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleRight_HH_Holzdübel 8x35 PIN>
+
+
+
+\\HH_Holzdübel 8x30 PIN
+
+<HoleLeft_HH_Holzdübel 8x30 PIN>
+;HH_Holzdübel 8x30 PIN left
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=0,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=30,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleLeft_HH_Holzdübel 8x30 PIN>
+
+<HoleRight_HH_Holzdübel 8x30 PIN>
+;HH_Holzdübel 8x30 PIN Right
+
+CALL DRILL_H_PIN_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=8,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0,SEITE_L_R:=1,LEIM:=1,PIN:=1,BOHREN:=1,AUSSTAND:=13,TIME:=0.5,PIN_L:=30,PAR1:=0,PAR2:=0,STRPAR:='')
+
+</HoleRight_HH_Holzdübel 8x30 PIN>
+
+
+
+;neu 13_01_2023 HB IF Verbinder ENDE PIN JET
+
+
+
+
+
+
+
+$CLAMEXWV$
+
+<HoleVXMax>
+</HoleVXMax>
+
+<HoleVThrough>
+CALL DRILL_V_HH ( VAL X:=$X$,Y:=$Y$,D:=$DIA$,T:=-$T$,TLF:=20,AXISDW:=0)
+</HoleVThrough>
+
+<HoleVU>
+</HoleVU>
+
+<HoleLeft>
+if $DIA$=6.9
+;links HH 0 (Divario)
+else
+;links HH 0
+CALL DRILL_H_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=$DIA$,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=0)
+</HoleLeft>
+
+
+
+<HoleRight>
+if $DIA$=6.9
+;rechts HH 180 (Divario)
+else
+;rechts HH 180
+CALL DRILL_H_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=$DIA$,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=180)
+</HoleRight>
+
+
+
+
+<HoleFront>
+;forne HH 90
+CALL DRILL_H_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=$DIA$,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=90)
+</HoleFront>
+
+<HoleBack>
+;Hinten HH 270
+CALL DRILL_H_HH ( VAL X:=$X$,Y:=$Y$,Z:=$Z$,D:=$DIA$,TIEFE:=-$T$,KW_BO:=0,DREHWINKEL:=270)
+</HoleBack>
+
+<HoleAngle>
+</HoleAngle>
+
+<PocketRect>
+;Tasche rechteck
+CALL PocketRect_HH ( VAL X:=$X$+$X1$/2,Y:=$Y$+$Y1$/2,R:=0,L:=$X1$,B:=$Y1$,T:=$T$,W1:=0,A:=0,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=1,RES2:=0)
+</PocketRect>
+
+<PocketRectFront>
+</PocketRectFront>
+
+<PocketRectRight>
+</PocketRectRight>
+
+<PocketRectLeft>
+</PocketRectLeft>
+
+<PocketRectBack>
+</PocketRectBack>
+
+<PocketCircle>
+;Kreistasche
+CALL PocketCircle_HH ( VAL X:=$X$,Y:=$Y$,R:=$R$,T:=$T$,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0)
+</PocketCircle>
+
+<PocketCircleLeft>
+</PocketCircleLeft>
+
+<PocketCircleFront>
+</PocketCircleFront>
+
+<PocketCircleRight>
+</PocketCircleRight>
+
+<PocketCircleBack>
+</PocketCircleBack>
+
+<PocketCircleU>
+;Kreistasche von Unten
+CALL PocketCircle_HH ( VAL X:=$X$,Y:=$Y$,R:=$R$,T:=$T$,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0)
+</PocketCircleU>
+
+<PocketRectU>
+;Tasche rechteck von unten
+CALL PocketRect_HH ( VAL X:=$X$+$X1$/2,Y:=$Y$+$Y1$/2,R:=0,L:=$X1$,B:=$Y1$,T:=$T$,W1:=0,A:=0,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=1,RES2:=0)
+</PocketRectU>
+
+<PocketRectThrough>
+;Rechteckbahn Durchfräsen
+CALL PocketRectThrough_HH ( VAL X:=$X$+$X1$/2,Y:=$Y$+$Y1$/2,R:=0,L:=$X1$,B:=$Y1$,T:=$T$,W1:=0,A:=0,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=2,RES2:=0)
+</PocketRectThrough>
+
+<PocketRectThroughU>
+;Rechteckbahn Durchfräsen Von Unten
+CALL PocketRectThrough_HH ( VAL X:=$X$+$X1$/2,Y:=$Y$+$Y1$/2,R:=0,L:=$X1$,B:=$Y1$,T:=$T$,W1:=0,A:=0,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=2,RES2:=0)
+</PocketRectThroughU>
+
+<PocketCircleThroughU>
+;kreisbahn Durchfräsen von unten
+CALL PocketCircleThrough_HH ( VAL X:=$X$,Y:=$Y$,R:=$R$,T:=$T$,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=1,RES2:=0)
+</PocketCircleThroughU>
+
+<PocketCircleThrough>
+;kreisbahn Durchfräsen
+CALL PocketCircleThrough_HH ( VAL X:=$X$,Y:=$Y$,R:=$R$,T:=$T$,ABFAHREN:=0,Z_INTER:=1,ZU_PRO_SCHRITT:=_AT_MAXDEPTH,RI:=0,LASER:=0,BEARBEITUNGS_LAGE:=1,RES2:=0)
+</PocketCircleThrough>
+
+<GrooveX>
+;Nut x
+CALL GROOVE_HH ( VAL NUTSX:=$X1$,NUTEX:=$X2$,NUTY:=$Y1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=0)
+</GrooveX>
+
+<GrooveY>
+;Nut Y
+CALL GROOVE_HH ( VAL NUTSX:=$Y1$,NUTEX:=$Y2$,NUTY:=$X1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=1)
+</GrooveY>
+
+<GrooveXY>
+;nut frei
+CALL GROOVE_HH ( VAL NUTSX:=$X1$,NUTEX:=$X2$,NUTY:=$Y1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=2)
+</GrooveXY>
+
+<GrooveXYAngle>
+
+</GrooveXYAngle>
+
+<RebateX>
+;Falz_X
+CALL FALZ_HH ( VAL NUTSX:=$X1$,NUTSY:=$Y1$,NUTEX:=$X2$,NUTEY:=$Y2$,NUTZ:=$T$,NUTD:=$NB$,NUT_IN:=0)
+</RebateX>
+
+<RebateY>
+;Falz_Y
+CALL FALZ_HH ( VAL NUTSX:=$X1$,NUTSY:=$Y1$,NUTEX:=$X2$,NUTEY:=$Y2$,NUTZ:=$T$,NUTD:=$NB$,NUT_IN:=1)
+</RebateY>
+
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\NEUE VARIABLEN STAND 06/2021
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+<MitreLeft>
+\\Befehlszeile(n) die eine Gehrung an der linken Kante definieren
+;Gehrung links
+</MitreLeft>
+
+<MitreRight>
+\\Befehlszeile(n) die eine Gehrung an der rechten Kante definieren
+;Gehrung rechts
+</MitreRight>
+
+<MitreFront>
+\\Befehlszeile(n) die eine Gehrung an der vorderen Kante definieren
+;Gehrung Vorderkante
+</MitreFront>
+
+<MitreBack>
+\\Befehlszeile(n) die eine Gehrung an der hinteren Kante definieren
+;gehrung Hinten
+</MitreBack>
+
+<HoleV_NameBeschlag>
+\\Befehlszeile(n) die eine vertikale Bohrung für den Beschlag „NameBeschlag“ definieren
+</HoleV_NameBeschlag>
+
+<HoleV_Durchmesser>
+\\Befehlszeile(n) die eine vertikale Bohrung mit dem Durchmesser „Durchmesser“ definieren
+</HoleV_Durchmesser>
+
+<HoleLeft_NameBeschlag>
+\\Befehlszeile(n) die eine horizontale Bohrung von links für den Beschlag „NameBeschlag“ definieren
+</HoleLeft_NameBeschlag>
+
+<HoleRight_NameBeschlag>
+\\Befehlszeile(n) die eine horizontale Bohrung von rechts für den Beschlag „NameBeschlag“ definieren
+</HoleRight_NameBeschlag>
+
+<HoleFront_NameBeschlag>
+\\Befehlszeile(n) die eine horizontale Bohrung von vorne für den Beschlag „NameBeschlag“ definieren
+</HoleFront_NameBeschlag>
+
+<HoleBack_NameBeschlag>
+\\Befehlszeile(n) die eine horizontale Bohrung von hinten für den Beschlag „NameBeschlag“ definieren
+</HoleBack_NameBeschlag>
+
+<HoleLeft_Durchmesser>
+\\Befehlszeile(n) die eine horizontale Bohrung von links mit dem Durchmesser „Durchmesser“ definieren
+</HoleLeft_Durchmesser>
+
+<HoleRight_Durchmesser>
+\\Befehlszeile(n) die eine horizontale Bohrung von rechts mit dem Durchmesser „Durchmesser“ definieren
+</HoleRight_ Durchmesser>
+
+<HoleFront_Durchmesser>
+\\Befehlszeile(n) die eine horizontale Bohrung von vorne mit dem Durchmesser „Durchmesser“ definieren
+</HoleFront_ Durchmesser>
+
+<HoleBack_Durchmesser>
+\\Befehlszeile(n) die eine horizontale Bohrung von hinten mit dem Durchmesser „Durchmesser“ definieren
+</HoleBack_Durchmesser>
+
+<GrooveXSaw>
+\\Befehlszeile(n) die eine gesägte Nut in X definieren (Auswahl in TrunCAD)
+;Nut x mit Saege
+CALL GROOVE_HH ( VAL NUTSX:=$X1$,NUTEX:=$X2$,NUTY:=$Y1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=0)
+</GrooveXSaw>
+
+<GrooveYSaw>
+\\Befehlszeile(n) die eine gesägte Nut in Y definieren (Auswahl in TrunCAD)
+;Nut Y mit Saege
+CALL GROOVE_HH ( VAL NUTSX:=$Y1$,NUTEX:=$Y2$,NUTY:=$X1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=1)
+</GrooveYSaw>
+
+<GrooveXMill>
+\\Befehlszeile(n) die eine gefräste Nut in X definieren (Auswahl in TrunCAD)
+;Nut x gefräst
+CALL GROOVE_HH ( VAL NUTSX:=$X1$,NUTEX:=$X2$,NUTY:=$Y1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=10)
+</GrooveXMill>
+
+<GrooveYMill>
+\\Befehlszeile(n) die eine gefräste Nut in Y definieren (Auswahl in TrunCAD)
+;Nut y gefräst
+CALL GROOVE_HH ( VAL NUTSX:=$Y1$,NUTEX:=$Y2$,NUTY:=$X1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=11)
+</GrooveYMill>
+
+<GrooveXPocket>
+\\Befehlszeile(n) die eine Nut als Tasche in X definieren (Auswahl in TrunCAD)
+;Nut x Tasche
+CALL GROOVE_HH ( VAL NUTSX:=$X1$,NUTEX:=$X2$,NUTY:=$Y1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=10)
+</GrooveXPocket>
+
+<GrooveYPocket>
+\\Befehlszeile(n) die eine Nut als Tasche in Y definieren (Auswahl in TrunCAD)
+;Nut y Tasche
+CALL GROOVE_HH ( VAL NUTSX:=$Y1$,NUTEX:=$Y2$,NUTY:=$X1$,NUTZ:=$T$,NUTD:=$NB$,NUTLAGE:=11)
+</GrooveYPocket>
+
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+<HGrooveLeft>
+;GrooveLeft =Ebene 2
+CALL GROOVE_H_HH ( VAL NUTSX:=$X$,NUTEX:=$X$,NUTSY:=$Y1$,NUTEY:=$Y2$,NUTTIEFE:=$NT$,NUTMITTE:=$Z$,NUTD:=$NB$,NUTOFFSET:=2,AN_AB_FAHRBEWEGUNG:=2,KANTE:=2,GL_GGL:=1,ZUSTELLUNG:=0,RADIUSKORREKTUR:=1,RES1:=0,RES2:=0)
+</HGrooveLeft>
+
+<HGrooveRight>
+;GrooveRight =Ebene 4
+CALL GROOVE_H_HH ( VAL NUTSX:=$X$,NUTEX:=$X$,NUTSY:=$Y1$,NUTEY:=$Y2$,NUTTIEFE:=$NT$,NUTMITTE:=$Z$,NUTD:=$NB$,NUTOFFSET:=2,AN_AB_FAHRBEWEGUNG:=2,KANTE:=4,GL_GGL:=1,ZUSTELLUNG:=0,RADIUSKORREKTUR:=1,RES1:=0,RES2:=0)
+</HGrooveRight>
+
+<HGrooveFront>
+;GrooveFront =Ebene 1
+CALL GROOVE_H_HH ( VAL NUTSX:=$X$,NUTEX:=$X$,NUTSY:=$Y1$,NUTEY:=$Y2$,NUTTIEFE:=$NT$,NUTMITTE:=$Z$,NUTD:=$NB$,NUTOFFSET:=2,AN_AB_FAHRBEWEGUNG:=2,KANTE:=1,GL_GGL:=1,ZUSTELLUNG:=0,RADIUSKORREKTUR:=1,RES1:=0,RES2:=0)
+</HGrooveFront>
+
+<HGrooveBack>
+;GrooveBack =Ebene 3
+CALL GROOVE_H_HH ( VAL NUTSX:=$X$,NUTEX:=$X$,NUTSY:=$Y1$,NUTEY:=$Y2$,NUTTIEFE:=$NT$,NUTMITTE:=$Z$,NUTD:=$NB$,NUTOFFSET:=2,AN_AB_FAHRBEWEGUNG:=2,KANTE:=3,GL_GGL:=1,ZUSTELLUNG:=0,RADIUSKORREKTUR:=1,RES1:=0,RES2:=0)
+</HGrooveBack>
