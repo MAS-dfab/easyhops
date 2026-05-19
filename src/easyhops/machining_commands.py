@@ -1302,7 +1302,7 @@ class SawingLengthAngleOperation(OperationCommand):
         lead_in: Optional[float] = HopsSystemVars.TOOL_RADIUS,
         lead_out: Optional[float] = HopsSystemVars.TOOL_RADIUS,
         parallel_distance: Optional[float] = 0.0,
-        process_mode: Optional[ProcessMode] = ProcessMode.WITH_ROTATION,
+        process_mode: Optional[ProcessMode] = ProcessMode.NO_CHANGE,
         tilt_angle: Optional[float] = 0.0,
         easy_snap_z: Optional[EasySnapZ] = EasySnapZ.TOP_EDGE,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.FRONT_LEFT,
