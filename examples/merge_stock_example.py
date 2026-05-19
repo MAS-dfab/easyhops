@@ -20,8 +20,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from easyhops.merge_stock_hops import StockHopsMerger
 
 # Define your paths here
-NESTING_JSON = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251212\1212_whole_model_nesting.json"
-HOP_DIRECTORY = r"c:\Users\kapso\OneDrive\Documents\GitHub\easyhops\examples\251212\1212_whole_model"
+_HERE = os.path.dirname(__file__)
+NESTING_JSON = os.path.join(_HERE, "..", "data", "merge_example", "nesting.json")
+HOP_DIRECTORY = os.path.join(_HERE, "..", "data", "merge_example", "hops")
 
 
 def main():
@@ -29,7 +30,7 @@ def main():
 
     nesting_json = NESTING_JSON
     hop_dir = HOP_DIRECTORY
-    output_dir = os.path.join(hop_dir, "merged")
+    output_dir = os.path.join(_HERE, "hops_output", "merged")
     os.makedirs(output_dir, exist_ok=True)
 
     # Verify files exist

@@ -27,7 +27,7 @@ from easyhops.utility_commands import MachineStop
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-BTLx_PATH = os.path.join(os.path.dirname(__file__), "BTLx", "test_btlx.btlx")
+BTLx_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "test.btlx")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "hops_output")
 
 
