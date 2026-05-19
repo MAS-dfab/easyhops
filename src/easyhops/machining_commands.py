@@ -1980,3 +1980,180 @@ class ContourPocketOperation(OperationCommand):
             )
         )
         return "\n".join([plane] + contour_lines + [pocket])
+
+
+class SawYOperation(OperationCommand):
+    """Represents a Y-direction saw cut using the HOPS macro call format.
+
+    Serializes as::
+
+        CALL _saege_y_V7 ( VAL SX:=0,SY:=0,SZ:=-3,EY:=0,EZ:=-2,BL:=1,
+            EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=0,KW:=0,
+            BH:=0,RITZVERSATZ:=0.05,ESZ:=0,ESXY1:=0,ESY:=5)
+
+    Parameters
+    ----------
+    sx : Union[float, str]
+        X position of the cut. Accepts a float or a HOPS expression such as ``'_RX'``.
+    sy : float
+        Starting Y-coordinate (SY).
+    sz : float
+        Starting Z depth — negative = into material (SZ).
+    ey : float
+        Ending Y-coordinate (EY).
+    ez : float
+        Ending Z depth (EZ).
+    radius_compensation : CompensationMode
+        Blade side: LEFT (1) = blade left of cut, RIGHT (2) = blade right of cut (BL).
+    fit_in : bool
+        Fit saw blade into contour (EINPASSEN). Default False.
+    lead_in : Union[float, str]
+        Lead-in extension length. Defaults to ``_WZR`` (EL).
+    lead_out : Union[float, str]
+        Lead-out extension length. Defaults to ``_WZR`` (AL).
+    parallel_distance : float
+        Parallel offset distance (PARALLEL).
+    process_mode : int
+        Groove position / process mode (K).
+    tilt_angle : float
+        Tilt angle in degrees (KW).
+    precut_depth : float
+        Scoring blade pre-cut depth (BH).
+    precut_offset : float
+        Scoring blade lateral offset (RITZVERSATZ).
+    easy_snap_z : EasySnapZ
+        Z-axis reference mode (ESZ).
+    easy_snap_xy : EasySnapXY
+        Corner snap mode for XY at start point (ESXY1).
+    easy_snap_y : int
+        Easy-snap mode for the Y axis (ESY).
+    """
+
+    OPERATION_TYPE = "SAWING"
+    _MACRO_NAME = "_saege_y_V7"
+
+    def __init__(
+        self,
+        sx: Union[float, str],
+        sy: float = 0.0,
+        sz: float = -3.0,
+        ey: float = 0.0,
+        ez: float = -2.0,
+        radius_compensation: Optional[CompensationMode] = CompensationMode.LEFT,
+        fit_in: Optional[bool] = False,
+        lead_in: Union[float, str] = HopsSystemVars.TOOL_RADIUS,
+        lead_out: Union[float, str] = HopsSystemVars.TOOL_RADIUS,
+        parallel_distance: float = 0.0,
+        process_mode: int = 0,
+        tilt_angle: float = 0.0,
+        precut_depth: float = 0.0,
+        precut_offset: float = 0.05,
+        easy_snap_z: int = 0,
+        easy_snap_xy: int = 0,
+        easy_snap_y: int = 5,
+    ):
+        super().__init__()
+        self.sx = sx
+        self.sy = sy
+        self.sz = sz
+        self.ey = ey
+        self.ez = ez
+        self.radius_compensation = radius_compensation
+        self.fit_in = fit_in
+        self.lead_in = lead_in
+        self.lead_out = lead_out
+        self.parallel_distance = parallel_distance
+        self.process_mode = process_mode
+        self.tilt_angle = tilt_angle
+        self.precut_depth = precut_depth
+        self.precut_offset = precut_offset
+        self.easy_snap_z = easy_snap_z
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_y = easy_snap_y
+
+    def __repr__(self) -> str:
+        return f"SawYOperation(sx={self.sx}, sz={self.sz}, ez={self.ez}, bl={self.radius_compensation.value})"
+
+    def _fmt(self, val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, (EasySnapXY, EasySnapZ)):
+            return str(int(val))
+        if isinstance(val, CompensationMode):
+            return str(val.value)
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        return (
+            f"CALL {self._MACRO_NAME} ( VAL "
+            f"SX:={f(self.sx)},"
+            f"SY:={f(self.sy)},"
+            f"SZ:={f(self.sz)},"
+            f"EY:={f(self.ey)},"
+            f"EZ:={f(self.ez)},"
+            f"BL:={f(self.radius_compensation)},"
+            f"EINPASSEN:={f(self.fit_in)},"
+            f"EL:={f(self.lead_in)},"
+            f"AL:={f(self.lead_out)},"
+            f"PARALLEL:={f(self.parallel_distance)},"
+            f"K:={f(self.process_mode)},"
+            f"KW:={f(self.tilt_angle)},"
+            f"BH:={f(self.precut_depth)},"
+            f"RITZVERSATZ:={f(self.precut_offset)},"
+            f"ESZ:={f(self.easy_snap_z)},"
+            f"ESXY1:={f(self.easy_snap_xy)},"
+            f"ESY:={f(self.easy_snap_y)})"
+        )
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "SawYOperation":
+        """Parse a CALL _saege_y_V7 line into a SawYOperation."""
+
+        def _get(name: str, s: str) -> str:
+            m = re.search(rf"{name}:=([^,)]+)", s)
+            if not m:
+                raise ValueError(f"Missing parameter '{name}' in line: {s}")
+            return m.group(1).strip()
+
+        def _float(name: str, s: str) -> float:
+            return float(_get(name, s))
+
+        def _int(name: str, s: str) -> int:
+            return int(float(_get(name, s)))
+
+        def _num_or_str(name: str, s: str) -> Union[float, str]:
+            raw = _get(name, s)
+            try:
+                return float(raw)
+            except ValueError:
+                return raw
+
+        s = line.strip()
+        if not re.match(rf"CALL\s+{re.escape(cls._MACRO_NAME)}", s):
+            raise ValueError(f"Not a {cls._MACRO_NAME} line: {line}")
+
+        return cls(
+            sx=_num_or_str("SX", s),
+            sy=_float("SY", s),
+            sz=_float("SZ", s),
+            ey=_float("EY", s),
+            ez=_float("EZ", s),
+            radius_compensation=CompensationMode(_int("BL", s)),
+            fit_in=bool(_int("EINPASSEN", s)),
+            lead_in=_num_or_str("EL", s),
+            lead_out=_num_or_str("AL", s),
+            parallel_distance=_float("PARALLEL", s),
+            process_mode=_int("K", s),
+            tilt_angle=_float("KW", s),
+            precut_depth=_float("BH", s),
+            precut_offset=_float("RITZVERSATZ", s),
+            easy_snap_z=_int("ESZ", s),
+            easy_snap_xy=_int("ESXY1", s),
+            easy_snap_y=_int("ESY", s),
+        )
