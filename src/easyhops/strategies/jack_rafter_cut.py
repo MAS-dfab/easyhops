@@ -74,7 +74,7 @@ class JackRafterCutStrategies:
             radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             length = f"_RY/SIN({angle})"
-            tilt_angle = jack_rafter_cut.inclination % 90
+            tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
         else:
             raise NotImplementedError(
                 f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."
