@@ -1993,15 +1993,15 @@ class SawYOperation(OperationCommand):
 
     Parameters
     ----------
-    sx : Union[float, str]
-        X position of the cut. Accepts a float or a HOPS expression such as ``'_RX'``.
-    sy : float
+    sx : Union[float, str], optional
+        X position of the cut. Accepts a float or a HOPS expression such as ``'_RX'``. Defaults to ``0.0``.
+    sy : Union[float, str], optional
         Starting Y-coordinate (SY).
-    sz : float
+    sz : Union[float, str], optional
         Starting Z depth — negative = into material (SZ).
-    ey : float
+    ey : Union[float, str], optional
         Ending Y-coordinate (EY).
-    ez : float
+    ez : Union[float, str], optional
         Ending Z depth (EZ).
     radius_compensation : CompensationMode
         Blade side: LEFT (1) = blade left of cut, RIGHT (2) = blade right of cut (BL).
@@ -2034,11 +2034,11 @@ class SawYOperation(OperationCommand):
 
     def __init__(
         self,
-        sx: Union[float, str],
-        sy: float = 0.0,
-        sz: float = -3.0,
-        ey: float = 0.0,
-        ez: float = -2.0,
+        sx: Union[float, str] = 0.0,
+        sy: Union[float, str] = 0.0,
+        sz: Union[float, str] = -3.0,
+        ey: Union[float, str] = 0.0,
+        ez: Union[float, str] = -2.0,
         radius_compensation: Optional[CompensationMode] = CompensationMode.LEFT,
         fit_in: Optional[bool] = False,
         lead_in: Union[float, str] = HopsSystemVars.TOOL_RADIUS,
