@@ -441,9 +441,9 @@ class FinishedPart:
 
     def __init__(
         self,
-        dx: Optional[float] = HopsSystemVars.X_DIM,
-        dy: Optional[float] = HopsSystemVars.Y_DIM,
-        dz: Optional[float] = HopsSystemVars.Z_DIM,
+        dx: Optional[float] = "DX",
+        dy: Optional[float] = "DY",
+        dz: Optional[float] = "DZ",
         rotation_flag: Optional[int] = 0,
         empty_parameter: Optional[int] = 0,
         offset_x: Optional[float] = 0,
