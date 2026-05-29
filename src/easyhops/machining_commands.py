@@ -2214,7 +2214,7 @@ class DrillingPocketOperation(OperationCommand):
         reverse_direction: Optional[bool] = True,
         overlap: Optional[float] = 67.0,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.FRONT_LEFT,
-        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.TOP_SIDE,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.BOTTOM_SIDE,
         laser: Optional[bool] = False,
     ):
         super().__init__()
@@ -2261,7 +2261,7 @@ class DrillingPocketOperation(OperationCommand):
             f"UMKEHREN:={f(self.reverse_direction)},"
             f"UW:={f(self.overlap)},"
             f"ESXY:={f(self.easy_snap_xy)},"
-            f"ESZ:={f(self.easy_snap_z)},"
+            f"ESMD:={f(self.easy_snap_z)},"
             f"LASER:={f(self.laser)})"
         )
 
@@ -2317,6 +2317,6 @@ class DrillingPocketOperation(OperationCommand):
             reverse_direction=bool(_int("UMKEHREN", s)),
             overlap=_int("UW", s),
             easy_snap_xy=_int("ESXY", s),
-            easy_snap_z=_int("ESZ", s),
+            easy_snap_z=_int("ESMD", s),
             laser=bool(_int("LASER", s)),
         )
