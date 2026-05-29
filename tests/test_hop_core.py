@@ -1,10 +1,13 @@
 """Unit tests for hop_core module."""
 
+import math
+
 import pytest
 from easyhops.hop_core import (
     EasySnapXY,
     EasySnapZ,
     FinishedPart,
+    HopsSystemVars,
     ParkMode,
     ParkPosition,
     VarsDefinition,
@@ -363,3 +366,88 @@ class TestFinishedPartRoundTrip:
         assert fp2.field_linking == fp1.field_linking
         assert fp2.activates_laser == fp1.activates_laser
         assert fp2.stop_flag == fp1.stop_flag
+
+
+class TestHopsSystemVars:
+    """Tests for HopsSystemVars dual-mode (macro string + numeric arithmetic)."""
+
+    def setup_method(self):
+        """Reset all numeric values before each test."""
+        HopsSystemVars.reset_all()
+
+    def test_str_returns_macro(self):
+        """str() always returns the HOPS macro string, unaffected by set()."""
+        assert str(HopsSystemVars.TOOL_DIAMETER) == "_WZD"
+        HopsSystemVars.TOOL_DIAMETER.set(61.092)
+        assert str(HopsSystemVars.TOOL_DIAMETER) == "_WZD"
+
+    def test_equality_unchanged_after_set(self):
+        """String equality checks continue to work after set()."""
+        assert HopsSystemVars.TOOL_DIAMETER == "_WZD"
+        HopsSystemVars.TOOL_DIAMETER.set(200.0)
+        assert HopsSystemVars.TOOL_DIAMETER == "_WZD"
+        assert HopsSystemVars.Y_DIM == "_RY"
+
+    def test_numeric_raises_before_set(self):
+        """Accessing .numeric raises ValueError when no value has been set."""
+        with pytest.raises(ValueError, match="HopsSystemVars.TOOL_DIAMETER"):
+            _ = HopsSystemVars.TOOL_DIAMETER.numeric
+
+    def test_set_and_numeric(self):
+        """set() stores the value and numeric returns it."""
+        HopsSystemVars.TOOL_DIAMETER.set(61.092)
+        assert HopsSystemVars.TOOL_DIAMETER.numeric == pytest.approx(61.092)
+
+    def test_negation(self):
+        """Unary negation returns a float."""
+        HopsSystemVars.TOOL_DIAMETER.set(61.092)
+        result = -HopsSystemVars.TOOL_DIAMETER
+        assert result == pytest.approx(-61.092)
+        assert isinstance(result, float)
+
+    def test_subtraction(self):
+        """Subtraction with a float returns a float."""
+        HopsSystemVars.Y_DIM.set(100.0)
+        assert HopsSystemVars.Y_DIM - 30.0 == pytest.approx(70.0)
+        assert 130.0 - HopsSystemVars.Y_DIM == pytest.approx(30.0)
+
+    def test_division(self):
+        """Division returns a float."""
+        HopsSystemVars.Y_DIM.set(100.0)
+        result = HopsSystemVars.Y_DIM / math.sin(math.pi / 2)
+        assert result == pytest.approx(100.0)
+        assert isinstance(result, float)
+
+    def test_addition_with_float(self):
+        """Addition with a float returns a float (not string concatenation)."""
+        HopsSystemVars.Y_DIM.set(100.0)
+        assert HopsSystemVars.Y_DIM + 50.0 == pytest.approx(150.0)
+        assert 50.0 + HopsSystemVars.Y_DIM == pytest.approx(150.0)
+
+    def test_float_conversion(self):
+        """float() returns the numeric value."""
+        HopsSystemVars.TOOL_RADIUS.set(30.546)
+        assert float(HopsSystemVars.TOOL_RADIUS) == pytest.approx(30.546)
+
+    def test_reset(self):
+        """reset() removes a single variable's numeric value."""
+        HopsSystemVars.TOOL_DIAMETER.set(61.0)
+        HopsSystemVars.TOOL_DIAMETER.reset()
+        with pytest.raises(ValueError):
+            _ = HopsSystemVars.TOOL_DIAMETER.numeric
+
+    def test_reset_all(self):
+        """reset_all() clears every variable."""
+        HopsSystemVars.TOOL_DIAMETER.set(61.0)
+        HopsSystemVars.Y_DIM.set(100.0)
+        HopsSystemVars.reset_all()
+        with pytest.raises(ValueError):
+            _ = HopsSystemVars.TOOL_DIAMETER.numeric
+        with pytest.raises(ValueError):
+            _ = HopsSystemVars.Y_DIM.numeric
+
+    def test_isinstance_str_still_true(self):
+        """HopsSystemVars members must still pass isinstance(v, str) checks in _fmt()."""
+        HopsSystemVars.TOOL_DIAMETER.set(61.0)
+        assert isinstance(HopsSystemVars.TOOL_DIAMETER, str)
+        assert isinstance(HopsSystemVars.Y_DIM, str)

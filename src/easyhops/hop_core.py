@@ -74,8 +74,79 @@ class HopsSystemVars(str, Enum):
     Y_DIM = "_RY"  # Part Y dimension (beam width)
     Z_DIM = "_RZ"  # Part Z dimension (beam thickness)
 
+    # Class-level cache for numeric values (auto-seeded by HOPSJob and HOPSMachining)
+    _numeric_values = {}
+
     def __str__(self):
         return self.value
+
+    def set(self, value):
+        """Seed this variable with a numeric value for use in arithmetic.
+
+        Once set, arithmetic operations (-, +, /, etc.) work on this variable while
+        the macro string (e.g. '_WZD') is still used for HOPS file serialization.
+
+        Part-dimension vars (X_DIM, Y_DIM, Z_DIM) are auto-seeded by HOPSJob.
+        Tool-dimension vars (TOOL_DIAMETER, TOOL_RADIUS) are auto-seeded by HOPSMachining.
+        """
+        HopsSystemVars._numeric_values[self.name] = float(value)
+
+    def reset(self):
+        """Remove the numeric value for this variable."""
+        HopsSystemVars._numeric_values.pop(self.name, None)
+
+    @classmethod
+    def reset_all(cls):
+        """Clear all numeric values. Useful for test isolation or resetting between jobs."""
+        cls._numeric_values.clear()
+
+    @property
+    def numeric(self):
+        """Return the numeric value for this variable.
+
+        Raises:
+        -------
+        ValueError
+            If no numeric value has been set. Either call .set(value) manually,
+            or ensure a HOPSJob (for part dims) or HOPSMachining (for tool dims)
+            has been instantiated first.
+        """
+        if self.name not in HopsSystemVars._numeric_values:
+            raise ValueError(
+                f"HopsSystemVars.{self.name} ('{self.value}') has no numeric value. "
+                f"Ensure a HOPSJob or HOPSMachining has been created, or call "
+                f"HopsSystemVars.{self.name}.set(value) manually."
+            )
+        return HopsSystemVars._numeric_values[self.name]
+
+    def __neg__(self):
+        return -self.numeric
+
+    def __float__(self):
+        return self.numeric
+
+    def __int__(self):
+        return int(self.numeric)
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return self.numeric + other
+        return str.__add__(self, other)  # fall back to string concatenation
+
+    def __radd__(self, other):
+        return float(other) + self.numeric
+
+    def __sub__(self, other):
+        return self.numeric - float(other)
+
+    def __rsub__(self, other):
+        return float(other) - self.numeric
+
+    def __truediv__(self, other):
+        return self.numeric / float(other)
+
+    def __rtruediv__(self, other):
+        return float(other) / self.numeric
 
 
 class EasySnapZ(IntEnum):
@@ -237,6 +308,15 @@ class VarsDefinition:
             else:
                 # Just a value, use default description
                 self.custom_vars[key] = {"value": val, "desc": "Custom Variable"}
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name == "dx" and isinstance(value, (int, float)):
+            HopsSystemVars.X_DIM.set(value)
+        elif name == "dy" and isinstance(value, (int, float)):
+            HopsSystemVars.Y_DIM.set(value)
+        elif name == "dz" and isinstance(value, (int, float)):
+            HopsSystemVars.Z_DIM.set(value)
 
     def __str__(self):
         lines = ["VARS"]

@@ -20,7 +20,6 @@ from .hop_core import FinishedPart
 from .hop_core import ParkMode
 from .hop_core import ParkPosition
 from .hop_core import VarsDefinition
-from .hop_core import HopsSystemVars
 from .machining_commands import G01
 from .machining_commands import G02M
 from .machining_commands import G03M

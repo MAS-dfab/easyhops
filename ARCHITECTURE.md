@@ -344,6 +344,8 @@ START
 
 **Class**: `VarsDefinition(dx, dy, dz)`
 
+Sets `HopsSystemVars.X_DIM`, `Y_DIM`, `Z_DIM` automatically via `__setattr__` whenever `dx`, `dy`, or `dz` are assigned — including on construction. This means strategy code can reference `HopsSystemVars.Y_DIM` in arithmetic as soon as a `VarsDefinition` instance with concrete floats exists.
+
 #### **FinishedPart**
 Represents the FERTIGTEIL command with 12 parameters.
 
@@ -372,9 +374,54 @@ Enum for Z-axis reference modes:
 - `BOTTOM_EDGE = 1` - Reference from bottom
 - `RELATIVE = 2` - Relative/incremental
 
+#### **HopsSystemVars (Enum)**
+
+Enum of HOPS runtime macro variable strings. Members are `str` instances so they pass through `_fmt()` serialization unchanged as HOPS macros (e.g. `_WZD`, `_RY`). They also support **Python arithmetic** once seeded with a concrete value.
+
+**Members**:
+- `TOOL_DIAMETER = "_WZD"` — router/drill tool diameter
+- `TOOL_RADIUS = "_WZR"` — tool radius (`_WZD / 2`)
+- `SAW_WIDTH = "_SBB"` — saw blade kerf width
+- `X_DIM = "_RX"`, `Y_DIM = "_RY"`, `Z_DIM = "_RZ"` — piece dimensions (from `VARS DX/DY/DZ`)
+- `FEEDRATE`, `LEAD_IN_FEEDRATE`, `LEAD_OUT_FEEDRATE` — machine default feedrates
+
+**Dual-mode behaviour**:
+
+| Usage | Result |
+|---|---|
+| `str(HopsSystemVars.TOOL_DIAMETER)` | `"_WZD"` — HOPS macro string |
+| `HopsSystemVars.TOOL_DIAMETER == "_WZD"` | `True` — enum equality unchanged |
+| `HopsSystemVars.Y_DIM - 30.0` | `float` — numeric subtraction |
+| `-HopsSystemVars.TOOL_DIAMETER` | `float` — numeric negation |
+
+**Auto-seeding** (no manual setup required):
+- Part dims (`X_DIM`, `Y_DIM`, `Z_DIM`): seeded by `VarsDefinition.__setattr__` when `dx`/`dy`/`dz` are assigned.
+- Tool dims (`TOOL_DIAMETER`, `TOOL_RADIUS`): seeded by `MachiningTool.__setattr__` when `diameter` is assigned.
+- Saw width (`SAW_WIDTH`): seeded by `MachiningTool.__setattr__` when `saw_width` is assigned.
+
+```python
+# Arithmetic works once the relevant object is constructed:
+vars = VarsDefinition(dx=3000, dy=120, dz=60)  # seeds X_DIM, Y_DIM, Z_DIM
+tool = CastorD61()                              # seeds TOOL_DIAMETER, TOOL_RADIUS
+
+full_depth = HopsSystemVars.Y_DIM / math.sin(inclination)   # → float
+offset = -HopsSystemVars.TOOL_DIAMETER                       # → float
+
+# HOPS serialization: str() preserves macro string
+print(str(HopsSystemVars.TOOL_DIAMETER))   # → "_WZD" (used in .hop file)
+```
+
+**Manual control** (rarely needed):
+```python
+HopsSystemVars.TOOL_DIAMETER.set(61.092)   # seed manually
+HopsSystemVars.TOOL_DIAMETER.reset()       # remove from cache
+HopsSystemVars.reset_all()                 # clear all cached values
+```
+
+**Arithmetic dunders implemented**: `__neg__`, `__float__`, `__int__`, `__add__`, `__radd__`, `__sub__`, `__rsub__`, `__truediv__`, `__rtruediv__`. Note: `__mul__` is intentionally **not** overridden (`str.__mul__` = string repetition, must not break).
+
 ---
 
-### 3. tool_library.py - Tool Definitions
 
 All tool classes inherit from `ToolCommand` base class.
 
@@ -395,10 +442,13 @@ Represents tool call commands (WZF/WZS/WZB). Inherits from `ToolCommand`.
 - `position` - Tool position number
 - `depth` - Processing depth
 - `diameter` - Tool diameter
+- `radius` - Property: `diameter / 2` (read-only, derived)
 - `processing_mode` - Processing parameters
 - `direction` - Feed direction
 - `reference` - Reference point
 - `comment` - Tool comment
+
+**Auto-seeding via `__setattr__`**: Whenever `diameter` is assigned (including in subclass `__init__`), `HopsSystemVars.TOOL_DIAMETER` and `HopsSystemVars.TOOL_RADIUS` are automatically updated. Assigning `saw_width` updates `HopsSystemVars.SAW_WIDTH`. This means strategy code can reference these vars in arithmetic immediately after constructing any concrete tool.
 
 **Example**: `WZF(504,3000,4000,5000,_SD,_ANF,'Birdsmouth tool')`
 
@@ -1078,10 +1128,22 @@ ToolCallType.ROUTER  # → "WZF"
 WorkPlane.TOP        # → EBENE0
 ```
 
-### 8. **Two-Phase Parsing**
+### 8. **Dual-Mode Enum Pattern** (`HopsSystemVars`)
+`HopsSystemVars` members are simultaneously HOPS macro strings and arithmetic operands. Auto-seeded by domain objects (`VarsDefinition`, `MachiningTool`) so strategy code can do Python math with them while serialization still emits the HOPS macro string.
+
+```python
+# Arithmetic in strategy:
+full_depth = HopsSystemVars.Y_DIM / math.sin(inclination)  # → float
+offset = -HopsSystemVars.TOOL_DIAMETER                      # → float
+
+# Serialization in _fmt():
+_fmt(HopsSystemVars.TOOL_DIAMETER)  # → "_WZD"  (str branch: isinstance(val, str))
+```
+
+### 9. **Two-Phase Parsing**
 Separate chunking from parsing for robustness and testability.
 
-### 9. **Strategy Pattern (Layer 2)**
+### 10. **Strategy Pattern (Layer 2)**
 Stateless strategy classes as namespaces for pure conversion functions.
 
 ```python

@@ -113,6 +113,14 @@ class MachiningTool(ToolCommand):
         self.head_id = head_id
         self.name = name
 
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name == "diameter" and isinstance(value, (int, float)):
+            HopsSystemVars.TOOL_DIAMETER.set(value)
+            HopsSystemVars.TOOL_RADIUS.set(value / 2.0)
+        elif name == "saw_width" and isinstance(value, (int, float)):
+            HopsSystemVars.SAW_WIDTH.set(value)
+
     @property
     def tool_type(self) -> ToolCallType:
         """Tool type (ROUTER, SAW, or DRILLER)."""
@@ -233,6 +241,12 @@ class MachiningTool(ToolCommand):
         if not isinstance(value, str):
             raise TypeError(f"name must be str, got {type(value).__name__}")
         self._name = value
+
+    @property
+    def radius(self) -> Optional[float]:
+        """Tool radius in mm. Returns diameter / 2 if diameter is set, else None."""
+        diameter = getattr(self, "diameter", None)
+        return diameter / 2.0 if diameter is not None else None
 
     def _to_hop_line(self) -> str:
         """Return HOPS tool command string."""
