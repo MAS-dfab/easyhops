@@ -555,6 +555,63 @@ class CastorD61(MachiningTool):
         self.max_depth = 130.0
         self.diameter = 61.092
 
+class SRSLD12(MachiningTool):
+    """SRSL Ø12 milling tool (WZF404) for pocket milling tasks.
+
+    Oertli Schrupp Schlicht Ø12 end mill.
+
+    Parameters:
+    -----------
+    lead_in_feedrate : Optional[float]
+        Lead in/out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_IN_FEEDRATE (_VE)
+    feedrate : Optional[float]
+        General/rapid feedrate in mm/min. If None, uses HopsSystemVars.FEEDRATE (_V)
+    lead_out_feedrate : Optional[float]
+        Lead out feedrate in mm/min. If None, uses HopsSystemVars.LEAD_OUT_FEEDRATE (_VA)
+    motor_speed : Optional[float]
+        Motor speed (RPM). If None, uses HopsSystemVars.MOTOR_SPEED (_SD)
+    lead_in_out_factor : Optional[float]
+        Lead-in/out factor. If None, uses HopsSystemVars.LEAD_IN_OUT_FACTOR (_ANF)
+    head_id : str
+        Tool head identifier (default: '1')
+
+    Attributes:
+    -----------
+    max_depth : float
+        Maximum cutting depth in mm (default: 10.0)
+    diameter : float
+        Tool diameter in mm (default: 11.8)
+
+    Example:
+        >>> tool = SRSLD12()
+        >>> str(tool)
+        "WZF(404,_VE,_V,_VA,_SD,_ANF,'1')"
+    """
+
+    def __init__(
+        self,
+        lead_in_feedrate: Optional[float] = None,
+        feedrate: Optional[float] = None,
+        lead_out_feedrate: Optional[float] = None,
+        motor_speed: Optional[float] = None,
+        lead_in_out_factor: Optional[float] = None,
+        head_id: str = "1",
+    ):
+        super().__init__(
+            tool_type=ToolCallType.ROUTER,
+            position=404,
+            lead_in_feedrate=lead_in_feedrate,
+            feedrate=feedrate,
+            lead_out_feedrate=lead_out_feedrate,
+            motor_speed=motor_speed,
+            lead_in_out_factor=lead_in_out_factor,
+            head_id=head_id,
+            name="SRSL Ø12",
+        )
+
+        self.max_depth = 10.0
+        self.diameter = 11.8
+
 
 class ToolLibrary:
     """Dynamic tool library parsed from CNC .too files.
