@@ -58,8 +58,8 @@ class DrillingStrategies:
             work_plane = WorkPlane.END
 
         drilling_operation = DrillingPocketOperation(
-            mx=drilling.x,
-            my=drilling.y,
+            mx=drilling.start_x,
+            my=drilling.start_y,
             radius=drilling.diameter / 2,
             depth=-drilling.depth,
             step_depth=tool.max_depth,

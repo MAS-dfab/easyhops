@@ -34,6 +34,9 @@ from enum import IntEnum
 from typing import List
 from typing import Optional
 
+# Module-level cache for HopsSystemVars numeric values (cannot live inside Enum class body)
+_hops_system_vars_cache: dict = {}
+
 
 class HopsSystemVars(str, Enum):
     """HOPS global system variables for tool parameters.
@@ -74,9 +77,6 @@ class HopsSystemVars(str, Enum):
     Y_DIM = "_RY"  # Part Y dimension (beam width)
     Z_DIM = "_RZ"  # Part Z dimension (beam thickness)
 
-    # Class-level cache for numeric values (auto-seeded by HOPSJob and HOPSMachining)
-    _numeric_values = {}
-
     def __str__(self):
         return self.value
 
@@ -89,16 +89,16 @@ class HopsSystemVars(str, Enum):
         Part-dimension vars (X_DIM, Y_DIM, Z_DIM) are auto-seeded by HOPSJob.
         Tool-dimension vars (TOOL_DIAMETER, TOOL_RADIUS) are auto-seeded by HOPSMachining.
         """
-        HopsSystemVars._numeric_values[self.name] = float(value)
+        _hops_system_vars_cache[self.name] = float(value)
 
     def reset(self):
         """Remove the numeric value for this variable."""
-        HopsSystemVars._numeric_values.pop(self.name, None)
+        _hops_system_vars_cache.pop(self.name, None)
 
     @classmethod
     def reset_all(cls):
         """Clear all numeric values. Useful for test isolation or resetting between jobs."""
-        cls._numeric_values.clear()
+        _hops_system_vars_cache.clear()
 
     @property
     def numeric(self):
@@ -111,13 +111,13 @@ class HopsSystemVars(str, Enum):
             or ensure a HOPSJob (for part dims) or HOPSMachining (for tool dims)
             has been instantiated first.
         """
-        if self.name not in HopsSystemVars._numeric_values:
+        if self.name not in _hops_system_vars_cache:
             raise ValueError(
                 f"HopsSystemVars.{self.name} ('{self.value}') has no numeric value. "
                 f"Ensure a HOPSJob or HOPSMachining has been created, or call "
                 f"HopsSystemVars.{self.name}.set(value) manually."
             )
-        return HopsSystemVars._numeric_values[self.name]
+        return _hops_system_vars_cache[self.name]
 
     def __neg__(self):
         return -self.numeric

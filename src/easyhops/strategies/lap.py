@@ -27,6 +27,7 @@ class LapStrategies:
     @staticmethod
     def milling(
         lap: "Lap",
+        machine_ref_side_index: int,
         tool: Optional[MachiningTool] = None,
     ) -> "List[HOPSMachining]":
         """Create a HOPSMachining for a contour milling operation derived from a Lap processing.
