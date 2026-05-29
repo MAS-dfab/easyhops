@@ -333,8 +333,8 @@ class HOPSJob:
         vars = VarsDefinition(dx=element.blank_length * scale_factor, dy=width * scale_factor, dz=height * scale_factor)
         vars.add_variable("RSI", str(rsi), "ReferenceSideIndex (0-5)")
 
-        finished_part = FinishedPart(dx=HopsSystemVars.X_DIM, dy=HopsSystemVars.Y_DIM, dz=HopsSystemVars.Z_DIM)
-        park_mode = ParkPosition(mode=ParkMode.RIGHT_MIDDLE)
+        finished_part = FinishedPart()
+        park_mode = ParkPosition(mode=ParkMode.RIGHT_FRONT)
 
         return cls(
             vars=vars,
