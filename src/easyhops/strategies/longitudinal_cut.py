@@ -63,13 +63,13 @@ class LongitudinalCutStrategies:
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             easy_snap_z = EasySnapZ.TOP_SIDE
 
-        full_depth = HopsSystemVars.Y_DIM / math.sin(abs(longitudinal_cut.inclination))
-        depth_per_pass = tool.max_depth * engagement_ratio
-        n_passes = math.ceil(full_depth / depth_per_pass)
+        full_depth = HopsSystemVars.Y_DIM / math.sin(math.radians(abs(longitudinal_cut.inclination)))
+        n_passes = math.ceil(full_depth / (tool.max_depth * engagement_ratio))
+        depth_per_pass = full_depth / n_passes
 
         milling_operations = []
         for i in range(n_passes):
-            z_pass = min((i + 1) * depth_per_pass, full_depth)
+            z_pass = full_depth - (i + 1) * depth_per_pass
             milling_operations.append(
                 MillingOperation(
                     start_point=StartPoint(
@@ -78,6 +78,8 @@ class LongitudinalCutStrategies:
                         z=z_pass,
                         radius_compensation=CompensationMode.LEFT,
                         lead_in_mode=LeadInOutMode.LINEAR,
+                        easy_snap_xy=EasySnapXY.REAR_LEFT,
+                        easy_snap_z=EasySnapZ.TOP_EDGE,
                     ),
                     moves=[
                         G01(x=0.0, y=-HopsSystemVars.TOOL_DIAMETER, z=0.0, easy_snap_xy=EasySnapXY.RELATIVE),  # Vertical Lead-in move
