@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ..hop_job import HOPSMachining
 
 
-class LongitudinalStrategies:
+class LongitudinalCutStrategies:
     @staticmethod
     def contouring(
         longitudinal_cut: "LongitudinalCut",
