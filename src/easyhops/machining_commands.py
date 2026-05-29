@@ -2157,3 +2157,166 @@ class SawYOperation(OperationCommand):
             easy_snap_xy=_int("ESXY1", s),
             easy_snap_y=_int("ESY", s),
         )
+
+
+class DrillingPocketOperation(OperationCommand):
+    """Represents a circular pocket operation using the HOPS macro call format.
+
+    Serializes as::
+
+        CALL _Kreistasche_V5_1 ( VAL X_MITTE:=566.409,Y_MITTE:=50,RADIUS:=20.5/2,
+            TIEFE:=-40,ZUSTELLUNG:=10,AB:=2,ABF:=_ANF,INTERPOL:=1,UMKEHREN:=1,
+            UW:=67,ESXY:=1,ESMD:=0,LASER:=0)
+
+    Parameters
+    ----------
+    mx : float
+        X-coordinate of the pocket center (X_MITTE).
+    my : float
+        Y-coordinate of the pocket center (Y_MITTE).
+    radius : Union[float, str]
+        Pocket radius in mm. Accepts a float or a HOPS expression such as ``'20.5/2'`` (RADIUS).
+    depth : float
+        Milling depth — negative = into material (TIEFE).
+    step_depth : float
+        Maximum depth per pass in mm (ZUSTELLUNG).
+    lead_out_mode : int
+        Lead-out type: 0 = without, 1 = linear, 2 = radial (AB). Defaults to 2.
+    lead_out_factor : Union[float, str]
+        Lead-out factor. ``None`` serializes as ``_ANF`` (ABF).
+    interpolate_z : bool
+        Interpolate Z at the centre circle for smooth plunge (INTERPOL). Defaults to True.
+    reverse_direction : bool
+        Reverse the milling direction (UMKEHREN). Defaults to True.
+    overlap : int
+        Tool overlap between passes as a percentage of the tool diameter (UW). Defaults to 67.
+    easy_snap_xy : int
+        EasySnap XY mode (ESXY). Defaults to 0.
+    easy_snap_z : int
+        EasySnap depth mode (ESZ). Defaults to 0.
+    laser : bool
+        Also execute as a laser path (LASER). Defaults to False.
+    """
+
+    OPERATION_TYPE = "DRILLING"
+    _MACRO_NAME = "_Kreistasche_V5_1"
+
+    def __init__(
+        self,
+        mx: float,
+        my: float,
+        radius: float,
+        depth: float,
+        step_depth: float,
+        lead_out_mode: LeadInOutMode.NONE,
+        lead_out_factor: Union[float, str] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
+        interpolate_z: bool = True,
+        reverse_direction: bool = True,
+        overlap: float = 67.0,
+        easy_snap_xy: EasySnapXY = EasySnapXY.FRONT_LEFT,
+        easy_snap_z: EasySnapZ = EasySnapZ.TOP_SIDE,
+        laser: bool = False,
+    ):
+        super().__init__()
+        self.mx = mx
+        self.my = my
+        self.radius = radius
+        self.depth = depth
+        self.step_depth = step_depth
+        self.lead_out_mode = lead_out_mode
+        self.lead_out_factor = lead_out_factor
+        self.interpolate_z = interpolate_z
+        self.reverse_direction = reverse_direction
+        self.overlap = overlap
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
+        self.laser = laser
+
+    def __repr__(self) -> str:
+        return f"DrillingPocketOperation(center=({self.mx:.3f},{self.my:.3f}), radius={self.radius}, depth={self.depth})"
+
+    def _fmt(self, val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        abf = self.lead_out_factor if self.lead_out_factor is not None else "_ANF"
+        return (
+            f"CALL {self._MACRO_NAME} ( VAL "
+            f"X_MITTE:={f(self.mx)},"
+            f"Y_MITTE:={f(self.my)},"
+            f"RADIUS:={f(self.radius)},"
+            f"TIEFE:={f(self.depth)},"
+            f"ZUSTELLUNG:={f(self.step_depth)},"
+            f"AB:={f(self.lead_out_mode)},"
+            f"ABF:={f(abf)},"
+            f"INTERPOL:={f(self.interpolate_z)},"
+            f"UMKEHREN:={f(self.reverse_direction)},"
+            f"UW:={f(self.overlap)},"
+            f"ESXY:={f(self.easy_snap_xy)},"
+            f"ESZ:={f(self.easy_snap_z)},"
+            f"LASER:={f(self.laser)})"
+        )
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "DrillingPocketOperation":
+        """Parse a ``CALL _Kreistasche_V5_1`` line into a :class:`DrillingPocketOperation`.
+
+        Parameters
+        ----------
+        line : str
+            Raw HOPS line starting with ``CALL _Kreistasche_V5_1 ( VAL ...)``.
+
+        Returns
+        -------
+        :class:`DrillingPocketOperation`
+        """
+
+        def _get(name: str, s: str) -> str:
+            m = re.search(rf"{name}:=([^,)]+)", s)
+            if not m:
+                raise ValueError(f"Missing parameter '{name}' in line: {s}")
+            return m.group(1).strip()
+
+        def _float(name: str, s: str) -> float:
+            return float(_get(name, s))
+
+        def _int(name: str, s: str) -> int:
+            return int(float(_get(name, s)))
+
+        def _num_or_str(name: str, s: str) -> Union[float, str]:
+            raw = _get(name, s)
+            try:
+                return float(raw)
+            except ValueError:
+                return raw
+
+        s = line.strip()
+        if not re.match(rf"CALL\s+{re.escape(cls._MACRO_NAME)}", s):
+            raise ValueError(f"Not a {cls._MACRO_NAME} line: {line}")
+
+        abf_raw = _get("ABF", s)
+        lead_out_factor: Union[float, str] = None if abf_raw == "_ANF" else float(abf_raw)
+
+        return cls(
+            mx=_float("X_MITTE", s),
+            my=_float("Y_MITTE", s),
+            radius=_num_or_str("RADIUS", s),
+            depth=_float("TIEFE", s),
+            step_depth=_float("ZUSTELLUNG", s),
+            lead_out_mode=_int("AB", s),
+            lead_out_factor=lead_out_factor,
+            interpolate_z=bool(_int("INTERPOL", s)),
+            reverse_direction=bool(_int("UMKEHREN", s)),
+            overlap=_int("UW", s),
+            easy_snap_xy=_int("ESXY", s),
+            easy_snap_z=_int("ESZ", s),
+            laser=bool(_int("LASER", s)),
+        )
