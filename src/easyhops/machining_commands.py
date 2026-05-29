@@ -2208,14 +2208,14 @@ class DrillingPocketOperation(OperationCommand):
         radius: float,
         depth: float,
         step_depth: float,
-        lead_out_mode: LeadInOutMode.NONE,
-        lead_out_factor: Union[float, str] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
-        interpolate_z: bool = True,
-        reverse_direction: bool = True,
-        overlap: float = 67.0,
-        easy_snap_xy: EasySnapXY = EasySnapXY.FRONT_LEFT,
-        easy_snap_z: EasySnapZ = EasySnapZ.TOP_SIDE,
-        laser: bool = False,
+        lead_out_mode: Optional[LeadInOutMode] = LeadInOutMode.NONE,
+        lead_out_factor: Optional[Union[float, str]] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
+        interpolate_z: Optional[bool] = True,
+        reverse_direction: Optional[bool] = True,
+        overlap: Optional[float] = 67.0,
+        easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.FRONT_LEFT,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.TOP_SIDE,
+        laser: Optional[bool] = False,
     ):
         super().__init__()
         self.mx = mx
