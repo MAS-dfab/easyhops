@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
+from ..hop_core import HopsSystemVars
 from ..machining_commands import G01
 from ..machining_commands import CompensationMode
 from ..machining_commands import ContourPocketOperation
@@ -67,18 +69,20 @@ class JackRafterCutStrategies:
         ref_side_index = jack_rafter_cut.ref_side_index
 
         if ref_side_index == machine_ref_side_index:
-            sx = jack_rafter_cut.start_x
+            sx = (
+                jack_rafter_cut.start_x if jack_rafter_cut.orientation == "end" else HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle)) + jack_rafter_cut.start_x
+            )
             sy = jack_rafter_cut.start_y
             sz = jack_rafter_cut.start_depth
-            angle = jack_rafter_cut.angle if jack_rafter_cut.orientation == "start" else 180 - jack_rafter_cut.angle
-            radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
-            easy_snap_xy = EasySnapXY.FRONT_LEFT
-            length = f"_RY/SIN({angle})"
+            angle = 180 - jack_rafter_cut.angle if jack_rafter_cut.orientation == "end" else jack_rafter_cut.angle
+            radius_compensation = CompensationMode.RIGHT
+            easy_snap_xy = EasySnapXY.FRONT_LEFT if jack_rafter_cut.orientation == "end" else EasySnapXY.REAR_LEFT
+            length = HopsSystemVars.Y_DIM / math.sin(math.radians(angle)) if jack_rafter_cut.orientation == "end" else HopsSystemVars.Y_DIM / math.sin(math.radians(-angle))
             tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
         else:
             raise NotImplementedError(
-                f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."
-            )  # noqa: E501
+                f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."  # noqa: E501
+            )
 
         sawing_operation = SawingLengthAngleOperation(
             sx=sx,
@@ -86,6 +90,7 @@ class JackRafterCutStrategies:
             sz=sz,
             length=length,
             angle=angle,
+            z_level=-2.0,
             radius_compensation=radius_compensation,
             tilt_angle=tilt_angle,
             easy_snap_xy=easy_snap_xy,
