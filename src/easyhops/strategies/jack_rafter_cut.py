@@ -66,13 +66,13 @@ class JackRafterCutStrategies:
         work_plane = WorkPlane.TOP
         ref_side_index = jack_rafter_cut.ref_side_index
 
-        if ref_side_index % 2 == machine_ref_side_index % 2:
+        if ref_side_index == machine_ref_side_index:
             sx = jack_rafter_cut.start_x
             sy = jack_rafter_cut.start_y
             sz = jack_rafter_cut.start_depth
-            angle = jack_rafter_cut.angle if jack_rafter_cut.orientation == "start" else jack_rafter_cut.angle
+            angle = jack_rafter_cut.angle if jack_rafter_cut.orientation == "start" else 180 - jack_rafter_cut.angle
             radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
-            easy_snap_xy = EasySnapXY.FRONT_LEFT if jack_rafter_cut.orientation == "start" else EasySnapXY.REAR_LEFT
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
             length = f"_RY/SIN({angle})"
             tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
         else:
