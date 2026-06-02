@@ -10,6 +10,7 @@ from ..contour_commands import ContourLine
 from ..contour_commands import ContourStart
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
+from ..hop_core import HopsSystemVars
 from ..hop_macros import FreeFormPocket
 from ..machining_commands import G01
 from ..machining_commands import CompensationMode
@@ -160,9 +161,11 @@ class DoubleCutStrategies:
     @staticmethod
     def milling(
         double_cut: "DoubleCut",
+        machine_ref_side_index: int,
         tool: Optional[MachiningTool] = None,
         first_cut: bool = True,
         engagement_ratio: float = 0.5,
+        avoid_splintering: bool = False,
     ) -> "List[HOPSMachining]":
         """Create HOPSMachining instances for a milling operation derived from a DoubleCut processing.
 
@@ -181,6 +184,11 @@ class DoubleCutStrategies:
             In case of 90 degree cuts, determines whether this is the first cut (True) or second cut (False)
         engagement_ratio : float
             Maximum fraction of the tool's chip area per pass. Defaults to 0.5.
+        avoid_splintering : bool
+            When True, a scoring pre-pass is added before the main passes at the final (deepest)
+            Z-level. The pre-pass approaches from the exit edge in the opposite direction and
+            bites in by one tool radius (_WZR), severing wood fibers before the main cut.
+            Defaults to False.
 
         Returns:
         --------
@@ -200,8 +208,8 @@ class DoubleCutStrategies:
 
         angle = 0.0 if angle == 0.1 else angle  # NOTE: hack in BTLx export to avoid issues with 90 degree cuts
 
-        riser_length = double_cut.user_attributes["riser_length"]
-        tread_length = double_cut.user_attributes["tread_length"]
+        riser_length = double_cut.user_attributes["riser_length"] * 1000
+        tread_length = double_cut.user_attributes["tread_length"] * 1000
 
         step_area = 0.5 * riser_length * tread_length
         tool_area = tool.diameter * tool.max_depth
@@ -214,18 +222,35 @@ class DoubleCutStrategies:
         n_x_passes = max(1, math.ceil(tread_length / tool.diameter))
         x_step = tread_length / n_x_passes
 
-        if double_cut.ref_side_index == 1:
-            easy_snap_xy = EasySnapXY.REAR_LEFT
-            rotation_angle = -angle if double_cut.orientation == "start" else angle
-            radius_compensation = CompensationMode.RIGHT if double_cut.orientation == "start" else CompensationMode.LEFT
-        elif double_cut.ref_side_index == 3:
+        if double_cut.ref_side_index == machine_ref_side_index:
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             rotation_angle = 180 + angle if double_cut.orientation == "start" else 180 - angle
-            radius_compensation = CompensationMode.LEFT if double_cut.orientation == "start" else CompensationMode.RIGHT
+            radius_compensation = CompensationMode.RIGHT if double_cut.orientation == "start" else CompensationMode.LEFT
         else:
-            raise NotImplementedError(f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut processing. Expected 1 or 3.")
+            if double_cut.ref_side_index == (machine_ref_side_index + 2) % 4:  # Opposite side
+                easy_snap_xy = EasySnapXY.REAR_LEFT
+                rotation_angle = -angle if double_cut.orientation == "start" else angle
+                radius_compensation = CompensationMode.LEFT if double_cut.orientation == "start" else CompensationMode.RIGHT
+            else:
+                raise NotImplementedError(
+                    f"Unsupported ref_side_index {double_cut.ref_side_index} for DoubleCut processing. The ref_side_index must match either the machine_ref_side_index or its opposite."
+                )
 
         x_sign = 1 if radius_compensation == CompensationMode.LEFT else -1
+        pre_pass_compensation = CompensationMode.RIGHT if radius_compensation == CompensationMode.LEFT else CompensationMode.LEFT
+
+        # add a pre-pass to score the wood fibers and reduce splintering on the final pass, if requested
+        pre_pass_operation = MillingOperation(
+            start_point=StartPoint(
+                x=0.0,
+                y=-HopsSystemVars.Z_DIM,
+                radius_compensation=pre_pass_compensation,
+                lead_in_mode=LeadInOutMode.LINEAR,
+            ),
+            moves=[G01(x=0.0, y=HopsSystemVars.TOOL_RADIUS, z=0.0, easy_snap_xy=EasySnapXY.RELATIVE)],
+            end_point=EndPoint(lead_out_mode=LeadInOutMode.LATERAL),
+        )
+
         milling_operations = [
             MillingOperation(
                 start_point=StartPoint(
@@ -254,5 +279,7 @@ class DoubleCutStrategies:
                 easy_snap_z=EasySnapZ.RELATIVE,
                 offset_z=depth_per_z_pass * (n_passes - 1 - i),
             )
-            result.append(HOPSMachining(tool=tool, work_plane=work_plane, operations=milling_operations, comments=[comment]))
+            is_final_pass = i == n_passes - 1
+            operations = [pre_pass_operation] + milling_operations if (avoid_splintering and is_final_pass) else milling_operations
+            result.append(HOPSMachining(tool=tool, work_plane=work_plane, operations=operations, comments=[comment]))
         return result
