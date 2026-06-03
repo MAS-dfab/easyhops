@@ -690,6 +690,441 @@ class EndPoint(MoveCommand):
         raise ValueError(f"Invalid EP line: {line}")
 
 
+class MillingContourStart(MoveCommand):
+    """HOPS contour-following start point (KSP) command.
+
+    Identical in parameters to :class:`StartPoint` (SP) but intended for
+    contour-following milling.  ``x`` and ``y`` accept HOPS string expressions
+    such as ``"'???'"`` when the position should be derived from the referenced
+    contour buffer at runtime.
+
+    Serialises to::
+
+        KSP("???", "???", -10, 0, 1, _ANF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+    Typically paired with :class:`MillingContour` (KonturFraesen)::
+
+        KSP("???", "???", -10, 0, 1, _ANF, ...)
+        KonturFraesen("K0", "KSP", "KEP", 0, 0, 0, 0, 0, 0, 0, 0)
+        EP(1, _ANF, 0)
+
+    Parameters
+    ----------
+    x : Union[str, float]
+        X-coordinate or HOPS expression.  Use ``"'???'"`` to let the contour
+        buffer determine the start X position at runtime.
+    y : Union[str, float]
+        Y-coordinate or HOPS expression.
+    z : float
+        Milling depth (Z-coordinate).
+    radius_compensation : CompensationMode
+        Tool offset relative to path.
+    lead_in_mode : LeadInOutMode
+        Lead-in strategy.
+    lead_in_factor : Optional[float]
+        Lead-in factor; ``None`` serialises as ``_ANF``.
+    distance_to_contour : float
+        Offset distance to the contour in mm.
+    offset_angle : float
+        Additive C-axis angle.
+    tip_angle : float
+        Tip angle for bevelled milling.
+    easy_snap_xy : EasySnapXY
+        XY corner-snap mode.
+    easy_snap_z : EasySnapZ
+        Z reference mode.
+    process_mode : ProcessMode
+        Machining direction control.
+    milling_steps : int
+        Number of depth passes (0 = single pass).
+    depth_per_level : float
+        Depth per pass when using multiple steps.
+    excess_depth : float
+        Extra depth for exact chip cut.
+    interpolation_with_rot_axis : bool
+        Smooth Z lead-in to start point.
+    activate_laser : bool
+        Use milling path as laser path.
+    start_correction_above : bool
+        Remove radius compensation above milling depth.
+    tilt_angle : float
+        C-axis tilt for bevelled milling.
+    excess_length : float
+        Depth influence for tipped tool.
+    axial_lead_in_out : bool
+        Lead in/out on tilted plane.
+    axial_distance : float
+        Retraction distance for axial lead in/out.
+    distance_to_view : float
+        Start height above plane for interpolative Z infeed.
+    """
+
+    def __init__(
+        self,
+        x: Union[str, float] = "'???'",
+        y: Union[str, float] = "'???'",
+        z: Optional[float] = 0.0,
+        radius_compensation: Optional[CompensationMode] = CompensationMode.CENTER,
+        lead_in_mode: Optional[LeadInOutMode] = LeadInOutMode.LINEAR,
+        lead_in_factor: Optional[float] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
+        distance_to_contour: Optional[float] = 0.0,
+        offset_angle: Optional[float] = 0.0,
+        tip_angle: Optional[float] = 0.0,
+        easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+        process_mode: Optional[ProcessMode] = ProcessMode.NO_CHANGE,
+        milling_steps: Optional[int] = 0,
+        depth_per_level: Optional[float] = 0.0,
+        excess_depth: Optional[float] = 0.0,
+        interpolation_with_rot_axis: Optional[bool] = False,
+        activate_laser: Optional[bool] = False,
+        start_correction_above: Optional[bool] = True,
+        tilt_angle: Optional[float] = 0.0,
+        excess_length: Optional[float] = 0.0,
+        axial_lead_in_out: Optional[bool] = False,
+        axial_distance: Optional[float] = 0.0,
+        distance_to_view: Optional[float] = 0.0,
+    ):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.z = z
+        self.radius_compensation = radius_compensation
+        self.lead_in_mode = lead_in_mode
+        self.lead_in_factor = lead_in_factor
+        self.distance_to_contour = distance_to_contour
+        self.offset_angle = offset_angle
+        self.tip_angle = tip_angle
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
+        self.process_mode = process_mode
+        self.milling_steps = milling_steps
+        self.depth_per_level = depth_per_level
+        self.excess_depth = excess_depth
+        self.interpolation_with_rot_axis = interpolation_with_rot_axis
+        self.activate_laser = activate_laser
+        self.start_correction_above = start_correction_above
+        self.tilt_angle = tilt_angle
+        self.excess_length = excess_length
+        self.axial_lead_in_out = axial_lead_in_out
+        self.axial_distance = axial_distance
+        self.distance_to_view = distance_to_view
+
+    def __repr__(self) -> str:
+        return f"MillingContourStart(x={self.x!r}, y={self.y!r}, z={self.z})"
+
+    def _to_hop_line(self) -> str:
+        lead_in_factor_str = self.lead_in_factor if self.lead_in_factor is not None else "_ANF"
+        params = [
+            self.x,
+            self.y,
+            self.z,
+            self.radius_compensation,
+            self.lead_in_mode,
+            lead_in_factor_str,
+            self.distance_to_contour,
+            self.offset_angle,
+            self.tip_angle,
+            self.easy_snap_xy,
+            self.easy_snap_z,
+            self.process_mode,
+            self.milling_steps,
+            self.depth_per_level,
+            self.excess_depth,
+            int(self.interpolation_with_rot_axis),
+            int(self.activate_laser),
+            int(self.start_correction_above),
+            self.tilt_angle,
+            self.excess_length,
+            int(self.axial_lead_in_out),
+            self.axial_distance,
+            self.distance_to_view,
+        ]
+        return f"KSP ({','.join(map(str, params))})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "MillingContourStart":
+        """Parse a KSP command from a HOPS line.
+
+        Parameters
+        ----------
+        line : str
+            HOPS ``KSP(...)`` or ``KSP (...)`` command line.
+
+        Returns
+        -------
+        MillingContourStart
+        """
+        # x and y may be quoted strings (e.g. '???') or numeric values.
+        # Remaining 21 parameters follow the same format as StartPoint (SP).
+        pattern = (
+            r"KSP\s*\("
+            r"('[^']*'|[-+]?\d+\.?\d*),\s*"  # x (quoted str or number)
+            r"('[^']*'|[-+]?\d+\.?\d*),\s*"  # y (quoted str or number)
+            r"([-+]?\d+\.?\d*),\s*"  # z
+            r"([-+]?\d+),\s*"  # radius_compensation
+            r"([-+]?\d+),\s*"  # lead_in_mode
+            r"([-+]?\d+\.?\d*|_ANF),\s*"  # lead_in_factor
+            r"([-+]?\d+\.?\d*),\s*"  # distance_to_contour
+            r"([-+]?\d+\.?\d*),\s*"  # offset_angle
+            r"([-+]?\d+\.?\d*),\s*"  # tip_angle
+            r"([-+]?\d+),\s*"  # easy_snap_xy
+            r"([-+]?\d+),\s*"  # easy_snap_z
+            r"([-+]?\d+),\s*"  # process_mode
+            r"([-+]?\d+),\s*"  # milling_steps
+            r"([-+]?\d+\.?\d*),\s*"  # depth_per_level
+            r"([-+]?\d+\.?\d*),\s*"  # excess_depth
+            r"([-+]?\d+),\s*"  # interpolation_with_rot_axis
+            r"([-+]?\d+),\s*"  # activate_laser
+            r"([-+]?\d+),\s*"  # start_correction_above
+            r"([-+]?\d+\.?\d*),\s*"  # tilt_angle
+            r"([-+]?\d+\.?\d*),\s*"  # excess_length
+            r"([-+]?\d+),\s*"  # axial_lead_in_out
+            r"([-+]?\d+\.?\d*),\s*"  # axial_distance
+            r"([-+]?\d+\.?\d*(?:mm)?)"  # distance_to_view (optional mm suffix)
+            r"\)"
+        )
+        match = re.match(pattern, line.strip())
+        if not match:
+            raise ValueError(f"Invalid KSP line: {line}")
+
+        raw_x = match.group(1)
+        raw_y = match.group(2)
+        x: Union[str, float] = raw_x if raw_x.startswith("'") else float(raw_x)
+        y: Union[str, float] = raw_y if raw_y.startswith("'") else float(raw_y)
+
+        lead_in_factor = None if match.group(6) == "_ANF" else float(match.group(6))
+        dtv_raw = match.group(23).rstrip("mm") if match.group(23).endswith("mm") else match.group(23)
+
+        return cls(
+            x=x,
+            y=y,
+            z=float(match.group(3)),
+            radius_compensation=CompensationMode(int(match.group(4))),
+            lead_in_mode=LeadInOutMode(int(match.group(5))),
+            lead_in_factor=lead_in_factor,
+            distance_to_contour=float(match.group(7)),
+            offset_angle=float(match.group(8)),
+            tip_angle=float(match.group(9)),
+            easy_snap_xy=EasySnapXY(int(match.group(10))),
+            easy_snap_z=EasySnapZ(int(match.group(11))),
+            process_mode=ProcessMode(int(match.group(12))),
+            milling_steps=int(match.group(13)),
+            depth_per_level=float(match.group(14)),
+            excess_depth=float(match.group(15)),
+            interpolation_with_rot_axis=bool(int(match.group(16))),
+            activate_laser=bool(int(match.group(17))),
+            start_correction_above=bool(int(match.group(18))),
+            tilt_angle=float(match.group(19)),
+            excess_length=float(match.group(20)),
+            axial_lead_in_out=bool(int(match.group(21))),
+            axial_distance=float(match.group(22)),
+            distance_to_view=float(dtv_raw),
+        )
+
+
+class MillingContour(MoveCommand):
+    """HOPS contour-following milling command (KonturFraesen).
+
+    Instructs the machine to follow a named contour buffer from a labelled
+    start element to a labelled end element.  Used between a
+    :class:`MillingContourStart` (or regular :class:`StartPoint`) and an
+    :class:`EndPoint`.
+
+    Serialises to::
+
+        KonturFraesen("K0", "KSP", "KEP", 0, 0, 0, 0, 0, 0, 0, 0)
+
+    Parameters
+    ----------
+    contour_name : str
+        Raw HOPS expression for the contour buffer.  Pass a HOPS string
+        literal (including quotes) such as ``"'K0'"`` or a HOPS variable
+        such as ``"KN"``.
+    start_element : str
+        Label of the contour start point; serialised with single quotes
+        (e.g. ``"KSP"`` → ``'KSP'`` in the output).
+    end_element : str
+        Label of the contour end point; serialised with single quotes
+        (e.g. ``"KEP"`` → ``'KEP'`` in the output).
+    direction : int
+        Milling direction along the contour: ``0`` = forward, ``1`` = backward.
+    corner_radius : float
+        Corner radius in mm for rounded transitions between contour segments.
+    transfer_z : bool
+        If ``True``, transfer the Z value from the contour definition.
+    additional_move_start : float
+        Extra approach distance at the contour start.
+    additional_move_start_kind : int
+        Unit for *additional_move_start*: ``0`` = mm, ``1`` = %.
+    additional_move_end : float
+        Extra retraction distance at the contour end.
+    additional_move_end_kind : int
+        Unit for *additional_move_end*: ``0`` = mm, ``1`` = %.
+    flags : int
+        Reserved parameter (default ``0``).
+    ramp_mode : Optional[int]
+        Ramp mode for the start approach (``None`` omits all ramp parameters).
+    ramp_angle : Optional[float]
+        Ramp angle in degrees (``90`` = perpendicular / no ramp).
+    ramp_flags : Optional[int]
+        Additional ramp flags.
+    ramp_distance : Optional[float]
+        Ramp distance in mm.
+    """
+
+    def __init__(
+        self,
+        contour_name: str = "'K0'",
+        start_element: str = "KSP",
+        end_element: str = "KEP",
+        direction: int = 0,
+        corner_radius: float = 0.0,
+        transfer_z: bool = False,
+        additional_move_start: float = 0.0,
+        additional_move_start_kind: int = 0,
+        additional_move_end: float = 0.0,
+        additional_move_end_kind: int = 0,
+        flags: int = 0,
+        ramp_mode: Optional[int] = None,
+        ramp_angle: Optional[float] = None,
+        ramp_flags: Optional[int] = None,
+        ramp_distance: Optional[float] = None,
+    ):
+        super().__init__()
+        self.contour_name = contour_name
+        self.start_element = start_element
+        self.end_element = end_element
+        self.direction = direction
+        self.corner_radius = corner_radius
+        self.transfer_z = transfer_z
+        self.additional_move_start = additional_move_start
+        self.additional_move_start_kind = additional_move_start_kind
+        self.additional_move_end = additional_move_end
+        self.additional_move_end_kind = additional_move_end_kind
+        self.flags = flags
+        self.ramp_mode = ramp_mode
+        self.ramp_angle = ramp_angle
+        self.ramp_flags = ramp_flags
+        self.ramp_distance = ramp_distance
+
+    def __repr__(self) -> str:
+        return f"MillingContour(contour={self.contour_name!r}, start={self.start_element!r}, end={self.end_element!r})"
+
+    @staticmethod
+    def _fmt(val) -> str:
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        parts = [
+            f"'{self.contour_name}'",
+            f"'{self.start_element}'",
+            f"'{self.end_element}'",
+            str(self.direction),
+            f(self.corner_radius),
+            "1" if self.transfer_z else "0",
+            f(self.additional_move_start),
+            str(self.additional_move_start_kind),
+            f(self.additional_move_end),
+            str(self.additional_move_end_kind),
+            str(self.flags),
+        ]
+        if self.ramp_mode is not None:
+            parts += [
+                str(self.ramp_mode),
+                f(self.ramp_angle if self.ramp_angle is not None else 90),
+                str(self.ramp_flags if self.ramp_flags is not None else 0),
+                f(self.ramp_distance if self.ramp_distance is not None else 0),
+            ]
+        return f"KonturFraesen ({','.join(parts)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "MillingContour":
+        """Parse a KonturFraesen command from a HOPS line.
+
+        Parameters
+        ----------
+        line : str
+            HOPS ``KonturFraesen (...)`` command line.
+
+        Returns
+        -------
+        MillingContour
+        """
+        m = re.match(r"KonturFraesen\s*\((.+)\)", line.strip())
+        if not m:
+            raise ValueError(f"Invalid KonturFraesen line: {line}")
+
+        # Tokenise the argument list while respecting single-quoted strings.
+        raw = m.group(1)
+        tokens: List[str] = []
+        current: List[str] = []
+        in_quote = False
+        for ch in raw:
+            if ch == "'" and not in_quote:
+                in_quote = True
+                current.append(ch)
+            elif ch == "'" and in_quote:
+                in_quote = False
+                current.append(ch)
+            elif ch == "," and not in_quote:
+                tokens.append("".join(current).strip())
+                current = []
+            else:
+                current.append(ch)
+        if current:
+            tokens.append("".join(current).strip())
+
+        if len(tokens) < 11:
+            raise ValueError(f"KonturFraesen expects at least 11 parameters, got {len(tokens)}: {line}")
+
+        def _num(t: str) -> float:
+            return float(t.rstrip("mm"))
+
+        contour_name = tokens[0]
+        start_element = tokens[1].strip("'")
+        end_element = tokens[2].strip("'")
+        direction = int(tokens[3])
+        corner_radius = _num(tokens[4])
+        transfer_z = bool(int(tokens[5]))
+        additional_move_start = _num(tokens[6])
+        additional_move_start_kind = int(tokens[7])
+        additional_move_end = _num(tokens[8])
+        additional_move_end_kind = int(tokens[9])
+        flags = int(tokens[10])
+
+        ramp_mode = ramp_angle = ramp_flags = ramp_distance = None
+        if len(tokens) >= 15:
+            ramp_mode = int(tokens[11])
+            ramp_angle = _num(tokens[12])
+            ramp_flags = int(tokens[13])
+            ramp_distance = _num(tokens[14])
+
+        return cls(
+            contour_name=contour_name,
+            start_element=start_element,
+            end_element=end_element,
+            direction=direction,
+            corner_radius=corner_radius,
+            transfer_z=transfer_z,
+            additional_move_start=additional_move_start,
+            additional_move_start_kind=additional_move_start_kind,
+            additional_move_end=additional_move_end,
+            additional_move_end_kind=additional_move_end_kind,
+            flags=flags,
+            ramp_mode=ramp_mode,
+            ramp_angle=ramp_angle,
+            ramp_flags=ramp_flags,
+            ramp_distance=ramp_distance,
+        )
+
+
 # ==================== Machining Command Classes ====================
 
 
