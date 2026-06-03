@@ -49,9 +49,9 @@ def load_model(btlx_path: str):
 # ---------------------------------------------------------------------------
 # 2.  Explicit workflow — developer drives everything
 # ---------------------------------------------------------------------------
-def element_to_job(element):
+def element_to_job(element, scale_factor=1.0):
     """Build a HOPSJob for *element* with explicit control over dispatch."""
-    job = HOPSJob.from_element(element)
+    job = HOPSJob.from_element(element, scale_factor=scale_factor)
     rsi = job.ref_side_index
     opp_rsi = (rsi + 2) % 4
 
@@ -59,6 +59,7 @@ def element_to_job(element):
     post_flip = []
 
     for processing in element.features:
+        processing = processing.scaled(scale_factor)
         name = processing.PROCESSING_NAME
 
         if name == "Lap":
