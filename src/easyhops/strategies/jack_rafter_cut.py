@@ -90,11 +90,12 @@ class JackRafterCutStrategies:
             sz=sz,
             length=length,
             angle=angle,
-            z_level=-2.0,
+            z_level=0.0,
             radius_compensation=radius_compensation,
             tilt_angle=tilt_angle,
             easy_snap_xy=easy_snap_xy,
             easy_snap_z=EasySnapZ.BOTTOM_SIDE,
+            precut_depth=-2.0,
         )
 
         return [
