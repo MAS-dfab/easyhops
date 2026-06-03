@@ -130,17 +130,19 @@ class FreeFormPocket(HopsMacroCommand):
 
 
 class AngledLine(HopsMacroCommand):
-    """Wraps the HOPS ``CALL _WGerade_V5`` macro (angled straight milling move).
+    """Wraps the HOPS ``CALL _KWGerade_V5`` macro (angled straight milling move).
 
     Executes a direct spindle move of a given length at a given angle within the
-    current work plane — the spindle equivalent of the contour-buffer ``_KWGerade_V5``.
+    current work plane.
 
     Serialises to a single HOPS line::
 
-        CALL _WGerade_V5 ( VAL LAENGE:=_RZ/COS(47.02),WINKEL:=47.02,Z:=0,R:=0,ESD:=2)
+        CALL _KWGerade_V5 ( VAL NAME:='',LAENGE:=-150.133,WINKEL:=61.661,Z:=0,INFO:='',ESD:=2)
 
     Parameters
     ----------
+    name : str
+        ``NAME`` — optional label for the move segment (default ``''``).
     length : Union[float, str]
         ``LAENGE`` — move length.  Accepts HOPS expressions such as
         ``'_RZ/COS(180-132.98)'``.
@@ -149,31 +151,33 @@ class AngledLine(HopsMacroCommand):
         such as ``'180-132.98'``.
     z : Union[float, str]
         ``Z`` — milling depth (default 0 = use current plane depth).
-    corner_radius : Union[float, str]
-        ``R`` — corner radius for path smoothing (default 0 = sharp corner).
+    info : str
+        ``INFO`` — optional comment string (default ``''``).
     easy_snap_z : EasySnapZ
         ``ESD`` — EasySnap z-mode (default EasySnapZ.RELATIVE).
     """
 
-    _MACRO_NAME = "_WGerade_V5"
+    _MACRO_NAME = "_KWGerade_V5"
 
     def __init__(
         self,
+        name: str = "",
         length: Union[float, str] = 0,
         angle: Union[float, str] = 0,
         z: Union[float, str] = 0,
-        corner_radius: Union[float, str] = 0,
+        info: str = "",
         easy_snap_z: EasySnapZ = EasySnapZ.RELATIVE,
     ):
         super().__init__()
+        self.name = name
         self.length = length
         self.angle = angle
         self.z = z
-        self.corner_radius = corner_radius
+        self.info = info
         self.easy_snap_z = easy_snap_z
 
     def __repr__(self) -> str:
-        return f"WGerade(length={self.length!r}, angle={self.angle!r})"
+        return f"AngledLine(length={self.length!r}, angle={self.angle!r})"
 
     @staticmethod
     def _fmt(val) -> str:
@@ -189,14 +193,15 @@ class AngledLine(HopsMacroCommand):
     def _to_hop_line(self) -> str:
         f = self._fmt
         parts = [
+            f"NAME:='{self.name}'",
             f"LAENGE:={f(self.length)}",
             f"WINKEL:={f(self.angle)}",
             f"Z:={f(self.z)}",
-            f"R:={f(self.corner_radius)}",
+            f"INFO:='{self.info}'",
             f"ESD:={f(self.easy_snap_z)}",
         ]
         return f"CALL {self._MACRO_NAME} ( VAL {','.join(parts)})"
 
     @classmethod
     def from_hop_line(cls, line: str) -> "AngledLine":
-        raise NotImplementedError("Parsing WGerade from a HOPS line is not yet implemented.")
+        raise NotImplementedError("Parsing AngledLine from a HOPS line is not yet implemented.")
