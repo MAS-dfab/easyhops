@@ -65,12 +65,12 @@ class MachiningTool(ToolCommand):
 
     Example:
         >>> # Use machine defaults
-        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 7, name="Example Tool")
+        >>> tool = MachiningTool(7, name="Example Tool")
         >>> str(tool)
         'WZF(7,_VE,_V,_VA,_SD,_ANF,'1')'
 
         >>> # Override specific parameters (lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000)
-        >>> tool = MachiningTool(ToolHolderType.CASSETTE, 1, lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000, name="DIA20_R")
+        >>> tool = MachiningTool(1, tool_type=ToolCallType.ROUTER, lead_in_feedrate=5000, feedrate=8000, surface_feedrate=5000, name="DIA20_R")
         >>> str(tool)
         'WZF(1,5000,8000,5000,_SD,_ANF,'1')'
 
@@ -82,8 +82,8 @@ class MachiningTool(ToolCommand):
 
     def __init__(
         self,
-        tool_type: ToolCallType,
         position: int,
+        tool_type: Optional[ToolCallType] = ToolCallType.ROUTER,
         lead_in_feedrate: Optional[float] = None,
         feedrate: Optional[float] = None,
         lead_out_feedrate: Optional[float] = None,
@@ -93,8 +93,8 @@ class MachiningTool(ToolCommand):
         name: str = "",
     ):
         super().__init__()
-        self._tool_type = None
         self._position = None
+        self._tool_type = None
         self._lead_in_feedrate = None
         self._feedrate = None
         self._lead_out_feedrate = None
@@ -103,8 +103,8 @@ class MachiningTool(ToolCommand):
         self._head_id = None
         self._name = None
 
-        self.tool_type = tool_type
         self.position = position
+        self.tool_type = tool_type
         self.lead_in_feedrate = lead_in_feedrate
         self.feedrate = feedrate
         self.lead_out_feedrate = lead_out_feedrate
@@ -122,17 +122,6 @@ class MachiningTool(ToolCommand):
             HopsSystemVars.SAW_WIDTH.set(value)
 
     @property
-    def tool_type(self) -> ToolCallType:
-        """Tool type (ROUTER, SAW, or DRILLER)."""
-        return self._tool_type
-
-    @tool_type.setter
-    def tool_type(self, value: ToolCallType):
-        if not isinstance(value, ToolCallType):
-            raise TypeError(f"tool_type must be ToolCallType, got {type(value).__name__}")
-        self._tool_type = value
-
-    @property
     def position(self) -> int:
         """Tool position number in the holder."""
         return self._position
@@ -144,6 +133,17 @@ class MachiningTool(ToolCommand):
         if value < 0:
             raise ValueError(f"position must be non-negative, got {value}")
         self._position = value
+
+    @property
+    def tool_type(self) -> ToolCallType:
+        """Tool type (ROUTER, SAW, or DRILLER)."""
+        return self._tool_type
+
+    @tool_type.setter
+    def tool_type(self, value: ToolCallType):
+        if not isinstance(value, ToolCallType):
+            raise TypeError(f"tool_type must be ToolCallType, got {type(value).__name__}")
+        self._tool_type = value
 
     @property
     def lead_in_feedrate(self) -> Optional[float]:
@@ -304,7 +304,7 @@ class MachiningTool(ToolCommand):
         else:
             raise ValueError(f"Unknown tool holder type in code: {tool_code}")
 
-        return cls(tool_type, position, **kwargs)
+        return cls(position, tool_type=tool_type, **kwargs)
 
     @classmethod
     def from_hop_line(cls, line: str) -> "MachiningTool":
@@ -554,6 +554,7 @@ class CastorD61(MachiningTool):
 
         self.max_depth = 130.0
         self.diameter = 61.092
+
 
 class SRSLD12(MachiningTool):
     """SRSL Ø12 milling tool (WZF404) for pocket milling tasks.
