@@ -623,6 +623,79 @@ class G03M(MoveCommand):
         raise ValueError(f"Invalid G03M line: {line}")
 
 
+class AngledLine(MoveCommand):
+    """Wraps the HOPS ``CALL _WGerade_V5`` macro (angled straight milling move).
+
+    Executes a direct spindle move of a given length at a given angle within the
+    current work plane — the spindle equivalent of the contour-buffer ``_KWGerade_V5``.
+
+    Serialises to a single HOPS line::
+
+        CALL _WGerade_V5 ( VAL LAENGE:=_RZ/COS(47.02),WINKEL:=47.02,Z:=0,R:=0,ESD:=2)
+
+    Parameters
+    ----------
+    length : Union[float, str]
+        ``LAENGE`` — move length.  Accepts HOPS expressions such as
+        ``'_RZ/COS(180-132.98)'``.
+    angle : Union[float, str]
+        ``WINKEL`` — direction angle in degrees.  Accepts HOPS expressions
+        such as ``'180-132.98'``.
+    z : Union[float, str]
+        ``Z`` — milling depth (default 0 = use current plane depth).
+    corner_radius : Union[float, str]
+        ``R`` — corner radius for path smoothing (default 0 = sharp corner).
+    easy_snap_z : EasySnapZ
+        ``ESD`` — EasySnap z-mode (default EasySnapZ.RELATIVE).
+    """
+
+    _MACRO_NAME = "_WGerade_V5"
+
+    def __init__(
+        self,
+        length: Union[float, str] = 0,
+        angle: Union[float, str] = 0,
+        z: Union[float, str] = 0,
+        corner_radius: Union[float, str] = 0,
+        easy_snap_z: EasySnapZ = EasySnapZ.RELATIVE,
+    ):
+        super().__init__()
+        self.length = length
+        self.angle = angle
+        self.z = z
+        self.corner_radius = corner_radius
+        self.easy_snap_z = easy_snap_z
+
+    def __repr__(self) -> str:
+        return f"WGerade(length={self.length!r}, angle={self.angle!r})"
+
+    @staticmethod
+    def _fmt(val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        parts = [
+            f"LAENGE:={f(self.length)}",
+            f"WINKEL:={f(self.angle)}",
+            f"Z:={f(self.z)}",
+            f"R:={f(self.corner_radius)}",
+            f"ESD:={f(self.easy_snap_z)}",
+        ]
+        return f"CALL {self._MACRO_NAME} ( VAL {','.join(parts)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "AngledLine":
+        raise NotImplementedError("Parsing WGerade from a HOPS line is not yet implemented.")
+
+
 class EndPoint(MoveCommand):
     """HOPS end point (EP) command definition.
 
@@ -1860,6 +1933,10 @@ class SawingLengthAngleOperation(OperationCommand):
 class DrillingOperation(OperationCommand):
     """Represents a horizontal drilling operation.
 
+    Serialises as::
+
+        HorzB(0, 0, 0, 8, -15, 0, 0, 0, 0, 1, 0, 0)
+
     Drilling creates holes at specific points.
 
     Parameters:
@@ -1887,6 +1964,7 @@ class DrillingOperation(OperationCommand):
     """
 
     OPERATION_TYPE = "DRILLING"
+    _MACRO_NAME = "HorzB"
 
     def __init__(
         self,
@@ -1927,143 +2005,143 @@ class DrillingOperation(OperationCommand):
     def __repr__(self) -> str:
         return f"DrillingOperation(pos=({self.x:.1f},{self.y:.1f},{self.z:.1f}), depth={self.depth}, ø={self.diameter})"
 
-    @property
-    def x(self) -> float:
-        """X-coordinate of the drill position."""
-        return self._x
+    # @property
+    # def x(self) -> float:
+    #     """X-coordinate of the drill position."""
+    #     return self._x
 
-    @x.setter
-    def x(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"x must be a number, got {type(value).__name__}")
-        self._x = float(value)
+    # @x.setter
+    # def x(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"x must be a number, got {type(value).__name__}")
+    #     self._x = float(value)
 
-    @property
-    def y(self) -> float:
-        """Y-coordinate of the drill position."""
-        return self._y
+    # @property
+    # def y(self) -> float:
+    #     """Y-coordinate of the drill position."""
+    #     return self._y
 
-    @y.setter
-    def y(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"y must be a number, got {type(value).__name__}")
-        self._y = float(value)
+    # @y.setter
+    # def y(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"y must be a number, got {type(value).__name__}")
+    #     self._y = float(value)
 
-    @property
-    def z(self) -> float:
-        """Z-coordinate of the drill position."""
-        return self._z
+    # @property
+    # def z(self) -> float:
+    #     """Z-coordinate of the drill position."""
+    #     return self._z
 
-    @z.setter
-    def z(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"z must be a number, got {type(value).__name__}")
-        self._z = float(value)
+    # @z.setter
+    # def z(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"z must be a number, got {type(value).__name__}")
+    #     self._z = float(value)
 
-    @property
-    def diameter(self) -> Optional[float]:
-        """Drill bit diameter in mm."""
-        return self._diameter
+    # @property
+    # def diameter(self) -> Optional[float]:
+    #     """Drill bit diameter in mm."""
+    #     return self._diameter
 
-    @diameter.setter
-    def diameter(self, value: Optional[float]):
-        if value is not None:
-            if not isinstance(value, (int, float)):
-                raise TypeError(f"diameter must be a number or None, got {type(value).__name__}")
-            if value <= 0:
-                raise ValueError(f"diameter must be positive, got {value}")
-        self._diameter = float(value) if value is not None else None
+    # @diameter.setter
+    # def diameter(self, value: Optional[float]):
+    #     if value is not None:
+    #         if not isinstance(value, (int, float)):
+    #             raise TypeError(f"diameter must be a number or None, got {type(value).__name__}")
+    #         if value <= 0:
+    #             raise ValueError(f"diameter must be positive, got {value}")
+    #     self._diameter = float(value) if value is not None else None
 
-    @property
-    def depth(self) -> float:
-        """Drilling depth in mm."""
-        return self._depth
+    # @property
+    # def depth(self) -> float:
+    #     """Drilling depth in mm."""
+    #     return self._depth
 
-    @depth.setter
-    def depth(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"depth must be a number, got {type(value).__name__}")
-        self._depth = float(value)
+    # @depth.setter
+    # def depth(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"depth must be a number, got {type(value).__name__}")
+    #     self._depth = float(value)
 
-    @property
-    def drilling_flags(self) -> int:
-        """Additional drilling options as bitwise flags."""
-        return self._drilling_flags
+    # @property
+    # def drilling_flags(self) -> int:
+    #     """Additional drilling options as bitwise flags."""
+    #     return self._drilling_flags
 
-    @drilling_flags.setter
-    def drilling_flags(self, value: int):
-        if not isinstance(value, int):
-            raise TypeError(f"drilling_flags must be int, got {type(value).__name__}")
-        self._drilling_flags = value
+    # @drilling_flags.setter
+    # def drilling_flags(self, value: int):
+    #     if not isinstance(value, int):
+    #         raise TypeError(f"drilling_flags must be int, got {type(value).__name__}")
+    #     self._drilling_flags = value
 
-    @property
-    def rotation(self) -> float:
-        """Rotation angle for angled drilling (0 < rotation < 180 degrees)."""
-        return self._rotation
+    # @property
+    # def rotation(self) -> float:
+    #     """Rotation angle for angled drilling (0 < rotation < 180 degrees)."""
+    #     return self._rotation
 
-    @rotation.setter
-    def rotation(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"rotation must be a number, got {type(value).__name__}")
-        if not 0 <= value <= 180:
-            raise ValueError(f"rotation must be between 0 and 180 degrees, got {value}")
-        self._rotation = float(value)
+    # @rotation.setter
+    # def rotation(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"rotation must be a number, got {type(value).__name__}")
+    #     if not 0 <= value <= 180:
+    #         raise ValueError(f"rotation must be between 0 and 180 degrees, got {value}")
+    #     self._rotation = float(value)
 
-    @property
-    def tilt(self) -> float:
-        """Tilt angle for angled drilling (0 < tilt < 90 degrees)."""
-        return self._tilt
+    # @property
+    # def tilt(self) -> float:
+    #     """Tilt angle for angled drilling (0 < tilt < 90 degrees)."""
+    #     return self._tilt
 
-    @tilt.setter
-    def tilt(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"tilt must be a number, got {type(value).__name__}")
-        if not -90 <= value <= 90:
-            raise ValueError(f"tilt must be between -90 and 90 degrees, got {value}")
-        self._tilt = float(value)
+    # @tilt.setter
+    # def tilt(self, value: float):
+    #     if not isinstance(value, (int, float)):
+    #         raise TypeError(f"tilt must be a number, got {type(value).__name__}")
+    #     if not -90 <= value <= 90:
+    #         raise ValueError(f"tilt must be between -90 and 90 degrees, got {value}")
+    #     self._tilt = float(value)
 
-    @property
-    def easy_snap_xy(self) -> int:
-        """Corner snap mode for XY movement (0-9)."""
-        return self._easy_snap_xy
+    # @property
+    # def easy_snap_xy(self) -> int:
+    #     """Corner snap mode for XY movement (0-9)."""
+    #     return self._easy_snap_xy
 
-    @easy_snap_xy.setter
-    def easy_snap_xy(self, value):
-        if isinstance(value, EasySnapXY):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_xy must be EasySnapXY enum or int, got {type(value).__name__}")
+    # @easy_snap_xy.setter
+    # def easy_snap_xy(self, value):
+    #     if isinstance(value, EasySnapXY):
+    #         value = value.value
+    #     elif not isinstance(value, int):
+    #         raise TypeError(f"easy_snap_xy must be EasySnapXY enum or int, got {type(value).__name__}")
 
-        if not 0 <= value <= 9:
-            raise ValueError(f"easy_snap_xy must be between 0 and 9, got {value}")
+    #     if not 0 <= value <= 9:
+    #         raise ValueError(f"easy_snap_xy must be between 0 and 9, got {value}")
 
-        self._easy_snap_xy = value
+    #     self._easy_snap_xy = value
 
-    @property
-    def easy_snap_z(self) -> int:
-        """Z-axis reference mode for depth calculations (0-2)."""
-        return self._easy_snap_z
+    # @property
+    # def easy_snap_z(self) -> int:
+    #     """Z-axis reference mode for depth calculations (0-2)."""
+    #     return self._easy_snap_z
 
-    @easy_snap_z.setter
-    def easy_snap_z(self, value):
-        if isinstance(value, EasySnapZ):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
+    # @easy_snap_z.setter
+    # def easy_snap_z(self, value):
+    #     if isinstance(value, EasySnapZ):
+    #         value = value.value
+    #     elif not isinstance(value, int):
+    #         raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
 
-        if not 0 <= value <= 2:
-            raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
+    #     if not 0 <= value <= 2:
+    #         raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
 
-        self._easy_snap_z = value
+    #     self._easy_snap_z = value
 
     @classmethod
     def from_hop_line(cls, line: str) -> "DrillingOperation":
-        """Parse BOHRUNG command from HOPS line.
+        """Parse HorzB positional command from HOPS line.
 
         Parameters:
         -----------
         line : str
-            HOPS line starting with BOHRUNG(...)
+            HOPS line in the form HorzB (x,y,z,d,t,tl,kw,dw,esxy,esz,0,0)
 
         Returns:
         --------
@@ -2071,45 +2149,39 @@ class DrillingOperation(OperationCommand):
             Parsed DrillingOperation instance
 
         """
-        # Match BOHR with 10 parameters (x, y, z, diameter, depth, flags, rotation, tilt, snap_xy, snap_z)
-        # Diameter can be a number or _WZD
+        s = line.strip()
         pattern = (
-            r"BOHR\(([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*|_WZD),([-+]?\d+\.?\d*),([-+]?\d+),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+),([-+]?\d+)\)"
+            rf"{re.escape(cls._MACRO_NAME)}\s*"
+            r"\(([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),"
+            r"([-+]?\d+\.?\d*|_WZD),([-+]?\d+\.?\d*),([-+]?\d+),"
+            r"([-+]?\d+\.?\d*),([-+]?\d+\.?\d*),"
+            r"([-+]?\d+),([-+]?\d+),[-+]?\d+,[-+]?\d+\)"
+        )
+        match = re.match(pattern, s)
+        if not match:
+            raise ValueError(f"Not a {cls._MACRO_NAME} line: {line}")
+
+        diameter_raw = match.group(4)
+        diameter = None if diameter_raw == "_WZD" else float(diameter_raw)
+
+        return cls(
+            x=float(match.group(1)),
+            y=float(match.group(2)),
+            z=float(match.group(3)),
+            diameter=diameter,
+            depth=float(match.group(5)),
+            drilling_flags=int(match.group(6)),
+            tilt=float(match.group(7)),
+            rotation=float(match.group(8)),
+            easy_snap_xy=EasySnapXY(int(match.group(9))),
+            easy_snap_z=EasySnapZ(int(match.group(10))),
         )
 
-        match = re.match(pattern, line.strip())
-        if match:
-            x = float(match.group(1))
-            y = float(match.group(2))
-            z = float(match.group(3))
-            diameter_str = match.group(4)
-            diameter = None if diameter_str == "_WZD" else float(diameter_str)
-            depth = float(match.group(5))
-            drilling_flags = int(match.group(6))
-            rotation = float(match.group(7))
-            tilt = float(match.group(8))
-            easy_snap_xy = EasySnapXY(int(match.group(9)))
-            easy_snap_z = EasySnapZ(int(match.group(10)))
-
-            return cls(
-                x=x,
-                y=y,
-                z=z,
-                depth=depth,
-                diameter=diameter,
-                drilling_flags=drilling_flags,
-                rotation=rotation,
-                tilt=tilt,
-                easy_snap_xy=easy_snap_xy,
-                easy_snap_z=easy_snap_z,
-            )
-        raise ValueError(f"Invalid BOHRUNG line: {line}")
-
     def _to_hop_line(self) -> str:
-        """Generate HOPS BOHRUNG command line.
+        """Generate HOPS HorzB command line.
 
         Returns:
-            Formatted BOHRUNG(...) command string
+            Formatted HorzB (...) command string
         """
 
         def fmt(val):
@@ -2118,7 +2190,13 @@ class DrillingOperation(OperationCommand):
             return str(val)
 
         diameter_str = fmt(self.diameter) if self.diameter is not None else "_WZD"
-        return f"BOHRUNG({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},{diameter_str},{fmt(self.depth)},{self.drilling_flags},{fmt(self.rotation)},{fmt(self.tilt)},{self.easy_snap_xy},{int(self.easy_snap_z)})"  # noqa: E501
+        return (
+            f"{self._MACRO_NAME} "
+            f"({fmt(self.x)},{fmt(self.y)},{fmt(self.z)},"
+            f"{diameter_str},{fmt(self.depth)},{self.drilling_flags},"
+            f"{fmt(self.tilt)},{fmt(self.rotation)},"
+            f"{int(self.easy_snap_xy)},{int(self.easy_snap_z)},0,0)"
+        )
 
 
 class OpenPocketOperation(OperationCommand):

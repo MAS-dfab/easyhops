@@ -128,6 +128,84 @@ class ContourLine(ContourCommand):
         return f"KG01 ('{self.name}',{_fmt(self.x)},{_fmt(self.y)},{_fmt(self.z)},'',{_fmt(self.easy_snap_xy)},{_fmt(self.easy_snap_z)})"
 
 
+class ContourLineAngle(ContourCommand):
+    """Wraps the HOPS ``CALL _KWGerade_V5`` macro (angled straight milling move).
+
+    Executes a direct spindle move of a given length at a given angle within the
+    current work plane.
+
+    Serialises to a single HOPS line::
+
+        CALL _KWGerade_V5 ( VAL NAME:='',LAENGE:=-150.133,WINKEL:=61.661,Z:=0,INFO:='',ESD:=2)
+
+    Parameters
+    ----------
+    name : str
+        ``NAME`` — optional label for the move segment (default ``''``).
+    length : Union[float, str]
+        ``LAENGE`` — move length.  Accepts HOPS expressions such as
+        ``'_RZ/COS(180-132.98)'``.
+    angle : Union[float, str]
+        ``WINKEL`` — direction angle in degrees.  Accepts HOPS expressions
+        such as ``'180-132.98'``.
+    z : Union[float, str]
+        ``Z`` — milling depth (default 0 = use current plane depth).
+    info : str
+        ``INFO`` — optional comment string (default ``''``).
+    easy_snap_z : EasySnapZ
+        ``ESD`` — EasySnap z-mode (default EasySnapZ.RELATIVE).
+    """
+
+    _MACRO_NAME = "_KWGerade_V5"
+
+    def __init__(
+        self,
+        name: str = "",
+        length: Union[float, str] = 0,
+        angle: Union[float, str] = 0,
+        z: Union[float, str] = 0,
+        info: str = "",
+        easy_snap_z: EasySnapZ = EasySnapZ.RELATIVE,
+    ):
+        super().__init__()
+        self.name = name
+        self.length = length
+        self.angle = angle
+        self.z = z
+        self.info = info
+        self.easy_snap_z = easy_snap_z
+
+    def __repr__(self) -> str:
+        return f"AngledLine(length={self.length!r}, angle={self.angle!r})"
+
+    @staticmethod
+    def _fmt(val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
+
+    def _to_hop_line(self) -> str:
+        f = self._fmt
+        parts = [
+            f"NAME:='{self.name}'",
+            f"LAENGE:={f(self.length)}",
+            f"WINKEL:={f(self.angle)}",
+            f"Z:={f(self.z)}",
+            f"INFO:='{self.info}'",
+            f"ESD:={f(self.easy_snap_z)}",
+        ]
+        return f"CALL {self._MACRO_NAME} ( VAL {','.join(parts)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "ContourLineAngle":
+        raise NotImplementedError("Parsing AngledLine from a HOPS line is not yet implemented.")
+
+
 class CloseContour(ContourCommand):
     """Closes the active contour buffer.
 
