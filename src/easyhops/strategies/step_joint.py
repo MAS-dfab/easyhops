@@ -66,15 +66,31 @@ class StepJointStrategies:
         heel_dx = step_joint.start_x + step_joint.heel_depth / math.sin(math.radians(180 - step_joint.strut_inclination))
         heel_dy = step_joint.heel_depth / math.cos(math.radians(180 - step_joint.strut_inclination))
 
+        diff = (step_joint.ref_side_index - machine_ref_side_index) % 4
+        if diff == 3:  # back side
+            x = -heel_dx
+            heel_work_plane = WorkPlane.BACK
+            compensation_mode = CompensationMode.RIGHT
+            step_easy_snap_xy = EasySnapXY.FRONT_LEFT
+            step_rotation_angle = 180 - (180 - step_joint.strut_inclination) / 2
+            body_easy_snap_xy = EasySnapXY.REAR_LEFT
+        elif diff == 1:  # front side
+            x = heel_dx
+            heel_work_plane = WorkPlane.FRONT
+            compensation_mode = CompensationMode.LEFT
+            step_easy_snap_xy = EasySnapXY.REAR_LEFT
+            step_rotation_angle = (180 - step_joint.strut_inclination) / 2
+            body_easy_snap_xy = EasySnapXY.FRONT_LEFT
+
         # ------------------------------------------------------------------ #
         # Block 1 — EBENE1 (standard front face), heel_cut                   #
         # ------------------------------------------------------------------ #
         heel_operation = MillingOperation(
             start_point=StartPoint(
-                x=heel_dx,
+                x=x,
                 y=HopsSystemVars.Z_DIM,
                 z=-heel_dy,
-                radius_compensation=CompensationMode.LEFT,
+                radius_compensation=compensation_mode,
                 lead_in_mode=LeadInOutMode.LINEAR,
                 easy_snap_xy=EasySnapXY.DISABLED,
                 easy_snap_z=EasySnapZ.TOP_EDGE,
@@ -87,7 +103,7 @@ class StepJointStrategies:
 
         block1 = HOPSMachining(
             tool=tool,
-            work_plane=WorkPlane.FRONT,
+            work_plane=heel_work_plane,
             operations=[heel_operation],
             comments=[
                 "; ---------------------------------",
@@ -101,7 +117,7 @@ class StepJointStrategies:
         # ------------------------------------------------------------------ #
         step_operation = MillingOperation(
             start_point=StartPoint(
-                radius_compensation=CompensationMode.LEFT,
+                radius_compensation=compensation_mode,
                 lead_in_mode=LeadInOutMode.LINEAR,
                 easy_snap_xy=EasySnapXY.DISABLED,
                 easy_snap_z=EasySnapZ.TOP_EDGE,
@@ -119,8 +135,8 @@ class StepJointStrategies:
                 y=0.0,
                 z=0.0,
                 tilt_angle=90.0,
-                rotation_angle=(180.0 - step_joint.strut_inclination) / 2,
-                easy_snap_xy=EasySnapXY.REAR_LEFT,
+                rotation_angle=step_rotation_angle,
+                easy_snap_xy=step_easy_snap_xy,
                 easy_snap_z=EasySnapZ.TOP_SIDE,
             ),
             operations=[step_operation],
@@ -134,17 +150,9 @@ class StepJointStrategies:
         # ------------------------------------------------------------------ #
         # Block 3 — EBENEF, heel face (right compensation), multi-pass        #
         # ------------------------------------------------------------------ #
-        displacement_end = HopsSystemVars.Z_DIM / math.sin(math.radians(step_joint.strut_inclination))
-        displacement_heel = step_joint.heel_depth / math.sin(math.radians(step_joint.strut_inclination))
-        trans_len = math.tan(math.radians(step_joint.strut_inclination)) * displacement_heel
-        heel_hyp = math.sqrt(trans_len**2 + displacement_heel**2)
-        angle_heel = (
-            step_joint.strut_inclination
-            - 90.0
-            + math.atan(step_joint.step_depth / (displacement_end - heel_hyp - step_joint.step_depth / math.tan(math.radians(step_joint.strut_inclination) / 2)))
-        )
+        heel_angle = step_joint.user_attributes.get("heel_angle", None)
 
-        heel_to_step_dx = (HopsSystemVars.Y_DIM - heel_dy - step_joint.step_depth) / math.cos(math.radians(angle_heel))
+        heel_to_step_dx = (HopsSystemVars.Y_DIM - heel_dy - step_joint.step_depth) / math.cos(math.radians(180 - heel_angle))
         n_passes = max(1, math.ceil(heel_to_step_dx / tool.max_depth))
         offset_per_pass = heel_to_step_dx / n_passes
 
@@ -153,7 +161,7 @@ class StepJointStrategies:
                 start_point=StartPoint(
                     y=HopsSystemVars.TOOL_DIAMETER,
                     z=offset_per_pass * j if j > 0 else (offset_per_pass if n_passes > 1 else 0),
-                    radius_compensation=CompensationMode.RIGHT,
+                    radius_compensation=CompensationMode.RIGHT if diff == 1 else CompensationMode.LEFT,
                     lead_in_mode=LeadInOutMode.LINEAR,
                     easy_snap_xy=EasySnapXY.DISABLED,
                     easy_snap_z=EasySnapZ.TOP_EDGE,
@@ -171,8 +179,8 @@ class StepJointStrategies:
                 y=heel_dy,
                 z=0.0,
                 tilt_angle=90.0,
-                rotation_angle=180.0 - angle_heel,
-                easy_snap_xy=EasySnapXY.FRONT_LEFT,
+                rotation_angle=heel_angle if diff == 1 else 180.0 - heel_angle,
+                easy_snap_xy=EasySnapXY.FRONT_LEFT if diff == 1 else EasySnapXY.REAR_LEFT,
                 easy_snap_z=EasySnapZ.TOP_SIDE,
             ),
             operations=heel_operations,
