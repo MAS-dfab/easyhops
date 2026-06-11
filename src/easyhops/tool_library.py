@@ -494,6 +494,9 @@ class SaegeD350(MachiningTool):
             name="Saw blade Ø350",
         )
 
+        self.max_depth = 110.0
+        self.diameter = 350.0
+
 
 class CastorD61(MachiningTool):
     """Castor Ø61 milling tool (WZF503) for general milling tasks.
@@ -553,7 +556,7 @@ class CastorD61(MachiningTool):
         )
 
         self.max_depth = 130.0
-        self.diameter = 61.092
+        self.diameter = 61.014
 
 
 class SRSLD12(MachiningTool):

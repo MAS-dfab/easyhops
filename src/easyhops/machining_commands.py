@@ -1913,7 +1913,7 @@ class SawingLengthAngleOperation(OperationCommand):
             sx=_float("SX", s),
             sy=_float("SY", s),
             sz=_float("SZ", s),
-            length=length,
+            length=length("LAENGE", s),
             angle=_float("SCHNITTWINKEL", s),
             z_level=_float("EZ", s),
             radius_compensation=CompensationMode(_int("BL", s)),
