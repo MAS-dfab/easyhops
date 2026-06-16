@@ -60,7 +60,7 @@ class FreeFormPocket(HopsMacroCommand):
         ``MAXEINTAUCHLAENGE`` — maximum plunge segment length in mm.
     """
 
-    _MACRO_NAME = "_ExecutePocket_ETH"
+    _MACRO_NAME = "_ExecutePocket_V5"
 
     def __init__(
         self,
