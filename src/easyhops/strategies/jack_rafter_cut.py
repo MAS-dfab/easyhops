@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
+from compas.tolerance import TOL
+
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
 from ..hop_core import HopsSystemVars
@@ -65,20 +67,37 @@ class JackRafterCutStrategies:
         from ..hop_job import HOPSMachining
 
         tool = tool or SaegeD350()
+        tool_max_depth = tool.max_depth
+
+        depth = HopsSystemVars.Z_DIM / math.sin(math.radians(jack_rafter_cut.inclination))
         work_plane = WorkPlane.TOP
         ref_side_index = jack_rafter_cut.ref_side_index
 
+        if jack_rafter_cut.orientation == "start":
+            sx = HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle)) + jack_rafter_cut.start_x
+            angle = jack_rafter_cut.angle
+            easy_snap_xy = EasySnapXY.REAR_LEFT
+            length = HopsSystemVars.Y_DIM / math.sin(math.radians(-angle))
+        else:
+            sx = jack_rafter_cut.start_x
+            angle = 180 - jack_rafter_cut.angle
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            length = HopsSystemVars.Y_DIM / math.sin(math.radians(angle))
+
         if ref_side_index == machine_ref_side_index:
-            sx = (
-                jack_rafter_cut.start_x if jack_rafter_cut.orientation == "end" else HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle)) + jack_rafter_cut.start_x
-            )
             sy = jack_rafter_cut.start_y
             sz = jack_rafter_cut.start_depth
-            angle = 180 - jack_rafter_cut.angle if jack_rafter_cut.orientation == "end" else jack_rafter_cut.angle
             radius_compensation = CompensationMode.RIGHT
-            easy_snap_xy = EasySnapXY.FRONT_LEFT if jack_rafter_cut.orientation == "end" else EasySnapXY.REAR_LEFT
-            length = HopsSystemVars.Y_DIM / math.sin(math.radians(angle)) if jack_rafter_cut.orientation == "end" else HopsSystemVars.Y_DIM / math.sin(math.radians(-angle))
             tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
+            if TOL.is_positive(tilt_angle):
+                tilt_angle = -tilt_angle
+                angle += 180
+                dx = math.sqrt(abs(length) ** 2 - HopsSystemVars.Y_DIM**2)
+                dx = dx if jack_rafter_cut.orientation == "start" else -dx
+                sx += dx  # mirror the X coordinate for the opposite face
+                sy += HopsSystemVars.Y_DIM  # mirror the Y coordinate for the opposite face
+                radius_compensation = CompensationMode.LEFT if radius_compensation == CompensationMode.RIGHT else CompensationMode.RIGHT
+
         else:
             raise NotImplementedError(
                 f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."  # noqa: E501
@@ -90,12 +109,12 @@ class JackRafterCutStrategies:
             sz=sz,
             length=length,
             angle=angle,
-            z_level=0.0,
+            z_level=-min(tool_max_depth, depth),
             radius_compensation=radius_compensation,
             tilt_angle=tilt_angle,
             easy_snap_xy=easy_snap_xy,
-            easy_snap_z=EasySnapZ.BOTTOM_SIDE,
-            precut_depth=-2.0,
+            easy_snap_z=EasySnapZ.TOP_SIDE,
+            precut_depth=2.0,
         )
 
         return [
