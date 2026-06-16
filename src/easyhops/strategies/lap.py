@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
-from easyhops.hop_macros import AngledLine
+from compas.tolerance import TOL
 
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
 from ..hop_core import HopsSystemVars
 from ..machining_commands import G01
+from ..machining_commands import AngledLine
 from ..machining_commands import CompensationMode
 from ..machining_commands import EndPoint
 from ..machining_commands import LeadInOutMode
@@ -176,16 +177,40 @@ class LapStrategies:
 
         tool = tool or CastorD61()
 
-        assert lap.inclination == 90.0 and lap.slope == 0.0, (
-            f"Lap milling is only supported for vertical laps (90° inclination and 0° slope). got inclination={lap.inclination} and slope={lap.slope}"
-        )
+        # assert lap.inclination == 90.0 and lap.slope == 0.0, (
+        #     f"Lap milling is only supported for vertical laps (90° inclination and 0° slope). got inclination={lap.inclination} and slope={lap.slope}"
+        # )
 
-        if lap.ref_side_index == machine_ref_side_index:  # Top face
+        # check the ref_side of the lap
+        diff = (lap.ref_side_index - machine_ref_side_index) % 4
+        angle = 180 - lap.angle if lap.orientation == "start" else lap.angle
+        length = abs(HopsSystemVars.Z_DIM / math.cos(math.radians(angle)))
+        if TOL.is_close(angle, 90.0):
+            length = HopsSystemVars.Z_DIM  # avoid numerical issues with cos(90) = 0 and resulting infinite length
+
+        if diff == 0:  # same side
             work_plane = WorkPlane.TOP
-        elif lap.ref_side_index == (machine_ref_side_index + 1) % 4:  # Next (clockwise) side
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            length = abs(HopsSystemVars.Y_DIM / math.sin(math.radians(angle)))
+            process_mode = ProcessMode.WITH_ROTATION if angle >= 90.0 else ProcessMode.NO_CHANGE
+            if TOL.is_close(angle, 90.0):
+                length = HopsSystemVars.Y_DIM  # avoid numerical issues with cos(90) = 0 and resulting infinite length
+        elif diff == 1:  # front side
             work_plane = WorkPlane.FRONT
-        elif lap.ref_side_index == (machine_ref_side_index - 1) % 4:  # Previous (counter-clockwise) side
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            if TOL.is_positive(angle - 90.0):
+                length = abs(HopsSystemVars.Z_DIM / math.sin(math.radians(angle)))
+            elif TOL.is_negative(angle - 90.0):
+                length = abs(HopsSystemVars.Z_DIM / math.sin(math.radians(180 - angle)))
+            else:
+                length = HopsSystemVars.Z_DIM  # avoid numerical issues with sin(90) = 1 and resulting length equal to Z_DIM, which is correct but we set it explicitly for clarity
+
+            process_mode = ProcessMode.WITH_ROTATION if angle >= 90.0 else ProcessMode.NO_CHANGE
+        elif diff == 3:  # back side
             work_plane = WorkPlane.BACK
+            easy_snap_xy = EasySnapXY.REAR_RIGHT
+            length = -length
+            process_mode = ProcessMode.NO_CHANGE
         else:
             raise NotImplementedError(
                 f"Unsupported ref_side_index {lap.ref_side_index} for Lap milling. "
@@ -199,7 +224,7 @@ class LapStrategies:
         )
         dx = (tool.diameter + tool_offset) / math.sin(math.radians(180 - lap.angle))
 
-        angle = 180 - lap.angle if lap.orientation == "start" else lap.angle
+        # length = -length if lap.orientation == "start" else length
         milling_operations = [
             MillingOperation(
                 start_point=StartPoint(
@@ -208,12 +233,16 @@ class LapStrategies:
                     z=-lap.depth,
                     radius_compensation=CompensationMode.RIGHT if lap.orientation == "start" else CompensationMode.LEFT,
                     lead_in_mode=LeadInOutMode.LINEAR,
-                    easy_snap_xy=EasySnapXY.FRONT_LEFT,
+                    easy_snap_xy=easy_snap_xy,
                     easy_snap_z=EasySnapZ.TOP_EDGE,
-                    process_mode=ProcessMode.WITH_ROTATION,
+                    process_mode=process_mode,
+                    # lead_in_factor=str(HopsSystemVars.LEAD_IN_OUT_FACTOR) + "*2",
                 ),
-                moves=[AngledLine(length=HopsSystemVars.Z_DIM / math.cos(math.radians(angle)), angle=angle, z=0.0, corner_radius=0.0, easy_snap_z=EasySnapZ.RELATIVE)],
-                end_point=EndPoint(lead_out_mode=LeadInOutMode.LINEAR),
+                moves=[AngledLine(length=length, angle=angle, z=0.0, corner_radius=0.0, easy_snap_z=EasySnapZ.RELATIVE)],
+                end_point=EndPoint(
+                    lead_out_mode=LeadInOutMode.LINEAR,
+                    # lead_out_factor=str(HopsSystemVars.LEAD_IN_OUT_FACTOR) + "*2"
+                ),
             )
             for j in range(num_passes)
         ]
