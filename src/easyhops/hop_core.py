@@ -142,6 +142,18 @@ class HopsSystemVars(str, Enum):
     def __rsub__(self, other):
         return float(other) - self.numeric
 
+    def __mul__(self, other):
+        return self.numeric * float(other)
+
+    def __rmul__(self, other):
+        return float(other) * self.numeric
+
+    def __pow__(self, other):
+        return self.numeric ** float(other)
+
+    def __rpow__(self, other):
+        return float(other) ** self.numeric
+
     def __truediv__(self, other):
         return self.numeric / float(other)
 
