@@ -15,6 +15,8 @@ ContourStart
     Opens a new contour buffer (KB command).
 ContourLine
     Adds a straight-line segment to the active buffer (KG01 command).
+ContourRectangle
+    Adds a complete rectangle as a contour (CALL Kontur_Rechteck macro).
 CloseContour
     Closes the active buffer and appends it as a contour (KG01ZuKB command).
 """
@@ -204,6 +206,114 @@ class ContourLineAngle(ContourCommand):
     @classmethod
     def from_hop_line(cls, line: str) -> "ContourLineAngle":
         raise NotImplementedError("Parsing AngledLine from a HOPS line is not yet implemented.")
+
+
+class ContourRectangle(ContourCommand):
+    """Wraps the HOPS ``CALL Kontur_Rechteck`` macro (rectangle contour).
+
+    Adds a complete rectangle as a self-contained contour, without needing a
+    matching :class:`ContourStart`/:class:`CloseContour` pair.
+
+    Serialises to a single HOPS line::
+
+        CALL Kontur_Rechteck ( VAL KONTURNAME:='RE1',MX:=146/2,MY:=65/2,Z:=0,\\
+            LAENGE:=146,BREITE:=65,RADIUS:=0,DW:=0,ABST:=0,CW_CCW:=0,\\
+            LAYER:='',INFO:='',ESXY:=0,ESZ:=0)
+
+    Parameters
+    ----------
+    name : str
+        ``KONTURNAME`` — contour buffer identifier, e.g. ``'RE1'``.
+    mx : Union[float, str]
+        ``MX`` — X coordinate of the rectangle centre.  Accepts HOPS
+        expressions such as ``'146/2'``.
+    my : Union[float, str]
+        ``MY`` — Y coordinate of the rectangle centre.
+    z : Union[float, str]
+        ``Z`` — Z offset of the contour.
+    length : Union[float, str]
+        ``LAENGE`` — rectangle length (L1).
+    width : Union[float, str]
+        ``BREITE`` — rectangle width (L2).
+    radius : Union[float, str]
+        ``RADIUS`` — corner radius (r).
+    angle : Union[float, str]
+        ``DW`` — rotation angle (ß1) in degrees.
+    distance_to_contour : Union[float, str]
+        ``ABST`` — distance to contour (A).
+    clockwise : bool
+        ``CW_CCW`` — direction of the contour: ``True`` = clockwise (``0``,
+        default), ``False`` = counterclockwise (``1``).
+    layer : str
+        ``LAYER`` — optional layer name.
+    info : str
+        ``INFO`` — optional comment string.
+    easy_snap_xy : int
+        ``ESXY`` — EasySnap mode for the XY centre (``EasySnapXY`` value).
+    easy_snap_z : int
+        ``ESZ`` — EasySnap mode for the Z offset (``EasySnapZ`` value).
+    """
+
+    _MACRO_NAME = "Kontur_Rechteck"
+
+    def __init__(
+        self,
+        name: str = "RE1",
+        mx: Union[float, str] = 0,
+        my: Union[float, str] = 0,
+        z: Union[float, str] = 0,
+        length: Union[float, str] = 0,
+        width: Union[float, str] = 0,
+        radius: Union[float, str] = 0,
+        angle: Union[float, str] = 0,
+        distance_to_contour: Union[float, str] = 0,
+        clockwise: bool = True,
+        layer: str = "",
+        info: str = "",
+        easy_snap_xy: int = EasySnapXY.DISABLED,
+        easy_snap_z: int = EasySnapZ.TOP_EDGE,
+    ):
+        super().__init__()
+        self.name = name
+        self.mx = mx
+        self.my = my
+        self.z = z
+        self.length = length
+        self.width = width
+        self.radius = radius
+        self.angle = angle
+        self.distance_to_contour = distance_to_contour
+        self.clockwise = clockwise
+        self.layer = layer
+        self.info = info
+        self.easy_snap_xy = easy_snap_xy
+        self.easy_snap_z = easy_snap_z
+
+    def __repr__(self) -> str:
+        return f"ContourRectangle({self.name!r}, length={self.length}, width={self.width})"
+
+    def _to_hop_line(self) -> str:
+        parts = [
+            f"KONTURNAME:='{self.name}'",
+            f"MX:={_fmt(self.mx)}",
+            f"MY:={_fmt(self.my)}",
+            f"Z:={_fmt(self.z)}",
+            f"LAENGE:={_fmt(self.length)}",
+            f"BREITE:={_fmt(self.width)}",
+            f"RADIUS:={_fmt(self.radius)}",
+            f"DW:={_fmt(self.angle)}",
+            f"ABST:={_fmt(self.distance_to_contour)}",
+            f"CW_CCW:={0 if self.clockwise else 1}",
+            f"LAYER:='{self.layer}'",
+            f"INFO:='{self.info}'",
+            f"ESXY:={_fmt(self.easy_snap_xy)}",
+            f"ESZ:={_fmt(self.easy_snap_z)}",
+        ]
+        return f"CALL {self._MACRO_NAME} ( VAL {','.join(parts)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "ContourRectangle":
+        raise NotImplementedError("Parsing ContourRectangle from a HOPS line is not yet implemented.")
 
 
 class CloseContour(ContourCommand):
