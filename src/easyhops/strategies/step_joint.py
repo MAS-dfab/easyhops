@@ -62,22 +62,24 @@ class StepJointStrategies:
 
         if step_joint.step_shape != "double":
             raise NotImplementedError(f"Only 'double' step shape is supported, got '{step_joint.step_shape}'")
-
-        heel_dx = step_joint.start_x + step_joint.heel_depth / math.sin(math.radians(180 - step_joint.strut_inclination))
+        if step_joint.orientation == "end":
+            heel_dx = step_joint.start_x + step_joint.heel_depth / math.sin(math.radians(180 - step_joint.strut_inclination))
+        else:
+            heel_dx = step_joint.start_x - step_joint.heel_depth / math.sin(math.radians(180 - step_joint.strut_inclination))
         heel_dy = step_joint.heel_depth / math.cos(math.radians(180 - step_joint.strut_inclination))
 
         diff = (step_joint.ref_side_index - machine_ref_side_index) % 4
         if diff == 3:  # back side
             x = -heel_dx
             heel_work_plane = WorkPlane.BACK
-            compensation_mode = CompensationMode.RIGHT
+            compensation_mode = CompensationMode.RIGHT if step_joint.orientation == "end" else CompensationMode.LEFT
             step_easy_snap_xy = EasySnapXY.FRONT_LEFT
             step_rotation_angle = 180 - (180 - step_joint.strut_inclination) / 2
             body_easy_snap_xy = EasySnapXY.REAR_LEFT
         elif diff == 1:  # front side
             x = heel_dx
             heel_work_plane = WorkPlane.FRONT
-            compensation_mode = CompensationMode.LEFT
+            compensation_mode = CompensationMode.RIGHT if step_joint.orientation == "start" else CompensationMode.LEFT
             step_easy_snap_xy = EasySnapXY.REAR_LEFT
             step_rotation_angle = (180 - step_joint.strut_inclination) / 2
             body_easy_snap_xy = EasySnapXY.FRONT_LEFT
@@ -115,6 +117,12 @@ class StepJointStrategies:
         # ------------------------------------------------------------------ #
         # Block 2 — EBENEF, step face (left compensation)                    #
         # ------------------------------------------------------------------ #
+        if step_joint.orientation == "start":
+            x_step = step_joint.start_x - HopsSystemVars.Y_DIM / math.tan(math.radians(180.0 - step_joint.strut_inclination))
+            step_rotation_angle = -step_rotation_angle
+        else:
+            x_step = step_joint.start_x + HopsSystemVars.Y_DIM / math.tan(math.radians(180.0 - step_joint.strut_inclination))
+
         step_operation = MillingOperation(
             start_point=StartPoint(
                 radius_compensation=compensation_mode,
@@ -127,11 +135,10 @@ class StepJointStrategies:
             ],
             end_point=EndPoint(lead_out_mode=LeadInOutMode.NONE),
         )
-
         block2 = HOPSMachining(
             tool=tool,
             work_plane=FreePlane(
-                x=step_joint.start_x + HopsSystemVars.Y_DIM / math.tan(math.radians(180.0 - step_joint.strut_inclination)),
+                x=x_step,
                 y=0.0,
                 z=0.0,
                 tilt_angle=90.0,
@@ -152,21 +159,28 @@ class StepJointStrategies:
         # ------------------------------------------------------------------ #
         heel_angle = step_joint.user_attributes.get("heel_angle", None)
 
-        heel_to_step_dx = (HopsSystemVars.Y_DIM - heel_dy - step_joint.step_depth) / math.cos(math.radians(180 - heel_angle))
+        heel_to_step_dx = abs((HopsSystemVars.Y_DIM - heel_dy - step_joint.step_depth) / math.cos(math.radians(180 - heel_angle)))
         n_passes = max(1, math.ceil(heel_to_step_dx / tool.max_depth))
         offset_per_pass = heel_to_step_dx / n_passes
+
+        compensation_mode = CompensationMode.RIGHT if diff == 1 else CompensationMode.LEFT
+        rotation_angle = heel_angle if diff == 1 else 180.0 - heel_angle
+        if step_joint.orientation == "start":
+            rotation_angle = -rotation_angle
+            compensation_mode = CompensationMode.LEFT if diff == 1 else CompensationMode.RIGHT
+            offset_per_pass = -offset_per_pass
 
         heel_operations = [
             MillingOperation(
                 start_point=StartPoint(
                     y=HopsSystemVars.TOOL_DIAMETER,
                     z=offset_per_pass * j if j > 0 else (offset_per_pass if n_passes > 1 else 0),
-                    radius_compensation=CompensationMode.RIGHT if diff == 1 else CompensationMode.LEFT,
+                    radius_compensation=compensation_mode,
                     lead_in_mode=LeadInOutMode.LINEAR,
                     easy_snap_xy=EasySnapXY.DISABLED,
                     easy_snap_z=EasySnapZ.TOP_EDGE,
                 ),
-                moves=([G01(x=0, y=0, z=-offset_per_pass, easy_snap_xy=EasySnapXY.RELATIVE)] if j == 0 else []) + [G01(x=0, y=-HopsSystemVars.Z_DIM, z=0)],
+                moves=([G01(x=0, y=0, z=-offset_per_pass, easy_snap_xy=EasySnapXY.RELATIVE)] if j == 0 and n_passes > 1 else []) + [G01(x=0, y=-HopsSystemVars.Z_DIM, z=0)],
                 end_point=EndPoint(lead_out_mode=LeadInOutMode.LATERAL),
             )
             for j in reversed(range(n_passes))
@@ -179,7 +193,7 @@ class StepJointStrategies:
                 y=heel_dy,
                 z=0.0,
                 tilt_angle=90.0,
-                rotation_angle=heel_angle if diff == 1 else 180.0 - heel_angle,
+                rotation_angle=rotation_angle,
                 easy_snap_xy=EasySnapXY.FRONT_LEFT if diff == 1 else EasySnapXY.REAR_LEFT,
                 easy_snap_z=EasySnapZ.TOP_SIDE,
             ),
