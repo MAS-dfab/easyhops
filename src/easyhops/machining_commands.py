@@ -185,7 +185,7 @@ class StartPoint(MoveCommand):
         offset_angle: Optional[float] = 0.0,
         tip_angle: Optional[float] = 0.0,
         easy_snap_xy: Optional[EasySnapXY] = EasySnapXY.DISABLED,
-        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.TOP_EDGE,
         process_mode: Optional[ProcessMode] = ProcessMode.NO_CHANGE,
         milling_steps: Optional[int] = 0,
         depth_per_level: Optional[float] = 0.0,
