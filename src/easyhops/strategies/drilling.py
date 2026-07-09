@@ -51,6 +51,7 @@ class DrillingStrategies:
 
         # check if the drilling is reference on the oposite side. if so, raise an error, as drilling pockets from the opposite side is not supported
         diff = (drilling.ref_side_index - machine_ref_side_index) % 4
+        easy_snap_xy = EasySnapXY.FRONT_LEFT
         if diff == 2:
             raise ValueError("Drilling pockets on the opposite side of the machine is not supported.")
         elif diff == 0:
@@ -59,12 +60,15 @@ class DrillingStrategies:
             work_plane = WorkPlane.FRONT
         elif diff == 3:
             work_plane = WorkPlane.BACK
+            easy_snap_xy = EasySnapXY.FRONT_RIGHT
         elif diff == 4:
             work_plane = WorkPlane.START
         elif diff == 5:
             work_plane = WorkPlane.END
 
-        drilling_operation = DrillingPocketOperation(mx=drilling.start_x, my=drilling.start_y, radius=38, depth=-32, step_depth=32, overlap=45)
+        drilling_operation = DrillingPocketOperation(
+            mx=drilling.start_x, my=drilling.start_y, radius=drilling.diameter / 2, depth=-drilling.depth, step_depth=tool.max_depth, easy_snap_xy=easy_snap_xy
+        )
 
         comment_label = "Drilling_Pocketing"
         comment = "\n".join(["; ---------------------------------", f"; {comment_label}", "; ---------------------------------"])
@@ -174,6 +178,7 @@ class DrillingStrategies:
         diff = (drilling.ref_side_index - machine_ref_side_index) % 4
         if diff == 2:  # opposite side
             raise ValueError("Drilling on the opposite side of the machine is not supported.")
+
         elif diff == 0:  # same side
             x = drilling.start_x
             y = drilling.start_y
@@ -183,6 +188,7 @@ class DrillingStrategies:
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             easy_snap_z = EasySnapZ.TOP_SIDE
             # tool_max_depth = 80.0 if TOL.is_close(drilling.inclination, 45.0) else 60.0
+
         elif diff == 1:  # front side
             x = drilling.start_x
             y = 0.0
@@ -192,11 +198,12 @@ class DrillingStrategies:
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             easy_snap_z = EasySnapZ.TOP_SIDE
             # tool_max_depth = 60.0  # Limit max depth to 60mm for drilling operations on the front side, as the back side is more stable for deeper drilling
+
         elif diff == 3:  # back side
             x = drilling.start_x
             y = 0.0
             z = drilling.start_y
-            rotation = drilling.inclination
+            rotation = 180 - drilling.inclination if TOL.is_close(drilling.angle, 180) else -(180 - drilling.inclination)
             tilt = drilling.angle
             easy_snap_xy = EasySnapXY.REAR_LEFT
             easy_snap_z = EasySnapZ.TOP_SIDE
