@@ -176,15 +176,13 @@ class LapStrategies:
         from ..hop_job import HOPSMachining
 
         tool = tool or CastorD61()
-
-        # assert lap.inclination == 90.0 and lap.slope == 0.0, (
-        #     f"Lap milling is only supported for vertical laps (90° inclination and 0° slope). got inclination={lap.inclination} and slope={lap.slope}"
-        # )
-
         # check the ref_side of the lap
         diff = (lap.ref_side_index - machine_ref_side_index) % 4
         angle = 180 - lap.angle if lap.orientation == "start" else lap.angle
         length = abs(HopsSystemVars.Z_DIM / math.cos(math.radians(angle)))
+        x = lap.start_x if lap.orientation == "start" else lap.start_x - lap.length / math.sin(math.radians(angle))
+        lead_in_mode = LeadInOutMode.LINEAR
+        lead_in_factor = HopsSystemVars.LEAD_IN_OUT_FACTOR
         if TOL.is_close(angle, 90.0):
             length = HopsSystemVars.Z_DIM  # avoid numerical issues with cos(90) = 0 and resulting infinite length
 
@@ -193,23 +191,57 @@ class LapStrategies:
             easy_snap_xy = EasySnapXY.FRONT_LEFT
             length = abs(HopsSystemVars.Y_DIM / math.sin(math.radians(angle)))
             process_mode = ProcessMode.WITH_ROTATION if angle >= 90.0 else ProcessMode.NO_CHANGE
+            radius_compensation = CompensationMode.RIGHT
             if TOL.is_close(angle, 90.0):
                 length = HopsSystemVars.Y_DIM  # avoid numerical issues with cos(90) = 0 and resulting infinite length
         elif diff == 1:  # front side
-            work_plane = WorkPlane.FRONT
-            easy_snap_xy = EasySnapXY.FRONT_LEFT
+            work_plane = FreePlane(
+                x=lap.start_x,
+                y=lap.start_y,
+                z=0.0,
+                tilt_angle=90 - lap.slope,
+                rotation_angle=90 - lap.inclination,
+                easy_snap_xy=EasySnapXY.FRONT_LEFT,
+                easy_snap_z=EasySnapZ.BOTTOM_SIDE,
+                offset_z=0.0,
+            )
+            x = 0.0
+            easy_snap_xy = EasySnapXY.DISABLED
+            process_mode = ProcessMode.NO_CHANGE
+            radius_compensation = CompensationMode.RIGHT
             if TOL.is_positive(angle - 90.0):
                 length = abs(HopsSystemVars.Z_DIM / math.sin(math.radians(angle)))
+                process_mode = ProcessMode.WITH_ROTATION
             elif TOL.is_negative(angle - 90.0):
-                length = abs(HopsSystemVars.Z_DIM / math.sin(math.radians(180 - angle)))
+                length = abs(HopsSystemVars.Z_DIM / math.sin(math.radians(180 - angle))) + HopsSystemVars.TOOL_RADIUS
+                process_mode = ProcessMode.WITH_ROTATION
+                lead_in_mode = LeadInOutMode.NONE
             else:
                 length = HopsSystemVars.Z_DIM  # avoid numerical issues with sin(90) = 1 and resulting length equal to Z_DIM, which is correct but we set it explicitly for clarity
 
-            process_mode = ProcessMode.WITH_ROTATION if angle >= 90.0 else ProcessMode.NO_CHANGE
         elif diff == 3:  # back side
-            work_plane = WorkPlane.BACK
-            easy_snap_xy = EasySnapXY.REAR_RIGHT
-            length = -length
+            work_plane = FreePlane(
+                x=lap.start_x,
+                y=lap.start_y,
+                z=0.0,
+                tilt_angle=lap.slope + 90.0,
+                rotation_angle=lap.inclination + 90.0,
+                easy_snap_xy=EasySnapXY.REAR_LEFT,
+                easy_snap_z=EasySnapZ.TOP_SIDE,
+                offset_z=0.0,
+            )
+            x = 0.0
+            easy_snap_xy = EasySnapXY.DISABLED
+            radius_compensation = CompensationMode.LEFT
+            if TOL.is_positive(angle - 90.0):
+                length = -abs(HopsSystemVars.Z_DIM / math.sin(math.radians(angle))) + HopsSystemVars.TOOL_RADIUS
+                lead_in_factor = str(HopsSystemVars.LEAD_IN_OUT_FACTOR) + "*2"
+            elif TOL.is_negative(angle - 90.0):
+                length = -abs(HopsSystemVars.Z_DIM / math.sin(math.radians(180 - angle)))
+            else:
+                length = (
+                    -HopsSystemVars.Z_DIM
+                )  # avoid numerical issues with sin(90) = 1 and resulting length equal to Z_DIM, which is correct but we set it explicitly for clarity
             process_mode = ProcessMode.NO_CHANGE
         else:
             raise NotImplementedError(
@@ -222,17 +254,18 @@ class LapStrategies:
         assert tool_offset <= 0, (
             f"Unexpected positive offset {tool_offset} for lap length {lap.length} and tool diameter {tool.diameter}. This should not happen since num_passes is calculated as the ceiling of length/diameter."
         )
-        dx = (tool.diameter + tool_offset) / math.sin(math.radians(180 - lap.angle))
+        sin_angle = math.sin(math.radians(180 - lap.angle))
+        step = (lap.length - tool.diameter) / (num_passes - 1) / sin_angle if num_passes > 1 else 0
 
-        # length = -length if lap.orientation == "start" else length
         milling_operations = [
             MillingOperation(
                 start_point=StartPoint(
-                    x=lap.start_x + round(j * dx, 3),
+                    x=x + round(j * step, 3),
                     y=lap.start_y,
                     z=-lap.depth,
-                    radius_compensation=CompensationMode.RIGHT if lap.orientation == "start" else CompensationMode.LEFT,
-                    lead_in_mode=LeadInOutMode.LINEAR,
+                    radius_compensation=radius_compensation,
+                    lead_in_mode=lead_in_mode,
+                    lead_in_factor=lead_in_factor,
                     easy_snap_xy=easy_snap_xy,
                     easy_snap_z=EasySnapZ.TOP_EDGE,
                     process_mode=process_mode,
