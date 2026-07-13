@@ -26,7 +26,7 @@ from .machining_commands import G03M
 from .machining_commands import DrillingOperation
 from .machining_commands import EndPoint
 from .machining_commands import MillingOperation
-from .machining_commands import SawingOperation
+from .machining_commands import SawingFreeOperation
 from .machining_commands import StartPoint
 from .tool_library import MachiningTool
 from .utility_commands import FeedrateOverride
@@ -91,7 +91,7 @@ class HOPSMachining:
     work_plane : Optional[Union[WorkPlane, FreePlane]]
         The work plane on which these operations are performed. ``None`` when
         each operation carries its own plane (e.g. OpenPocketOperation).
-    operations : List[Union[MillingOperation, SawingOperation, DrillingOperation, OpenPocketOperation]]
+    operations : List[Union[MillingOperation, SawingFreeOperation, DrillingOperation, OpenPocketOperation]]
         The actual machining operations (one or more)
     feedrate_overrides : List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]
         List of ((operation_idx, command_idx), FeedrateOverride) tuples.
@@ -114,7 +114,7 @@ class HOPSMachining:
         self,
         tool: MachiningTool,
         work_plane: Optional[Union[WorkPlane, FreePlane]],
-        operations: List[Union[MillingOperation, SawingOperation, DrillingOperation]],
+        operations: List[Union[MillingOperation, SawingFreeOperation, DrillingOperation]],
         comments: Optional[List[str]] = None,
         feedrate_overrides: Optional[List[Tuple[Tuple[int, Optional[int]], FeedrateOverride]]] = None,
     ):
@@ -1028,19 +1028,16 @@ class HOPSJob:
                     # Reached end of chunk without finding SP
                     chunk_idx += 1
 
-            elif line.startswith("CALL"):
-                # Other CALL commands, skip them
-                chunk_idx += 1
-            elif line.startswith("CALL"):
-                # Other CALL commands, skip them
-                chunk_idx += 1
-            elif line.startswith("SAEGEN("):
+            elif line.startswith(f"CALL {SawingFreeOperation._MACRO_NAME}"):
                 try:
-                    operation = SawingOperation.from_hop_line(line)
+                    operation = SawingFreeOperation.from_hop_line(line)
                     if operation:
                         operations.append(operation)
                 except Exception:
                     pass
+                chunk_idx += 1
+            elif line.startswith("CALL"):
+                # Other CALL commands, skip them
                 chunk_idx += 1
             elif line.startswith("BOHR("):
                 try:

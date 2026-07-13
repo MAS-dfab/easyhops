@@ -10,7 +10,7 @@ from easyhops.machining_commands import (
     LeadInOutMode,
     MillingOperation,
     ProcessMode,
-    SawingOperation,
+    SawingFreeOperation,
     StartPoint,
 )
 from easyhops.hop_core import EasySnapXY, EasySnapZ
@@ -49,12 +49,12 @@ class TestProcessMode:
         assert ProcessMode.AGAINST_ROTATION_MIRROR == 4
 
 
-class TestSawingOperation:
-    """Tests for SawingOperation class."""
+class TestSawingFreeOperation:
+    """Tests for SawingFreeOperation class."""
 
-    def test_sawing_operation_init(self):
-        """Test SawingOperation initialization."""
-        saw = SawingOperation(
+    def test_sawing_free_operation_init(self):
+        """Test SawingFreeOperation initialization."""
+        saw = SawingFreeOperation(
             sx=100.0,
             sy=200.0,
             sz=-50.0,
@@ -69,126 +69,44 @@ class TestSawingOperation:
         assert saw.ey == 400.0
         assert saw.ez == -50.0
 
-    def test_sawing_operation_with_optional_params(self):
-        """Test SawingOperation with optional parameters."""
-        saw = SawingOperation(
+    def test_sawing_free_operation_with_optional_params(self):
+        """Test SawingFreeOperation with optional parameters."""
+        saw = SawingFreeOperation(
             sx=100.0,
             sy=200.0,
             sz=-50.0,
             ex=300.0,
             ey=400.0,
             ez=-50.0,
-            radius_compensation=CompensationMode.LEFT,
-            fit_in=False,
-            lead_in_out=5.0,
+            radius_compensation=CompensationMode.RIGHT,
+            fit_in=True,
+            lead_in=5.0,
+            lead_out=6.0,
+            parallel_distance=1.5,
             process_mode=ProcessMode.WITH_ROTATION,
             tilt_angle=-7.5,
-            z_level=10.0,
+            precut_depth=2.0,
+            precut_offset=0.1,
+            easy_snap_z=EasySnapZ.TOP_SIDE,
+            easy_snap_xy_start=EasySnapXY.REAR_LEFT,
+            easy_snap_xy_end=EasySnapXY.FRONT_LEFT,
         )
-        assert saw.radius_compensation == CompensationMode.LEFT
-        assert saw.fit_in is False
-        assert saw.lead_in_out == 5.0
+        assert saw.radius_compensation == CompensationMode.RIGHT
+        assert saw.fit_in is True
+        assert saw.lead_in == 5.0
+        assert saw.lead_out == 6.0
+        assert saw.parallel_distance == 1.5
         assert saw.process_mode == ProcessMode.WITH_ROTATION
         assert saw.tilt_angle == -7.5
-        assert saw.z_level == 10.0
+        assert saw.precut_depth == 2.0
+        assert saw.precut_offset == 0.1
+        assert saw.easy_snap_z == EasySnapZ.TOP_SIDE
+        assert saw.easy_snap_xy_start == EasySnapXY.REAR_LEFT
+        assert saw.easy_snap_xy_end == EasySnapXY.FRONT_LEFT
 
-    def test_sawing_coordinate_setters_type_validation(self):
-        """Test coordinate setters validate type."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(TypeError, match="sx must be a number"):
-            saw.sx = "invalid"
-        with pytest.raises(TypeError, match="sy must be a number"):
-            saw.sy = "invalid"
-        with pytest.raises(TypeError, match="sz must be a number"):
-            saw.sz = "invalid"
-        with pytest.raises(TypeError, match="ex must be a number"):
-            saw.ex = "invalid"
-        with pytest.raises(TypeError, match="ey must be a number"):
-            saw.ey = "invalid"
-        with pytest.raises(TypeError, match="ez must be a number"):
-            saw.ez = "invalid"
-
-    def test_sawing_radius_compensation_setter_accepts_enum(self):
-        """Test radius_compensation setter accepts CompensationMode enum."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-        saw.radius_compensation = CompensationMode.RIGHT
-        assert saw.radius_compensation == CompensationMode.RIGHT
-
-    def test_sawing_radius_compensation_setter_accepts_int(self):
-        """Test radius_compensation setter accepts int and validates range."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-        saw.radius_compensation = 1
-        assert saw.radius_compensation == CompensationMode.LEFT
-
-    def test_sawing_radius_compensation_setter_validates_range(self):
-        """Test radius_compensation setter validates range 0-2."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(ValueError, match="radius_compensation must be between 0 and 2"):
-            saw.radius_compensation = 3
-        with pytest.raises(ValueError, match="radius_compensation must be between 0 and 2"):
-            saw.radius_compensation = -1
-
-    def test_sawing_process_mode_setter_accepts_enum(self):
-        """Test process_mode setter accepts ProcessMode enum."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-        saw.process_mode = ProcessMode.AGAINST_ROTATION
-        assert saw.process_mode == ProcessMode.AGAINST_ROTATION
-
-    def test_sawing_process_mode_setter_accepts_int(self):
-        """Test process_mode setter accepts int and validates range."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-        saw.process_mode = 2
-        assert saw.process_mode == ProcessMode.AGAINST_ROTATION
-
-    def test_sawing_process_mode_setter_validates_range(self):
-        """Test process_mode setter validates range 0-4."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(ValueError, match="process_mode must be between 0 and 4"):
-            saw.process_mode = 5
-        with pytest.raises(ValueError, match="process_mode must be between 0 and 4"):
-            saw.process_mode = -1
-
-    def test_sawing_fit_in_setter_validates_bool(self):
-        """Test fit_in setter validates bool type."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(TypeError, match="fit_in must be bool"):
-            saw.fit_in = 1
-        with pytest.raises(TypeError, match="fit_in must be bool"):
-            saw.fit_in = "true"
-
-    def test_sawing_easy_snap_xy_setter_accepts_enum(self):
-        """Test easy_snap_xy setters accept EasySnapXY enum."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-        saw.easy_snap_xy_start = EasySnapXY.DISABLED
-        saw.easy_snap_xy_end = EasySnapXY.DISABLED
-        assert saw.easy_snap_xy_start == 0
-        assert saw.easy_snap_xy_end == 0
-
-    def test_sawing_easy_snap_xy_setter_validates_range(self):
-        """Test easy_snap_xy setters validate range 0-9."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(ValueError, match="easy_snap_xy_start must be between 0 and 9"):
-            saw.easy_snap_xy_start = 10
-        with pytest.raises(ValueError, match="easy_snap_xy_end must be between 0 and 9"):
-            saw.easy_snap_xy_end = -1
-
-    def test_sawing_easy_snap_z_setter_validates_range(self):
-        """Test easy_snap_z setter validates range 0-2."""
-        saw = SawingOperation(0, 0, 0, 0, 0, 0)
-
-        with pytest.raises(ValueError, match="easy_snap_z must be between 0 and 2"):
-            saw.easy_snap_z = 3
-        with pytest.raises(ValueError, match="easy_snap_z must be between 0 and 2"):
-            saw.easy_snap_z = -1
-
-    def test_sawing_to_line(self):
-        """Test SawingOperation._to_hop_line() formatting."""
-        saw = SawingOperation(
+    def test_sawing_free_operation_to_line(self):
+        """Test SawingFreeOperation._to_hop_line() formatting."""
+        saw = SawingFreeOperation(
             sx=100,
             sy=200,
             sz=-50.5,
@@ -199,30 +117,36 @@ class TestSawingOperation:
             tilt_angle=-7.57,
         )
         line = saw._to_hop_line()
-        assert line.startswith("SAEGEN(")
-        assert "100," in line
-        assert "200," in line
-        assert "-50.5" in line
-        assert "-7.57" in line
+        assert line.startswith("CALL _saege_frei_V7 ( VAL ")
+        assert "SX:=100," in line
+        assert "SY:=200," in line
+        assert "SZ:=-50.500," in line
+        assert "EX:=300," in line
+        assert "EY:=400," in line
+        assert "EINPASSEN:=1," in line
+        assert "KW:=-7.570," in line
 
-    def test_sawing_str(self):
-        """Test SawingOperation.__str__() calls _to_hop_line()."""
-        saw = SawingOperation(100, 200, -50, 300, 400, -50)
+    def test_sawing_free_operation_str(self):
+        """Test SawingFreeOperation.__str__() calls _to_hop_line()."""
+        saw = SawingFreeOperation(100, 200, -50, 300, 400, -50)
         assert str(saw) == saw._to_hop_line()
 
-    def test_sawing_repr(self):
-        """Test SawingOperation.__repr__()."""
-        saw = SawingOperation(100, 200, -50, 300, 400, -50, tilt_angle=-7.5)
+    def test_sawing_free_operation_repr(self):
+        """Test SawingFreeOperation.__repr__()."""
+        saw = SawingFreeOperation(100, 200, -50, 300, 400, -50, tilt_angle=-7.5)
         repr_str = repr(saw)
-        assert "SawingOperation" in repr_str
-        assert "100.0" in repr_str
-        assert "200.0" in repr_str
-        assert "-7.5" in repr_str
+        assert "SawingFreeOperation" in repr_str
+        assert "sx=100.000" in repr_str
+        assert "ey=400.000" in repr_str
 
-    def test_sawing_from_hop_line(self):
-        """Test SawingOperation.from_hop_line() parsing."""
-        line = "SAEGEN(852.354,-0.428,-70.735,849.565,139.941,-70.735,0,1,0,0,-7.57,0,0,0,2,0,0)"
-        saw = SawingOperation.from_hop_line(line)
+    def test_sawing_free_operation_from_hop_line(self):
+        """Test SawingFreeOperation.from_hop_line() parsing."""
+        line = (
+            "CALL _saege_frei_V7 ( VAL SX:=852.354,SY:=-0.428,SZ:=-70.735,"
+            "EX:=849.565,EY:=139.941,EZ:=-70.735,BL:=1,EINPASSEN:=0,EL:=5,AL:=5,"
+            "PARALLEL:=0,K:=0,KW:=-7.57,BH:=0,RITZVERSATZ:=0,ESZ:=0,ESXY1:=1,ESXY2:=0)"
+        )
+        saw = SawingFreeOperation.from_hop_line(line)
 
         assert saw.sx == pytest.approx(852.354)
         assert saw.sy == pytest.approx(-0.428)
@@ -230,13 +154,13 @@ class TestSawingOperation:
         assert saw.ex == pytest.approx(849.565)
         assert saw.ey == pytest.approx(139.941)
         assert saw.ez == pytest.approx(-70.735)
-        assert saw.fit_in is True
+        assert saw.radius_compensation == CompensationMode.LEFT
         assert saw.tilt_angle == pytest.approx(-7.57)
 
-    def test_sawing_from_hop_line_invalid(self):
-        """Test SawingOperation.from_hop_line() with invalid input."""
-        with pytest.raises(ValueError, match="Invalid SAEGEN line"):
-            SawingOperation.from_hop_line("INVALID(1,2,3)")
+    def test_sawing_free_operation_from_hop_line_invalid(self):
+        """Test SawingFreeOperation.from_hop_line() with invalid input."""
+        with pytest.raises(ValueError, match="Not a _saege_frei_V7 line"):
+            SawingFreeOperation.from_hop_line("INVALID(1,2,3)")
 
 
 class TestDrillingOperation:

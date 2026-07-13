@@ -16,7 +16,7 @@ from easyhops.machining_commands import (
     EndPoint,
     G01,
     MillingOperation,
-    SawingOperation,
+    SawingFreeOperation,
     StartPoint,
 )
 from easyhops.tool_library import MachiningTool, ToolCallType
@@ -95,14 +95,14 @@ class TestMachining:
         """Test HOPSMachining __str__ with sawing operation."""
         tool = MachiningTool(ToolCallType.SAW, 2)
         plane = WorkPlane.BACK
-        op = SawingOperation(100.0, 200.0, -30.0, 150.0, 250.0, -30.0)
+        op = SawingFreeOperation(100.0, 200.0, -30.0, 150.0, 250.0, -30.0)
 
         machining = HOPSMachining(tool, plane, op)
 
         output = str(machining)
         assert "WZS(" in output
         assert "EBENE3()" in output
-        assert "SAEGEN(" in output
+        assert "CALL _saege_frei_V7" in output
 
     def test_machining_str_drilling(self):
         """Test HOPSMachining __str__ with drilling operation."""
@@ -206,7 +206,7 @@ class TestHOPSJob:
         machining1 = HOPSMachining(tool, plane, milling_op)
 
         # Create a sawing operation
-        saw_op = SawingOperation(100.0, 200.0, -30.0, 150.0, 250.0, -30.0)
+        saw_op = SawingFreeOperation(100.0, 200.0, -30.0, 150.0, 250.0, -30.0)
         machining2 = HOPSMachining(tool, plane, saw_op)
 
         job = HOPSJob(vars_def, finished_part, park_mode, [machining1, machining2])
@@ -217,7 +217,7 @@ class TestHOPSJob:
         assert "SP(" in output
         assert "G01(" in output
         assert "EP(" in output
-        assert "SAEGEN(" in output
+        assert "CALL _saege_frei_V7" in output
 
     def test_HOPSJob_to_hop_file(self):
         """Test HOPSJob.to_hop_file() writes to file."""

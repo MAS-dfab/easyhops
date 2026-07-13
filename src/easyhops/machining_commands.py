@@ -1316,58 +1316,61 @@ class MillingOperation(OperationCommand):
         return cls(start_point=start, moves=moves, end_point=end)
 
 
-class SawingOperation(OperationCommand):
-    """Represents a saw cutting operation (SAEGEN).
+class SawingFreeOperation(OperationCommand):
+    """Represents a saw cut defined by start and end points using the HOPS macro call format.
 
-    Sawing cuts a straight line from point 1 to point 2 with full control over
-    cutting parameters including lead in/out, offsets, tilt angles, and precuts.
-
-    SAEGEN format (17 parameters):
-        SAEGEN(sx,sy,z1, ex,ey,z2, lead_in,lead_out,parallel_offset, fit_in,tilt_angle, groove_pos,mode,precut_depth, precut_offset,p16,p17)
+    Serializes as:
+        CALL _saege_frei_V7 ( VAL SX:=...,SY:=...,SZ:=...,EX:=...,EY:=...,EZ:=...,
+            BL:=...,EINPASSEN:=...,EL:=...,AL:=...,PARALLEL:=...,K:=...,KW:=...,
+            BH:=0,RITZVERSATZ:=0,ESZ:=...,ESXY1:=...,ESXY2:=...)
 
     Example:
-        SAEGEN(852.354,-0.428,-70.735, 849.565,139.941,-70.735, 0,0,0, 1,-7.57, 0,0,0, 2,0,0)
+        CALL _saege_frei_V7 ( VAL SX:=-62.82,SY:=0,SZ:=-0,EX:=0,EY:=139.941,EZ:=-2,
+            BL:=1,EINPASSEN:=0,EL:=_WZR,AL:=_WZR,PARALLEL:=0,K:=0,KW:=0,BH:=0,
+            RITZVERSATZ:=0,ESZ:=0,ESXY1:=1,ESXY2:=0)
 
     Parameters:
     -----------
     sx : float
-        Starting position X-coordinate based on current reference point
+        Starting X-coordinate (SX)
     sy : float
-        Starting position Y-coordinate based on current reference point
+        Starting Y-coordinate (SY)
     sz : float
-        Starting position Z-coordinate based on current reference point
+        Starting Z-coordinate (SZ)
     ex : float
-        Ending position X-coordinate based on current reference point
+        Ending X-coordinate (EX)
     ey : float
-        Ending position Y-coordinate based on current reference point
+        Ending Y-coordinate (EY)
     ez : float
-        Ending position Z-coordinate based on current reference point'
-    radius_compensation : Optional[CompensationMode]
-        Tool position relative to path. See CompensationMode enum for options. If None, defaults to CompensationMode.CENTER
-    fit_in : Optional[Obool]
-        Saw blade fitting mode:
-        True = Fit saw blade into contour (default)
-        False = Do not fit saw blade into contour
-    lead_in_out : Optional[float]
-        Extending the length of the sawing cut before and after the contour
-    process_mode : Optional[ProcessMode]
-        Machining direction control. See ProcessMode enum for options. If None, defaults to ProcessMode.NO_CHANGE
-    tilt_angle : Optional[float]
-        C-axis tilt angle for beveled sawing in degrees:
-        0 = vertical cut
-        Positive = tip toward part
-        Negative = tip away from part (default: 0.0)
-    z_level : Optional[float]
-        Reference height offset for sawing operation
-    easy_snap_xy_start : Optional[EasySnapXY]
-        Corner snap mode for XY movement at start point. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
-    easy_snap_xy_end : Optional[EasySnapXY]
-        Corner snap mode for XY movement at end point. See EasySnapXY enum for options. If None, defaults to EasySnapXY.DISABLED
-    easy_snap_z : Optional[EasySnapZ]
-        Z-axis reference mode for depth calculations. See EasySnapZ enum for options. If None, defaults to EasySnapZ.RELATIVE
+        Ending Z-coordinate / depth (EZ)
+    radius_compensation : CompensationMode
+        Blade side / tool position relative to path (BL). Defaults to LEFT.
+    fit_in : bool
+        Fit saw blade into contour (EINPASSEN). Default False.
+    lead_in : Union[float, str]
+        Lead-in length. Defaults to _WZR tool radius (EL).
+    lead_out : Union[float, str]
+        Lead-out length. Defaults to _WZR tool radius (AL).
+    parallel_distance : float
+        Parallel offset distance (PARALLEL).
+    process_mode : int
+        Mode / groove position (K).
+    tilt_angle : float
+        Tilt angle / Kippwinkel in degrees (KW).
+    precut_depth : float
+        Depth of the scoring blade pre-cut (BH). Default 0.
+    precut_offset : float
+        Lateral offset of the scoring blade relative to the main blade (RITZVERSATZ). Default 0.
+    easy_snap_z : EasySnapZ
+        Z-axis reference mode (ESZ).
+    easy_snap_xy_start : EasySnapXY
+        Corner snap mode for XY movement at start point (ESXY1).
+    easy_snap_xy_end : EasySnapXY
+        Corner snap mode for XY movement at end point (ESXY2).
     """
 
     OPERATION_TYPE = "SAWING"
+    _MACRO_NAME = "_saege_frei_V7"
 
     def __init__(
         self,
@@ -1377,33 +1380,20 @@ class SawingOperation(OperationCommand):
         ex: float,
         ey: float,
         ez: float,
-        radius_compensation: Optional[CompensationMode] = CompensationMode.CENTER,
+        radius_compensation: Optional[CompensationMode] = CompensationMode.LEFT,
         fit_in: Optional[bool] = False,
-        lead_in_out: Optional[float] = HopsSystemVars.TOOL_RADIUS,
-        process_mode: Optional[ProcessMode] = ProcessMode.WITH_ROTATION,
+        lead_in: Optional[float] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
+        lead_out: Optional[float] = HopsSystemVars.LEAD_IN_OUT_FACTOR,
+        parallel_distance: Optional[float] = 0.0,
+        process_mode: Optional[ProcessMode] = ProcessMode.NO_CHANGE,
         tilt_angle: Optional[float] = 0.0,
-        z_level: Optional[float] = 0.0,
-        easy_snap_xy_start: Optional[EasySnapXY] = EasySnapXY.DISABLED,
+        precut_depth: float = 0.0,
+        precut_offset: float = 0.0,
+        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.TOP_EDGE,
+        easy_snap_xy_start: Optional[EasySnapXY] = EasySnapXY.FRONT_LEFT,
         easy_snap_xy_end: Optional[EasySnapXY] = EasySnapXY.DISABLED,
-        easy_snap_z: Optional[EasySnapZ] = EasySnapZ.RELATIVE,
     ):
         super().__init__()
-        self._sx = None
-        self._sy = None
-        self._sz = None
-        self._ex = None
-        self._ey = None
-        self._ez = None
-        self._radius_compensation = None
-        self._fit_in = None
-        self._lead_in_out = None
-        self._process_mode = None
-        self._tilt_angle = None
-        self._z_level = None
-        self._easy_snap_xy_start = None
-        self._easy_snap_xy_end = None
-        self._easy_snap_z = None
-
         self.sx = sx
         self.sy = sy
         self.sz = sz
@@ -1412,334 +1402,104 @@ class SawingOperation(OperationCommand):
         self.ez = ez
         self.radius_compensation = radius_compensation
         self.fit_in = fit_in
-        self.lead_in_out = lead_in_out
+        self.lead_in = lead_in
+        self.lead_out = lead_out
+        self.parallel_distance = parallel_distance
         self.process_mode = process_mode
         self.tilt_angle = tilt_angle
-        self.z_level = z_level
+        self.precut_depth = precut_depth
+        self.precut_offset = precut_offset
+        self.easy_snap_z = easy_snap_z
         self.easy_snap_xy_start = easy_snap_xy_start
         self.easy_snap_xy_end = easy_snap_xy_end
-        self.easy_snap_z = easy_snap_z
 
     def __repr__(self) -> str:
-        return f"SawingOperation(from=({self.sx:.1f},{self.sy:.1f},{self.sz:.1f}), to=({self.ex:.1f},{self.ey:.1f},{self.ez:.1f}), tilt={self.tilt_angle}°)"
+        return f"SawingFreeOperation(sx={self.sx:.3f}, sy={self.sy:.3f}, sz={self.sz:.3f}, ex={self.ex:.3f}, ey={self.ey:.3f}, ez={self.ez:.3f})"
 
-    @property
-    def sx(self) -> float:
-        """Starting position X-coordinate."""
-        return self._sx
-
-    @sx.setter
-    def sx(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"sx must be a number, got {type(value).__name__}")
-        self._sx = float(value)
-
-    @property
-    def sy(self) -> float:
-        """Starting position Y-coordinate."""
-        return self._sy
-
-    @sy.setter
-    def sy(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"sy must be a number, got {type(value).__name__}")
-        self._sy = float(value)
-
-    @property
-    def sz(self) -> float:
-        """Starting position Z-coordinate."""
-        return self._sz
-
-    @sz.setter
-    def sz(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"sz must be a number, got {type(value).__name__}")
-        self._sz = float(value)
-
-    @property
-    def ex(self) -> float:
-        """Ending position X-coordinate."""
-        return self._ex
-
-    @ex.setter
-    def ex(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"ex must be a number, got {type(value).__name__}")
-        self._ex = float(value)
-
-    @property
-    def ey(self) -> float:
-        """Ending position Y-coordinate."""
-        return self._ey
-
-    @ey.setter
-    def ey(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"ey must be a number, got {type(value).__name__}")
-        self._ey = float(value)
-
-    @property
-    def ez(self) -> float:
-        """Ending position Z-coordinate."""
-        return self._ez
-
-    @ez.setter
-    def ez(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"ez must be a number, got {type(value).__name__}")
-        self._ez = float(value)
-
-    @property
-    def radius_compensation(self) -> CompensationMode:
-        """Tool position relative to path."""
-        return self._radius_compensation
-
-    @radius_compensation.setter
-    def radius_compensation(self, value: Optional[CompensationMode]):
-        if isinstance(value, CompensationMode):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"radius_compensation must be CompensationMode enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 2:
-            raise ValueError(f"radius_compensation must be between 0 and 2, got {value}")
-
-        self._radius_compensation = CompensationMode(value)
-
-    @property
-    def fit_in(self) -> bool:
-        """Saw blade fitting mode."""
-        return self._fit_in
-
-    @fit_in.setter
-    def fit_in(self, value: bool):
-        if not isinstance(value, bool):
-            raise TypeError(f"fit_in must be bool, got {type(value).__name__}")
-        self._fit_in = value
-
-    @property
-    def lead_in_out(self) -> float:
-        """Extending the length of the sawing cut before and after the contour."""
-        return self._lead_in_out
-
-    @lead_in_out.setter
-    def lead_in_out(self, value: float):
-        if not isinstance(value, (int, float)):
-            # raise TypeError(f"lead_in_out must be a number, got {type(value).__name__}")
-            self._lead_in_out = value
-        else:
-            self._lead_in_out = float(value)
-
-    @property
-    def process_mode(self) -> ProcessMode:
-        """Machining direction control."""
-        return self._process_mode
-
-    @process_mode.setter
-    def process_mode(self, value: Optional[ProcessMode]):
-        if isinstance(value, ProcessMode):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"process_mode must be ProcessMode enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 4:
-            raise ValueError(f"process_mode must be between 0 and 4, got {value}")
-
-        self._process_mode = ProcessMode(value)
-
-    @property
-    def tilt_angle(self) -> float:
-        """C-axis tilt angle for beveled sawing in degrees."""
-        return self._tilt_angle
-
-    @tilt_angle.setter
-    def tilt_angle(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"tilt_angle must be a number, got {type(value).__name__}")
-        self._tilt_angle = float(value)
-
-    @property
-    def z_level(self) -> float:
-        """Reference height offset for sawing operation."""
-        return self._z_level
-
-    @z_level.setter
-    def z_level(self, value: float):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f"z_level must be a number, got {type(value).__name__}")
-        self._z_level = float(value)
-
-    @property
-    def easy_snap_xy_start(self) -> int:
-        """Corner snap mode for XY movement at start point (0-9)."""
-        return self._easy_snap_xy_start
-
-    @easy_snap_xy_start.setter
-    def easy_snap_xy_start(self, value):
-        if isinstance(value, EasySnapXY):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_xy_start must be EasySnapXY enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 9:
-            raise ValueError(f"easy_snap_xy_start must be between 0 and 9, got {value}")
-
-        self._easy_snap_xy_start = value
-
-    @property
-    def easy_snap_xy_end(self) -> int:
-        """Corner snap mode for XY movement at end point (0-9)."""
-        return self._easy_snap_xy_end
-
-    @easy_snap_xy_end.setter
-    def easy_snap_xy_end(self, value):
-        if isinstance(value, EasySnapXY):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_xy_end must be EasySnapXY enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 10:
-            raise ValueError(f"easy_snap_xy_end must be between 0 and 10, got {value}")
-
-        self._easy_snap_xy_end = value
-
-    @property
-    def easy_snap_z(self) -> int:
-        """Z-axis reference mode for depth calculations (0-2)."""
-        return self._easy_snap_z
-
-    @easy_snap_z.setter
-    def easy_snap_z(self, value):
-        if isinstance(value, EasySnapZ):
-            value = value.value
-        elif not isinstance(value, int):
-            raise TypeError(f"easy_snap_z must be EasySnapZ enum or int, got {type(value).__name__}")
-
-        if not 0 <= value <= 2:
-            raise ValueError(f"easy_snap_z must be between 0 and 2, got {value}")
-
-        self._easy_snap_z = value
-
-    @classmethod
-    def from_hop_line(cls, line: str) -> "SawingOperation":
-        """Parse SAEGEN command from HOPS line.
-
-        Parameters:
-        -----------
-        line : str
-            HOPS SAEGEN(...) command line
-
-        Returns:
-        -----------
-        :class:`SawingOperation`
-            Parsed SawingOperation instance
-        """
-        # Match all 17 parameters (allow optional spaces after commas)
-        pattern = (
-            r"SAEGEN\(([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*"
-            r"([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*"
-            r"([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*"
-            r"([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*"
-            r"([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*),\s*"
-            r"([-+]?\d+\.?\d*),\s*([-+]?\d+\.?\d*)\)"
-        )
-
-        match = re.match(pattern, line.strip())
-        if match:
-            params = [float(match.group(i)) for i in range(1, 18)]
-            return cls(
-                sx=params[0],
-                sy=params[1],
-                sz=params[2],
-                ex=params[3],
-                ey=params[4],
-                ez=params[5],
-                radius_compensation=CompensationMode(int(params[6])),
-                fit_in=bool(int(params[7])),
-                lead_in_out=params[8],
-                process_mode=ProcessMode(int(params[9])),
-                tilt_angle=params[10],
-                z_level=params[11],
-                easy_snap_xy_start=EasySnapXY(int(params[12])),
-                easy_snap_xy_end=EasySnapXY(int(params[13])),
-                easy_snap_z=EasySnapZ(int(params[14])),
-            )
-        raise ValueError(f"Invalid SAEGEN line: {line}")
+    def _fmt(self, val) -> str:
+        if isinstance(val, str):
+            return val
+        if isinstance(val, (EasySnapXY, EasySnapZ)):
+            return str(int(val))
+        if isinstance(val, CompensationMode):
+            return str(val.value)
+        if isinstance(val, bool):
+            return "1" if val else "0"
+        if isinstance(val, (int, float)):
+            i = int(val)
+            return str(i) if val == i else f"{val:.3f}"
+        return str(val)
 
     def _to_hop_line(self) -> str:
-        """Generate HOPS SAEGEN command line.
-
-        Returns:
-            Formatted SAEGEN(...) command string
-        """
-
-        # Format with intelligent number formatting (integers without decimals, floats with 3)
-        def fmt(val):
-            if isinstance(val, bool):
-                return "1" if val else "0"
-            if isinstance(val, (CompensationMode, ProcessMode)):
-                return str(val.value)
-            if isinstance(val, (int, float)):
-                return str(int(val)) if val == int(val) else f"{val:.3f}"
-            return str(val)
-
+        f = self._fmt
         return (
-            f"SAEGEN({fmt(self.sx)},{fmt(self.sy)},{fmt(self.sz)},"
-            f"{fmt(self.ex)},{fmt(self.ey)},{fmt(self.ez)},"
-            f"{fmt(self.radius_compensation)},{fmt(self.fit_in)},{fmt(self.lead_in_out)},"
-            f"{fmt(self.process_mode)},{fmt(self.tilt_angle)},{fmt(self.z_level)},"
-            f"{fmt(self.easy_snap_xy_start)},{fmt(self.easy_snap_xy_end)},{fmt(self.easy_snap_z)},"
-            f"{fmt(0)},{fmt(0)})"
+            f"CALL {self._MACRO_NAME} ( VAL "
+            f"SX:={f(self.sx)},"
+            f"SY:={f(self.sy)},"
+            f"SZ:={f(self.sz)},"
+            f"EX:={f(self.ex)},"
+            f"EY:={f(self.ey)},"
+            f"EZ:={f(self.ez)},"
+            f"BL:={f(self.radius_compensation)},"
+            f"EINPASSEN:={f(self.fit_in)},"
+            f"EL:={f(self.lead_in)},"
+            f"AL:={f(self.lead_out)},"
+            f"PARALLEL:={f(self.parallel_distance)},"
+            f"K:={f(self.process_mode)},"
+            f"KW:={f(self.tilt_angle)},"
+            f"BH:={f(self.precut_depth)},"
+            f"RITZVERSATZ:={f(self.precut_offset)},"
+            f"ESZ:={f(self.easy_snap_z)},"
+            f"ESXY1:={f(self.easy_snap_xy_start)},"
+            f"ESXY2:={f(self.easy_snap_xy_end)})"
         )
 
     @classmethod
-    def from_jack_rafter_cut(cls, jack_rafter_cut: JackRafterCut):
-        """Create a SawingOperation from a JackRafterCut instance.
+    def from_hop_line(cls, line: str) -> "SawingFreeOperation":
+        """Parse a CALL _saege_frei_V7 line into a SawingFreeOperation."""
 
-        Parameters:
-        -----------
-        jack_rafter_cut : JackRafterCut
-            JackRafterCut instance containing parameters for the sawing operation
+        def _get(name: str, s: str) -> str:
+            m = re.search(rf"{name}:=([^,)]+)", s)
+            if not m:
+                raise ValueError(f"Missing parameter '{name}' in line: {s}")
+            return m.group(1).strip()
 
-        Returns:
-        --------
-        SawingOperation
-        """
-        # define reference side index for JackRafterCut
-        ref_side_index = jack_rafter_cut.ref_side_index
+        def _float(name: str, s: str) -> float:
+            return float(_get(name, s))
 
-        # This would probably work with only this reference side, but we can add more cases if needed
-        if ref_side_index == 3:
-            sx = jack_rafter_cut.start_x
-            sy = jack_rafter_cut.start_y
-            sz = jack_rafter_cut.start_depth
+        def _int(name: str, s: str) -> int:
+            return int(float(_get(name, s)))
 
-            angle = jack_rafter_cut.angle
-            tilt_angle = jack_rafter_cut.inclination
+        def _lead(name: str, s: str) -> Union[float, str]:
+            raw = _get(name, s)
+            try:
+                return float(raw)
+            except ValueError:
+                return raw
 
-            ex = sx + abs(sx) / math.tan(angle)
-            ey = sy + abs(sx)
-            ez = sz
-
-            radius_compensation = CompensationMode.LEFT if jack_rafter_cut.orientation == "start" else CompensationMode.RIGHT
-            easy_snap_xy_start = EasySnapXY.FRONT_LEFT
+        s = line.strip()
+        if not re.match(rf"CALL\s+{re.escape(cls._MACRO_NAME)}", s):
+            raise ValueError(f"Not a {cls._MACRO_NAME} line: {line}")
 
         return cls(
-            sx=sx,
-            sy=sy,
-            sz=sz,
-            ex=ex,
-            ey=ey,
-            ez=ez,
-            radius_compensation=radius_compensation,
-            fit_in=False,
-            lead_in_out=HopsSystemVars.TOOL_RADIUS,
-            process_mode=ProcessMode.WITH_ROTATION,
-            tilt_angle=tilt_angle,
-            z_level=-2.0,
-            easy_snap_xy_start=easy_snap_xy_start,
-            easy_snap_xy_end=EasySnapXY.RELATIVE,
-            easy_snap_z=EasySnapZ.BOTTOM_EDGE,
+            sx=_float("SX", s),
+            sy=_float("SY", s),
+            sz=_float("SZ", s),
+            ex=_float("EX", s),
+            ey=_float("EY", s),
+            ez=_float("EZ", s),
+            radius_compensation=CompensationMode(_int("BL", s)),
+            fit_in=bool(_int("EINPASSEN", s)),
+            lead_in=_lead("EL", s),
+            lead_out=_lead("AL", s),
+            parallel_distance=_float("PARALLEL", s),
+            process_mode=_int("K", s),
+            tilt_angle=_float("KW", s),
+            precut_depth=_float("BH", s),
+            precut_offset=_float("RITZVERSATZ", s),
+            easy_snap_z=EasySnapZ(_int("ESZ", s)),
+            easy_snap_xy_start=EasySnapXY(_int("ESXY1", s)),
+            easy_snap_xy_end=EasySnapXY(_int("ESXY2", s)),
         )
 
 

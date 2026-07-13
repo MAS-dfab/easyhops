@@ -63,7 +63,7 @@ from .machining_commands import G02M
 from .machining_commands import G03M
 from .machining_commands import DrillingOperation
 from .machining_commands import MillingOperation
-from .machining_commands import SawingOperation
+from .machining_commands import SawingFreeOperation
 from .work_planes import FreePlane
 
 
@@ -393,17 +393,17 @@ class StockHopsMerger:
         return MillingOperation(start_point=new_sp, moves=new_moves, end_point=new_ep)
 
     @staticmethod
-    def _offset_sawing_operation(operation: SawingOperation, x_offset: float) -> SawingOperation:
-        """Apply X-offset to a SawingOperation (SAEGEN).
+    def _offset_sawing_operation(operation: SawingFreeOperation, x_offset: float) -> SawingFreeOperation:
+        """Apply X-offset to a SawingFreeOperation (CALL _saege_frei_V7).
 
         Args:
-            operation: Original SawingOperation
+            operation: Original SawingFreeOperation
             x_offset: X-offset to apply
 
         Returns:
-            New SawingOperation with offset applied to both start and end X
+            New SawingFreeOperation with offset applied to both start and end X
         """
-        return SawingOperation(
+        return SawingFreeOperation(
             sx=operation.sx + x_offset,
             sy=operation.sy,
             sz=operation.sz,
@@ -412,13 +412,16 @@ class StockHopsMerger:
             ez=operation.ez,
             radius_compensation=operation.radius_compensation,
             fit_in=operation.fit_in,
-            lead_in_out=operation.lead_in_out,
+            lead_in=operation.lead_in,
+            lead_out=operation.lead_out,
+            parallel_distance=operation.parallel_distance,
             process_mode=operation.process_mode,
             tilt_angle=operation.tilt_angle,
-            z_level=operation.z_level,
+            precut_depth=operation.precut_depth,
+            precut_offset=operation.precut_offset,
+            easy_snap_z=operation.easy_snap_z,
             easy_snap_xy_start=operation.easy_snap_xy_start,
             easy_snap_xy_end=operation.easy_snap_xy_end,
-            easy_snap_z=operation.easy_snap_z,
         )
 
     @staticmethod
@@ -469,7 +472,7 @@ class StockHopsMerger:
         for operation in machining.operations:
             if isinstance(operation, MillingOperation):
                 new_operations.append(StockHopsMerger._offset_milling_operation(operation, x_offset))
-            elif isinstance(operation, SawingOperation):
+            elif isinstance(operation, SawingFreeOperation):
                 new_operations.append(StockHopsMerger._offset_sawing_operation(operation, x_offset))
             elif isinstance(operation, DrillingOperation):
                 new_operations.append(StockHopsMerger._offset_drilling_operation(operation, x_offset))
@@ -486,7 +489,7 @@ class StockHopsMerger:
             first_op = new_operations[0]
             if isinstance(first_op, MillingOperation):
                 min_x = first_op.start_point.x
-            elif isinstance(first_op, SawingOperation):
+            elif isinstance(first_op, SawingFreeOperation):
                 min_x = min(first_op.sx, first_op.ex)
             elif isinstance(first_op, DrillingOperation):
                 min_x = first_op.x

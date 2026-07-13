@@ -17,7 +17,7 @@ from ..machining_commands import EndPoint
 from ..machining_commands import LeadInOutMode
 from ..machining_commands import MillingOperation
 from ..machining_commands import OpenPocketOperation
-from ..machining_commands import SawingLengthAngleOperation
+from ..machining_commands import SawingFreeOperation
 from ..machining_commands import StartPoint
 from ..tool_library import BirdsmouthW41
 from ..tool_library import CastorD61
@@ -74,43 +74,45 @@ class JackRafterCutStrategies:
         ref_side_index = jack_rafter_cut.ref_side_index
         dx = HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle))
 
-        if jack_rafter_cut.orientation == "start":
-            sx = jack_rafter_cut.start_x + dx
-            angle = jack_rafter_cut.angle
-            easy_snap_xy = EasySnapXY.REAR_LEFT
-            length = HopsSystemVars.Y_DIM / math.sin(math.radians(-angle))
-        else:
-            sx = jack_rafter_cut.start_x
-            angle = 180 - jack_rafter_cut.angle
-            easy_snap_xy = EasySnapXY.FRONT_LEFT
-            length = HopsSystemVars.Y_DIM / math.sin(math.radians(angle))
-
-        if ref_side_index == machine_ref_side_index:
-            sy = jack_rafter_cut.start_y
-            sz = jack_rafter_cut.start_depth
-            radius_compensation = CompensationMode.RIGHT
-            tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
-            if TOL.is_positive(tilt_angle):
-                tilt_angle = -tilt_angle
-                angle += 180
-                sx -= dx
-                sy += HopsSystemVars.Y_DIM
-                radius_compensation = CompensationMode.LEFT if radius_compensation == CompensationMode.RIGHT else CompensationMode.RIGHT
-        else:
+        if ref_side_index != machine_ref_side_index:
             raise NotImplementedError(
                 f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."  # noqa: E501
             )
 
-        sawing_operation = SawingLengthAngleOperation(
+        # ex/ey derived directly from dx and Y_DIM (algebraically equivalent to the
+        # macro's own EX/EY:=SX/SY+COS/SIN(angle)*length formula, without the
+        # intermediate angle/length/sin() computation).
+        if jack_rafter_cut.orientation == "start":
+            sx = jack_rafter_cut.start_x + dx
+            ex = jack_rafter_cut.start_x
+            easy_snap_xy = EasySnapXY.REAR_LEFT
+        else:
+            sx = jack_rafter_cut.start_x
+            ex = sx - dx
+            easy_snap_xy = EasySnapXY.FRONT_LEFT
+
+        sy = jack_rafter_cut.start_y
+        sz = jack_rafter_cut.start_depth
+        ey = sy + HopsSystemVars.Y_DIM
+        radius_compensation = CompensationMode.RIGHT
+        tilt_angle = 90 - jack_rafter_cut.inclination  # this needs to be always negative for a 5-axis sawing operation
+        if TOL.is_positive(tilt_angle):
+            tilt_angle = -tilt_angle
+            sx, ex = ex, sx
+            sy, ey = ey, sy
+            radius_compensation = CompensationMode.LEFT
+
+        sawing_operation = SawingFreeOperation(
             sx=sx,
             sy=sy,
             sz=sz,
-            length=length,
-            angle=angle,
-            z_level=-min(tool_max_depth, depth),
+            ex=ex,
+            ey=ey,
+            ez=-min(tool_max_depth, depth),
             radius_compensation=radius_compensation,
             tilt_angle=tilt_angle,
-            easy_snap_xy=easy_snap_xy,
+            easy_snap_xy_start=easy_snap_xy,
+            easy_snap_xy_end=easy_snap_xy,
             easy_snap_z=EasySnapZ.TOP_SIDE,
         )
 
