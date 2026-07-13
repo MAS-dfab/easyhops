@@ -69,12 +69,13 @@ class JackRafterCutStrategies:
         tool = tool or SaegeD350()
         tool_max_depth = tool.max_depth
 
-        depth = HopsSystemVars.Z_DIM / math.sin(math.radians(jack_rafter_cut.inclination))
+        depth = HopsSystemVars.Z_DIM / math.sin(math.radians(jack_rafter_cut.inclination)) + tool.width
         work_plane = WorkPlane.TOP
         ref_side_index = jack_rafter_cut.ref_side_index
+        dx = HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle))
 
         if jack_rafter_cut.orientation == "start":
-            sx = HopsSystemVars.Y_DIM / math.tan(math.radians(jack_rafter_cut.angle)) + jack_rafter_cut.start_x
+            sx = jack_rafter_cut.start_x + dx
             angle = jack_rafter_cut.angle
             easy_snap_xy = EasySnapXY.REAR_LEFT
             length = HopsSystemVars.Y_DIM / math.sin(math.radians(-angle))
@@ -92,12 +93,9 @@ class JackRafterCutStrategies:
             if TOL.is_positive(tilt_angle):
                 tilt_angle = -tilt_angle
                 angle += 180
-                dx = math.sqrt(abs(length) ** 2 - HopsSystemVars.Y_DIM**2)
-                dx = dx if jack_rafter_cut.orientation == "start" else -dx
-                sx += dx  # mirror the X coordinate for the opposite face
-                sy += HopsSystemVars.Y_DIM  # mirror the Y coordinate for the opposite face
+                sx -= dx
+                sy += HopsSystemVars.Y_DIM
                 radius_compensation = CompensationMode.LEFT if radius_compensation == CompensationMode.RIGHT else CompensationMode.RIGHT
-
         else:
             raise NotImplementedError(
                 f"JackRafterCut sawing currently only supports when the JRC ref_side_index matches the machine_ref_side_index. Got JRC ref_side_index={ref_side_index} and machine_ref_side_index={machine_ref_side_index}."  # noqa: E501
@@ -114,7 +112,6 @@ class JackRafterCutStrategies:
             tilt_angle=tilt_angle,
             easy_snap_xy=easy_snap_xy,
             easy_snap_z=EasySnapZ.TOP_SIDE,
-            precut_depth=2.0,
         )
 
         return [
