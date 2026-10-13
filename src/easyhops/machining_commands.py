@@ -1316,6 +1316,326 @@ class MillingOperation(OperationCommand):
         return cls(start_point=start, moves=moves, end_point=end)
 
 
+# ==================== Vector (5-axis) Milling ====================
+
+
+def _fmt_vector_value(value: Union[float, int, str]) -> str:
+    """Format a vector-command parameter: numbers with at most 3 decimals, HOPS macros (e.g. ``_VAKT``) unchanged."""
+    if isinstance(value, str):
+        return value
+    text = f"{float(value):.3f}".rstrip("0").rstrip(".")
+    return "0" if text in ("", "-0") else text
+
+
+def _split_vector_params(keyword: str, line: str) -> List[str]:
+    """Return the raw comma-separated parameters of ``KEYWORD (...)`` (case-insensitive, optional space)."""
+    match = re.match(rf"^\s*{keyword}\s*\((.*)\)\s*$", line, re.IGNORECASE)
+    if not match:
+        raise ValueError(f"Invalid {keyword} line: {line}")
+    return [p.strip() for p in match.group(1).split(",")]
+
+
+def _num_or_macro(raw: str) -> Union[float, str]:
+    try:
+        return float(raw)
+    except ValueError:
+        return raw
+
+
+class VectorMove(MoveCommand):
+    """HOPS vector move (VG01): linear move with its own tool orientation.
+
+    ``VG01 (x, y, z, DW, KW, feed)``
+
+    Coordinates are absolute in the finished-part system (X along DX, Y along DY,
+    Z up from the bottom face) and give the tool tip. The tool orientation is set
+    per move, so consecutive VG01 lines interpolate all five axes.
+
+    The angles follow the machine's own macros (``_SystemV7/Math/Calc_DW_KW_NV`` and
+    ``Rot3D_V7``) for the unit tool vector N pointing from the tool tip to the holder:
+
+    - ``KW = arccos(Nz)``, the tilt from vertical
+    - ``DW = angle(Nx, Ny) + 90``, wrapped to [0, 360); ``DW = 0`` when vertical
+    - inverse: ``N = (sin DW sin KW, -cos DW sin KW, cos KW)``
+
+    Parameters:
+    -----------
+    x, y, z : float
+        Tool tip position in part coordinates
+    rotation_angle : float
+        DW, rotation of the tool vector around the vertical axis in degrees
+    tilt_angle : float
+        KW, tilt of the tool vector from vertical in degrees
+    feedrate : Union[float, str]
+        Feed in mm/min, or a HOPS macro such as ``_V`` / ``_VAKT``
+
+    Example:
+    --------
+        >>> str(VectorMove(490, -129.968, 192.5, 90, 90, 3000))
+        'VG01 (490,-129.968,192.5,90,90,3000)'
+    """
+
+    def __init__(self, x: float, y: float, z: float, rotation_angle: float, tilt_angle: float, feedrate: Union[float, str] = "_V"):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.z = z
+        self.rotation_angle = rotation_angle
+        self.tilt_angle = tilt_angle
+        self.feedrate = feedrate
+
+    def __repr__(self) -> str:
+        return f"VectorMove(x={self.x}, y={self.y}, z={self.z}, DW={self.rotation_angle}, KW={self.tilt_angle}, F={self.feedrate})"
+
+    def _to_hop_line(self) -> str:
+        params = [self.x, self.y, self.z, self.rotation_angle, self.tilt_angle, self.feedrate]
+        return f"VG01 ({','.join(_fmt_vector_value(p) for p in params)})"
+
+    @property
+    def tool_vector(self) -> tuple:
+        """Unit tool vector (tip -> holder) for this move's angles."""
+        return VectorMove.vector_from_angles(self.rotation_angle, self.tilt_angle)
+
+    @staticmethod
+    def angles_from_vector(vector, vertical_tol: float = 1e-9) -> tuple:
+        """Return ``(DW, KW)`` in degrees for a tool vector pointing from the tip to the holder.
+
+        Mirrors the HOPS macro ``Calc_DW_KW_NV``. For a vertical vector DW is 0.
+        """
+        nx, ny, nz = (float(c) for c in vector)
+        length = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if length == 0:
+            raise ValueError("Tool vector must not be zero.")
+        nx, ny, nz = nx / length, ny / length, nz / length
+        tilt = math.degrees(math.acos(max(-1.0, min(1.0, nz))))
+        if tilt <= vertical_tol:
+            return 0.0, 0.0
+        rotation = (math.degrees(math.atan2(ny, nx)) % 360.0 + 90.0) % 360.0
+        return rotation, tilt
+
+    @staticmethod
+    def vector_from_angles(rotation_angle: float, tilt_angle: float) -> tuple:
+        """Return the unit tool vector (tip -> holder) for ``DW``/``KW``. Mirrors the HOPS macro ``Rot3D_V7``."""
+        dw = math.radians(rotation_angle)
+        kw = math.radians(tilt_angle)
+        return (math.sin(dw) * math.sin(kw), -math.cos(dw) * math.sin(kw), math.cos(kw))
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "VectorMove":
+        """Parse a ``VG01 (x,y,z,DW,KW,feed)`` line."""
+        params = _split_vector_params("VG01", line)
+        if len(params) != 6:
+            raise ValueError(f"VG01 expects 6 parameters, got {len(params)}: {line}")
+        x, y, z, dw, kw = (float(p) for p in params[:5])
+        return cls(x, y, z, dw, kw, _num_or_macro(params[5]))
+
+
+class VectorStartPoint(MoveCommand):
+    """HOPS vector start point (VSP): start of a vector (5-axis) milling path.
+
+    ``VSP (X, Y, Z, DW, KW, Laser, Res3, Res4, Res5, Darstellen, SaugerCheck, DreiAchsMode, AB)``
+
+    Parameter names and meanings from the NC-HOPS 8 definition ``System/SYS/VSP.SYS`` and
+    the help page "Macro Starting point vector milling". Position and angles as in
+    :class:`VectorMove`.
+
+    Parameters:
+    -----------
+    x, y, z : float
+        Start point (tool tip) in part coordinates
+    rotation_angle, tilt_angle : float
+        DW / KW at the start point
+    laser : bool
+        "Laser path": show this path on the laser
+    display : int
+        "Display mode": 0 do not show, 1 show in Hops, 2 show in Workcenter, 3 both (default)
+    check_pads : bool
+        "Check pads": if False, Workcenter ignores this path when checking through-going processing
+    three_axis : bool
+        "3-axis mode": use only 3 axes. The tool stays vertical and DW/KW of the path are
+        ignored, so this must be False for 5-axis milling (default).
+    approach : int
+        "Approach to starting point": 0 standard (uses the safety settings), 6 without safety
+
+    Example:
+    --------
+        >>> str(VectorStartPoint(490, -129.968, 192.5, 90, 90))
+        'VSP (490,-129.968,192.5,90,90,0,0,0,0,3,1,0,0)'
+    """
+
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        rotation_angle: float,
+        tilt_angle: float,
+        laser: bool = False,
+        display: int = 3,
+        check_pads: bool = True,
+        three_axis: bool = False,
+        approach: int = 0,
+    ):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.z = z
+        self.rotation_angle = rotation_angle
+        self.tilt_angle = tilt_angle
+        self.laser = laser
+        self.display = display
+        self.check_pads = check_pads
+        self.three_axis = three_axis
+        self.approach = approach
+
+    def __repr__(self) -> str:
+        return (
+            f"VectorStartPoint(x={self.x}, y={self.y}, z={self.z}, DW={self.rotation_angle}, KW={self.tilt_angle}, "
+            f"three_axis={self.three_axis}, approach={self.approach})"
+        )
+
+    def _to_hop_line(self) -> str:
+        params = [
+            self.x,
+            self.y,
+            self.z,
+            self.rotation_angle,
+            self.tilt_angle,
+            int(self.laser),
+            0,  # Res3
+            0,  # Res4
+            0,  # Res5
+            int(self.display),
+            int(self.check_pads),
+            int(self.three_axis),
+            int(self.approach),
+        ]
+        return f"VSP ({','.join(_fmt_vector_value(p) for p in params)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "VectorStartPoint":
+        """Parse a ``VSP (...)`` line with 13 parameters."""
+        params = _split_vector_params("VSP", line)
+        if len(params) != 13:
+            raise ValueError(f"VSP expects 13 parameters, got {len(params)}: {line}")
+        x, y, z, dw, kw = (float(p) for p in params[:5])
+        laser, _, _, _, display, check_pads, three_axis, approach = (int(float(p)) for p in params[5:])
+        return cls(x, y, z, dw, kw, bool(laser), display, bool(check_pads), bool(three_axis), approach)
+
+
+class VectorEndPoint(MoveCommand):
+    """HOPS vector end point (VEP): end of a vector milling path.
+
+    ``VEP (AB)`` with AB 0 = standard (retreat from the last point to the safety level)
+    or 6 = without safety (NC-HOPS 8 help "Macro Ending point vector milling").
+
+    Example:
+    --------
+        >>> str(VectorEndPoint())
+        'VEP (0)'
+    """
+
+    def __init__(self, mode: int = 0):
+        super().__init__()
+        self.mode = mode
+
+    def __repr__(self) -> str:
+        return f"VectorEndPoint(mode={self.mode})"
+
+    def _to_hop_line(self) -> str:
+        return f"VEP ({int(self.mode)})"
+
+    @classmethod
+    def from_hop_line(cls, line: str) -> "VectorEndPoint":
+        params = _split_vector_params("VEP", line)
+        if len(params) != 1:
+            raise ValueError(f"VEP expects 1 parameter, got {len(params)}: {line}")
+        return cls(int(float(params[0])))
+
+
+class VectorMillingOperation(OperationCommand):
+    """A vector (5-axis) milling path: VSP + VG01 moves + VEP.
+
+    Coordinates are absolute in the finished-part system, so a :class:`HOPSMachining`
+    holding these operations uses ``work_plane=None``. HOPS links consecutive
+    operations itself (retract after VEP, travel to the next VSP).
+
+    Example:
+    --------
+        >>> op = VectorMillingOperation.from_points([(0, 0, 10), (10, 0, 10)], [(0, 0, 1), (0, 0, 1)], 3000)
+        >>> print(op)
+        VSP (0,0,10,0,0,0,0,0,0,3,1,0,0)
+        VG01 (0,0,10,0,0,3000)
+        VG01 (10,0,10,0,0,3000)
+        VEP (0)
+    """
+
+    OPERATION_TYPE = "MILLING"
+
+    def __init__(self, start_point: VectorStartPoint, moves: List[VectorMove], end_point: Optional[VectorEndPoint] = None):
+        super().__init__()
+        self.start_point = start_point
+        self.moves = list(moves)
+        self.end_point = end_point or VectorEndPoint()
+
+    def __repr__(self) -> str:
+        return f"VectorMillingOperation(start={self.start_point.x:.1f},{self.start_point.y:.1f},{self.start_point.z:.1f}, moves={len(self.moves)})"
+
+    def _to_hop_line(self) -> str:
+        return "\n".join([str(self.start_point)] + [str(m) for m in self.moves] + [str(self.end_point)])
+
+    @classmethod
+    def from_points(cls, points, vectors, feedrates=None) -> "VectorMillingOperation":
+        """Build a path from tool-tip points and tool vectors (tip -> holder), both in part coordinates.
+
+        Like the HOPS system macros, the VSP and the first VG01 share the first point.
+        A vertical vector takes the rotation angle of its nearest non-vertical neighbour,
+        so the C-axis does not swing to 0 in the middle of a path.
+
+        Parameters:
+        -----------
+        points : sequence of (x, y, z)
+        vectors : sequence of (nx, ny, nz), same length as ``points``
+        feedrates : float, str or sequence, optional
+            One feed for all moves, or one per point. ``None`` uses ``_V`` (tool manager).
+        """
+        points = [tuple(float(c) for c in p) for p in points]
+        if len(points) < 2:
+            raise ValueError("A vector milling path needs at least 2 points.")
+        if len(vectors) != len(points):
+            raise ValueError(f"Got {len(points)} points but {len(vectors)} vectors.")
+        if feedrates is None or isinstance(feedrates, (int, float, str)):
+            feedrates = [feedrates if feedrates is not None else "_V"] * len(points)
+        elif len(feedrates) != len(points):
+            raise ValueError(f"Got {len(points)} points but {len(feedrates)} feedrates.")
+
+        angles = [VectorMove.angles_from_vector(v) for v in vectors]
+        defined = [i for i, (_, kw) in enumerate(angles) if kw > 0.0]
+        if defined:
+            for i, (dw, kw) in enumerate(angles):
+                if kw == 0.0:
+                    nearest = min(defined, key=lambda j: abs(j - i))
+                    angles[i] = (angles[nearest][0], 0.0)
+
+        start = VectorStartPoint(*points[0], *angles[0])
+        moves = [VectorMove(*p, *a, f) for p, a, f in zip(points, angles, feedrates)]
+        return cls(start, moves, VectorEndPoint())
+
+    @classmethod
+    def from_hop_lines(cls, lines: List[str]) -> "VectorMillingOperation":
+        """Parse a VSP, VG01..., VEP block (comments and blank lines are ignored)."""
+        code = [line.strip() for line in lines if line.strip() and not line.strip().startswith(";")]
+        if not code or not re.match(r"VSP\s*\(", code[0], re.IGNORECASE):
+            raise ValueError("Vector milling block must start with VSP")
+        if not re.match(r"VEP\s*\(", code[-1], re.IGNORECASE):
+            raise ValueError("Vector milling block must end with VEP")
+        return cls(
+            VectorStartPoint.from_hop_line(code[0]),
+            [VectorMove.from_hop_line(line) for line in code[1:-1]],
+            VectorEndPoint.from_hop_line(code[-1]),
+        )
+
+
 class SawingFreeOperation(OperationCommand):
     """Represents a saw cut defined by start and end points using the HOPS macro call format.
 

@@ -7,6 +7,7 @@ representations of all machining operations with their associated tools and work
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
@@ -28,6 +29,7 @@ from .machining_commands import EndPoint
 from .machining_commands import MillingOperation
 from .machining_commands import SawingFreeOperation
 from .machining_commands import StartPoint
+from .machining_commands import VectorMillingOperation
 from .tool_library import MachiningTool
 from .utility_commands import FeedrateOverride
 from .work_planes import FreePlane
@@ -35,6 +37,10 @@ from .work_planes import WorkPlane
 
 if TYPE_CHECKING:
     from compas_timber.base import TimberElement
+
+
+_VSP_LINE = re.compile(r"VSP\s*\(", re.IGNORECASE)
+_VEP_LINE = re.compile(r"VEP\s*\(", re.IGNORECASE)
 
 
 class HOPParsingError(Exception):
@@ -953,6 +959,9 @@ class HOPSJob:
                     if strict:
                         errors.append(UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Failed to parse EBENE work plane"))
                     return None, errors
+            elif _VSP_LINE.match(line):
+                # Vector (5-axis) milling carries absolute part coordinates and needs no work plane
+                break
             elif line.startswith("SP(") or line.startswith("SAEGEN(") or line.startswith("BOHR("):
                 # Found operation before work plane - this is an error
                 if strict:
@@ -977,7 +986,7 @@ class HOPSJob:
                 # Skip CALL or empty lines
                 chunk_idx += 1
 
-        if not work_plane:
+        if not work_plane and not (chunk_idx < len(chunk.lines) and _VSP_LINE.match(chunk.lines[chunk_idx].strip())):
             if strict:
                 errors.append(UnparsedLineError(line_number=chunk.start_line + work_plane_start_idx, line_content="", context="No work plane definition found after tool"))
             return None, errors
@@ -1027,6 +1036,19 @@ class HOPSJob:
                 else:
                     # Reached end of chunk without finding SP
                     chunk_idx += 1
+
+            elif _VSP_LINE.match(line):
+                end_idx = chunk_idx
+                while end_idx < len(chunk.lines) and not _VEP_LINE.match(chunk.lines[end_idx].strip()):
+                    end_idx += 1
+                try:
+                    operations.append(VectorMillingOperation.from_hop_lines(chunk.lines[chunk_idx : end_idx + 1]))
+                except Exception:
+                    if strict:
+                        errors.append(
+                            UnparsedLineError(line_number=chunk.start_line + chunk_idx, line_content=chunk.lines[chunk_idx], context="Failed to parse VSP/VG01/VEP block")
+                        )
+                chunk_idx = end_idx + 1
 
             elif line.startswith(f"CALL {SawingFreeOperation._MACRO_NAME}"):
                 try:

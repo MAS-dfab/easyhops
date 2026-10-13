@@ -8,6 +8,7 @@ from .longitudinal_cut import LongitudinalCutStrategies
 from .drilling import DrillingStrategies
 from .step_joint import StepJointStrategies
 from .pocket import PocketStrategies
+from .frames import FrameToolpathStrategies
 
 __all__ = [
     "BirdsMouthStrategies",
@@ -18,4 +19,5 @@ __all__ = [
     "DrillingStrategies",
     "StepJointStrategies",
     "PocketStrategies",
+    "FrameToolpathStrategies",
 ]

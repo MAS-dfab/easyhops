@@ -558,6 +558,43 @@ class FinishedPart:
             raise ValueError(f"Invalid FERTIGTEIL line: {line}")
 
 
+def hop_header(name: str, info: str = "", tool_database: str = "7235C_219", machine: str = "Holzher") -> List[str]:
+    """Return the ``;KEY=value`` header block that HOPS writes at the top of a program.
+
+    Mirrors the header of programs that run on the machine (HOPS-saved files and the
+    Fusion 360 HOPS post). Pass it as ``HOPSJob(..., header=hop_header("part_01"))``.
+
+    Parameters:
+    -----------
+    name : str
+        Program name (``NCNAME``)
+    info : str
+        Free text shown as ``INFO``
+    tool_database : str
+        Tool database the program refers to (``WZGV``)
+    machine : str
+        Machine type (``MASCHINE``)
+
+    Example:
+    --------
+        >>> hop_header("part_01")[4]
+        ';NCNAME=part_01'
+    """
+    return [
+        ";MAKROTYP=0",
+        f";INFO={info}",
+        f";WZGV={tool_database}",
+        f";MASCHINE={machine}",
+        f";NCNAME={name}",
+        ";KOMMENTAR=",
+        ";DIALOGDLL=Dialoge.Dll",
+        ";DIALOGPROC=StandardFormAnzeigen",
+        ";AUTOSCRIPTSTART=1",
+        ";BUTTONBILD=",
+        ";DIMENSION_UNIT=0",
+    ]
+
+
 class ParkPosition:
     """Represents the Park_V7 command for tool parking positions.
 

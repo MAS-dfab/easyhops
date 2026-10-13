@@ -139,6 +139,46 @@ See [`examples/timber_model_to_hops.py`](examples/timber_model_to_hops.py) for a
 
 ---
 
+## Vector (5-axis) milling from tool frames
+
+`FrameToolpathStrategies` turns tool frames (e.g. Grasshopper planes) into the native HOPS
+vector commands `VSP` / `VG01` / `VEP`, where every move carries its own tool orientation,
+so all five axes interpolate continuously (the format used by the HOPS system macro
+`Sphere.hop` and the Fusion 360 HOPS post).
+
+- frame origin = tool tip, frame Z = tool axis from tip to holder (X/Y are ignored)
+- coordinates are absolute in the finished part: origin at the X=0/Y=0/Z=0 corner
+  (bottom face), X along DX, Y along DY, Z up
+- one pass per `VSP … VEP` block; start and end each pass with the tool clear of the
+  material, HOPS links the passes
+
+```python
+from easyhops.hop_core import FinishedPart, ParkPosition, VarsDefinition
+from easyhops.hop_job import HOPSJob
+from easyhops.strategies import FrameToolpathStrategies
+from easyhops.tool_library import MachiningTool
+
+machinings = FrameToolpathStrategies.vector_milling(
+    passes,                      # list of passes, each a list of compas Frames
+    MachiningTool(404, motor_speed=18000),
+    part_frame=part_frame,       # compas Frame at the part's zero corner
+    feedrates=feeds,             # one value, or per pass (value or list per frame)
+)
+job = HOPSJob(VarsDefinition(dx=500, dy=200, dz=100), FinishedPart(), ParkPosition(), machinings)
+print(FrameToolpathStrategies.check(job, passes, part_frame=part_frame))  # read-back report
+job.to_hop_file("toolpath.hop")
+```
+
+The tool angles follow the machine's own macros (`Calc_DW_KW_NV`, `Rot3D_V7`):
+`KW = arccos(Nz)`, `DW = angle(Nx, Ny) + 90` in [0, 360). Run
+`examples/vector_milling_calibration.py` to write a calibration program
+(`data/calibration/`) that checks origin, axis directions and tool-tip reference in the
+HOPS simulation.
+
+For Grasshopper, use the Script component in [`examples/grasshopper/`](examples/grasshopper/README.md).
+
+---
+
 ## Preset tools
 
 Common machine tools are available as zero-argument classes:

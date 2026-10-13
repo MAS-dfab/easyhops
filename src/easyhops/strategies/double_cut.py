@@ -11,7 +11,7 @@ from ..contour_commands import ContourStart
 from ..hop_core import EasySnapXY
 from ..hop_core import EasySnapZ
 from ..hop_core import HopsSystemVars
-from ..hop_macros import AngledLine
+from ..machining_commands import AngledLine
 from ..machining_commands import G01
 from ..machining_commands import CompensationMode
 from ..machining_commands import EndPoint
